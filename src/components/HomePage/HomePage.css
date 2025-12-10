@@ -75,6 +75,10 @@
   padding: 20px 10px;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 .categories-carousel::-webkit-scrollbar {
@@ -93,6 +97,11 @@
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
   position: relative;
   overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .category-card::before {

@@ -336,22 +336,26 @@
   }
 
   .recipe-title-section {
-    padding: 30px 20px;
+    padding: 25px 15px;
   }
 
   .recipe-title-section h1 {
     font-size: 1.8rem;
+    margin-bottom: 12px;
   }
 
   .recipe-emoji {
     font-size: 3rem;
+    margin-bottom: 15px;
   }
 
   .recipe-description {
-    font-size: 1rem;
+    font-size: 0.95rem;
     word-wrap: break-word;
     overflow-wrap: break-word;
     white-space: normal;
+    line-height: 1.5;
+    padding: 0 5px;
   }
 
   .card {
