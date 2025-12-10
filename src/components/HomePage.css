@@ -12,10 +12,7 @@
 
 .header h1 {
   font-size: 3rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #333;
   margin-bottom: 10px;
   font-weight: 700;
 }
@@ -241,42 +238,84 @@
 }
 
 @media (max-width: 768px) {
+  .home-page-container {
+    padding: 20px 10px;
+  }
+
+  .header {
+    margin-bottom: 30px;
+  }
+
   .header h1 {
-    font-size: 2rem;
+    font-size: 1.8rem;
   }
   
   .subtitle {
-    font-size: 1rem;
+    font-size: 0.95rem;
   }
 
   .carousel-section {
-    padding: 0 35px;
+    padding: 0 30px;
+    margin-bottom: 40px;
   }
 
   .carousel-btn {
-    width: 30px;
-    height: 30px;
-    font-size: 1.2rem;
+    width: 32px;
+    height: 32px;
+    font-size: 1.3rem;
+  }
+
+  .categories-carousel {
+    gap: 12px;
+    padding: 15px 5px;
   }
 
   .category-card {
-    width: 150px;
-    padding: 20px 15px;
+    width: 140px;
+    padding: 20px 12px;
   }
 
   .category-emoji {
-    font-size: 2.5rem;
+    font-size: 2.2rem;
   }
 
   .category-name {
-    font-size: 1rem;
+    font-size: 0.95rem;
   }
   
   .recipes-grid {
     grid-template-columns: 1fr;
+    gap: 20px;
   }
 
   .all-recipes-section h2 {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
+    margin-bottom: 20px;
+  }
+
+  .recipe-preview-card {
+    margin: 0;
+  }
+
+  .recipe-image {
+    height: 180px;
+    font-size: 4rem;
+  }
+
+  .recipe-preview-content {
+    padding: 20px;
+  }
+
+  .recipe-preview-content h3 {
+    font-size: 1.3rem;
+  }
+
+  .recipe-description {
+    font-size: 0.95rem;
+  }
+
+  .recipe-meta {
+    font-size: 0.85rem;
+    gap: 10px;
   }
 }

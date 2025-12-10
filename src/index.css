@@ -12,6 +12,16 @@ body {
 .recipe-container {
   min-height: 100vh;
   position: relative;
-  background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 50%, #ff9a9e 100%);
+  background: #f5f7fa;
   overflow-x: hidden;
+}
+
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+
+  .recipe-container {
+    padding: 0;
+  }
 }

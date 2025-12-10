@@ -45,10 +45,6 @@
   font-size: 3rem;
   color: #333;
   margin-bottom: 15px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 .recipe-description {
@@ -328,20 +324,89 @@
 }
 
 @media (max-width: 768px) {
+  .recipe-card-container {
+    padding: 20px 10px;
+  }
+
+  .back-button {
+    padding: 10px 18px;
+    font-size: 0.9rem;
+  }
+
+  .recipe-title-section {
+    padding: 30px 20px;
+  }
+
   .recipe-title-section h1 {
-    font-size: 2rem;
+    font-size: 1.8rem;
   }
   
   .recipe-emoji {
-    font-size: 3.5rem;
+    font-size: 3rem;
+  }
+
+  .recipe-description {
+    font-size: 1rem;
+  }
+
+  .card {
+    padding: 20px;
+  }
+
+  .card h2 {
+    font-size: 1.5rem;
   }
   
   .info-grid,
   .nutrition-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .info-item {
+    padding: 12px;
+  }
+
+  .adjust-btn {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+  }
+
+  .servings-number {
+    font-size: 1.3rem;
+    min-width: 50px;
   }
   
   .instruction-step {
-    flex-direction: column;
+    flex-direction: row;
+    padding: 15px;
+    gap: 15px;
+  }
+
+  .step-number {
+    width: 35px;
+    height: 35px;
+    font-size: 1rem;
+  }
+
+  .step-text {
+    font-size: 1rem;
+  }
+
+  .ingredient-section h3 {
+    font-size: 1.1rem;
+  }
+
+  .ingredient-section li {
+    font-size: 0.95rem;
+    padding: 8px 0;
+    padding-left: 25px;
+  }
+
+  .tips-list li {
+    font-size: 0.95rem;
+    padding: 12px;
   }
 }

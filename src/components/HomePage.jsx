@@ -69,7 +69,6 @@ function HomePage({ onSelectRecipe, onSelectCategory }) {
     <div className="home-page-container">
       <div className="header">
         <h1>🍳 Mon Carnet de Recettes 🍰</h1>
-        <p className="subtitle">Découvrez toutes mes recettes favorites</p>
       </div>
 
       {/* Category Carousel */}
