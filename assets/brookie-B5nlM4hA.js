@@ -11,10 +11,10 @@ const e=`{\r
     "difficulty": "Moyen"\r
   },\r
   "nutrition": {\r
-    "calories": "420 kcal",\r
-    "proteines": "5g",\r
-    "lipides": "22g",\r
-    "glucides": "52g"\r
+    "calories": "620 kcal",\r
+    "proteines": "8g",\r
+    "lipides": "30g",\r
+    "glucides": "80g"\r
   },\r
   "ingredients": [\r
     {\r
