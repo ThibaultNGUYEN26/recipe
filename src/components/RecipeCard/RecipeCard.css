@@ -20,6 +20,7 @@
   font-weight: 600;
   transition: all 0.3s ease;
   margin-bottom: 30px;
+  user-select: none;
 }
 
 .back-button:hover {
@@ -140,6 +141,7 @@
   padding: 0;
   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
   flex-shrink: 0;
+  user-select: none;
 }
 
 .adjust-btn:hover {
@@ -340,13 +342,16 @@
   .recipe-title-section h1 {
     font-size: 1.8rem;
   }
-  
+
   .recipe-emoji {
     font-size: 3rem;
   }
 
   .recipe-description {
     font-size: 1rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
   }
 
   .card {
@@ -356,7 +361,7 @@
   .card h2 {
     font-size: 1.5rem;
   }
-  
+
   .info-grid,
   .nutrition-grid {
     grid-template-columns: 1fr;
@@ -378,7 +383,7 @@
     font-size: 1.3rem;
     min-width: 50px;
   }
-  
+
   .instruction-step {
     flex-direction: row;
     padding: 15px;
