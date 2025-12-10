@@ -12,7 +12,8 @@ function RecipeList({ category, onSelectRecipe, onBack }) {
   const loadRecipes = async (categoryName) => {
     try {
       // Dynamically import all .json recipe files
-      const recipeModules = import.meta.glob('../recipes/**/*.json', { as: 'raw' });
+      const recipeModules = import.meta.glob('../../recipes/**/*.json', { as: 'raw' });
+      const imageModules = import.meta.glob('../../recipes/**/*.png', { eager: true, import: 'default' });
       const loadedRecipes = [];
 
       for (const path in recipeModules) {
@@ -20,9 +21,18 @@ function RecipeList({ category, onSelectRecipe, onBack }) {
         const recipe = JSON.parse(content);
         
         if (recipe.category === categoryName) {
+          // Extract folder path and recipe name
+          const pathParts = path.split('/');
+          const recipeName = pathParts[pathParts.length - 2];
+          
+          // Try to find corresponding image
+          const imagePath = path.replace('.json', '.png');
+          const recipeImage = imageModules[imagePath] || null;
+          
           loadedRecipes.push({
             ...recipe,
-            id: path.split('/').pop().replace('.json', '')
+            id: recipeName,
+            imagePath: recipeImage
           });
         }
       }

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './Index.css';
-import HomePage from './components/HomePage';
-import RecipeCard from './components/RecipeCard';
+import HomePage from './components/HomePage/HomePage';
+import RecipeCard from './components/RecipeCard/RecipeCard';
 
 function Index() {
   const [view, setView] = useState('home'); // 'home', 'recipe'

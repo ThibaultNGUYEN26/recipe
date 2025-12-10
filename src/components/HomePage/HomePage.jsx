@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
+import SearchBar from '../SearchBar/SearchBar';
 import './HomePage.css';
 
 function HomePage({ onSelectRecipe, onSelectCategory }) {
   const [recipes, setRecipes] = useState([]);
   const [filteredRecipes, setFilteredRecipes] = useState([]);
   const [activeCategory, setActiveCategory] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const carouselRef = useRef(null);
 
   const categories = [
@@ -22,25 +24,54 @@ function HomePage({ onSelectRecipe, onSelectCategory }) {
   }, []);
 
   useEffect(() => {
-    if (activeCategory === 'all') {
-      setFilteredRecipes(recipes);
-    } else {
-      setFilteredRecipes(recipes.filter(recipe => recipe.category === activeCategory));
+    filterRecipes();
+  }, [activeCategory, recipes, searchQuery]);
+
+  const filterRecipes = () => {
+    let filtered = recipes;
+
+    // Filter by category
+    if (activeCategory !== 'all') {
+      filtered = filtered.filter(recipe => recipe.category === activeCategory);
     }
-  }, [activeCategory, recipes]);
+
+    // Filter by search query (name, description, tags)
+    if (searchQuery.trim() !== '') {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(recipe => {
+        const matchesName = recipe.name.toLowerCase().includes(query);
+        const matchesDescription = recipe.description.toLowerCase().includes(query);
+        const matchesTags = recipe.tags && recipe.tags.some(tag => tag.toLowerCase().includes(query));
+        return matchesName || matchesDescription || matchesTags;
+      });
+    }
+
+    setFilteredRecipes(filtered);
+  };
 
   const loadAllRecipes = async () => {
     try {
-      const recipeModules = import.meta.glob('../recipes/**/*.json', { as: 'raw' });
+      const recipeModules = import.meta.glob('../../recipes/**/*.json', { as: 'raw' });
+      const imageModules = import.meta.glob('../../recipes/**/*.png', { eager: true, import: 'default' });
       const loadedRecipes = [];
 
       for (const path in recipeModules) {
         const content = await recipeModules[path]();
         const recipe = JSON.parse(content);
         
+        // Extract folder path and recipe name
+        const pathParts = path.split('/');
+        const recipeName = pathParts[pathParts.length - 2]; // folder name
+        const category = pathParts[pathParts.length - 3]; // category folder
+        
+        // Try to find corresponding image
+        const imagePath = path.replace('.json', '.png');
+        const recipeImage = imageModules[imagePath] || null;
+        
         loadedRecipes.push({
           ...recipe,
-          id: path.split('/').pop().replace('.json', '')
+          id: recipeName,
+          imagePath: recipeImage
         });
       }
 
@@ -69,6 +100,12 @@ function HomePage({ onSelectRecipe, onSelectCategory }) {
     <div className="home-page-container">
       <div className="header">
         <h1>🍳 Mon Carnet de Recettes 🍰</h1>
+        
+        {/* Search Bar */}
+        <SearchBar 
+          searchQuery={searchQuery} 
+          onSearchChange={setSearchQuery} 
+        />
       </div>
 
       {/* Category Carousel */}
@@ -115,7 +152,20 @@ function HomePage({ onSelectRecipe, onSelectCategory }) {
                 className="recipe-preview-card"
                 onClick={() => onSelectRecipe(recipe)}
               >
-                <div className="recipe-image">{recipe.image || '🍽️'}</div>
+                {recipe.imagePath ? (
+                  <div 
+                    className="recipe-image recipe-image-photo" 
+                    style={{
+                      backgroundImage: `url(${recipe.imagePath})`,
+                      backgroundSize: 'cover',
+                      backgroundPosition: 'center'
+                    }}
+                  ></div>
+                ) : (
+                  <div className="recipe-image">
+                    {recipe.image || '🍽️'}
+                  </div>
+                )}
                 <div className="recipe-preview-content">
                   <h3>{recipe.name}</h3>
                   <p className="recipe-description">{recipe.description}</p>

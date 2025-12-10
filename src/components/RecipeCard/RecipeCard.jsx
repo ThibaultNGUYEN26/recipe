@@ -44,7 +44,24 @@ function RecipeCard({ recipe, onBack }) {
           ← Retour à l'accueil
         </button>
         <div className="recipe-title-section">
-          <div className="recipe-emoji">{recipe.image || '🍽️'}</div>
+          <div className="recipe-hero">
+            {recipe.imagePath ? (
+              <div className="recipe-image-header" style={{
+                backgroundImage: `url(${recipe.imagePath})`,
+                backgroundSize: '100% auto',
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'center center',
+                width: '100%',
+                height: '300px',
+                borderRadius: '15px',
+                marginBottom: '20px'
+              }}></div>
+            ) : (
+              <div className="recipe-emoji-wrapper">
+                <div className="recipe-emoji">{recipe.image || '🍽️'}</div>
+              </div>
+            )}
+          </div>
           <h1>{recipe.name}</h1>
           <p className="recipe-description">{recipe.description}</p>
         </div>
