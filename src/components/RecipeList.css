@@ -1,0 +1,139 @@
+.recipe-list-container {
+  padding: 40px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: 100vh;
+}
+
+.recipe-list-header {
+  text-align: center;
+  margin-bottom: 40px;
+  position: relative;
+}
+
+.back-button {
+  position: absolute;
+  left: 0;
+  top: 0;
+  background: white;
+  border: 2px solid #667eea;
+  color: #667eea;
+  padding: 12px 24px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.back-button:hover {
+  background: #667eea;
+  color: white;
+  transform: translateX(-5px);
+}
+
+.recipe-list-header h1 {
+  font-size: 2.5rem;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.recipe-count {
+  color: #666;
+  font-size: 1.1rem;
+}
+
+.no-recipes {
+  text-align: center;
+  padding: 60px 20px;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.no-recipes p {
+  font-size: 1.2rem;
+  color: #666;
+  margin: 10px 0;
+}
+
+.hint {
+  font-size: 0.9rem !important;
+  color: #999 !important;
+  font-style: italic;
+}
+
+.recipes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 30px;
+}
+
+.recipe-preview-card {
+  background: white;
+  border-radius: 20px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.recipe-preview-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+}
+
+.recipe-image {
+  height: 200px;
+  background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 5rem;
+}
+
+.recipe-preview-content {
+  padding: 25px;
+}
+
+.recipe-preview-content h3 {
+  font-size: 1.5rem;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.recipe-description {
+  color: #666;
+  font-size: 1rem;
+  line-height: 1.5;
+  margin-bottom: 15px;
+}
+
+.recipe-meta {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+  color: #888;
+}
+
+.recipe-meta span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+@media (max-width: 768px) {
+  .back-button {
+    position: static;
+    margin-bottom: 20px;
+  }
+  
+  .recipe-list-header h1 {
+    font-size: 2rem;
+  }
+  
+  .recipes-grid {
+    grid-template-columns: 1fr;
+  }
+}

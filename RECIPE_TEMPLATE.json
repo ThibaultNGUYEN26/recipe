@@ -1,0 +1,67 @@
+{
+  "name": "Modèle de Recette",
+  "category": "cakes",
+  "description": "Une brève description de votre recette",
+  "image": "",
+  "info": {
+    "prepTime": "20 min",
+    "cookTime": "30 min",
+    "totalTime": "50 min",
+    "servings": 8,
+    "difficulty": "Moyen"
+  },
+  "nutrition": {
+    "calories": "350 kcal",
+    "proteines": "6g",
+    "lipides": "18g",
+    "glucides": "45g"
+  },
+  "ingredients": [
+    {
+      "section": "Pour la base",
+      "items": [
+        "200g de farine",
+        "100g de sucre",
+        "2 œufs"
+      ]
+    },
+    {
+      "section": "Pour la garniture",
+      "items": [
+        "100g de pépites de chocolat",
+        "50g de beurre"
+      ]
+    }
+  ],
+  "instructions": [
+    {
+      "step": 1,
+      "text": "Préchauffez votre four à 180°C."
+    },
+    {
+      "step": 2,
+      "text": "Mélangez les ingrédients secs dans un grand bol."
+    },
+    {
+      "step": 3,
+      "text": "Ajoutez les ingrédients humides et mélangez jusqu'à obtenir une texture lisse."
+    },
+    {
+      "step": 4,
+      "text": "Versez dans un moule beurré."
+    },
+    {
+      "step": 5,
+      "text": "Faites cuire pendant 30 minutes jusqu'à ce que ce soit doré."
+    },
+    {
+      "step": 6,
+      "text": "Laissez refroidir avant de servir. Bon appétit !"
+    }
+  ],
+  "tips": [
+    "Vous pouvez substituer les ingrédients selon vos besoins",
+    "Conservez dans un récipient hermétique jusqu'à 3 jours"
+  ],
+  "tags": ["dessert", "pâtisserie", "sucré"]
+}
