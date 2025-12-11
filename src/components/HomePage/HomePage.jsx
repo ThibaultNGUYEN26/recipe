@@ -27,6 +27,14 @@ function HomePage({ onSelectRecipe, onSelectCategory }) {
     filterRecipes();
   }, [activeCategory, recipes, searchQuery]);
 
+  // Helper function to normalize text (remove accents)
+  const normalizeText = (text) => {
+    return text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '');
+  };
+
   const filterRecipes = () => {
     let filtered = recipes;
 
@@ -35,14 +43,20 @@ function HomePage({ onSelectRecipe, onSelectCategory }) {
       filtered = filtered.filter(recipe => recipe.category === activeCategory);
     }
 
-    // Filter by search query (name, description, tags)
+    // Filter by search query (name, description, tags, ingredients)
     if (searchQuery.trim() !== '') {
-      const query = searchQuery.toLowerCase();
+      const query = normalizeText(searchQuery);
       filtered = filtered.filter(recipe => {
-        const matchesName = recipe.name.toLowerCase().includes(query);
-        const matchesDescription = recipe.description.toLowerCase().includes(query);
-        const matchesTags = recipe.tags && recipe.tags.some(tag => tag.toLowerCase().includes(query));
-        return matchesName || matchesDescription || matchesTags;
+        const matchesName = normalizeText(recipe.name).includes(query);
+        const matchesDescription = normalizeText(recipe.description).includes(query);
+        const matchesTags = recipe.tags && recipe.tags.some(tag => normalizeText(tag).includes(query));
+        
+        // Search in ingredients
+        const matchesIngredients = recipe.ingredients && recipe.ingredients.some(section => 
+          section.items && section.items.some(item => normalizeText(item).includes(query))
+        );
+        
+        return matchesName || matchesDescription || matchesTags || matchesIngredients;
       });
     }
 
