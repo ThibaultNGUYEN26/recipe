@@ -69,13 +69,6 @@ function HomePage({ onSelectRecipe, onSelectCategory }) {
       const imageModules = import.meta.glob('../../recipes/**/*.png', { eager: true, import: 'default' });
       const loadedRecipes = [];
 
-      // Create a normalized map of image paths
-      const normalizedImageMap = {};
-      for (const imgPath in imageModules) {
-        const normalizedPath = imgPath.normalize('NFC');
-        normalizedImageMap[normalizedPath] = imageModules[imgPath];
-      }
-
       for (const path in recipeModules) {
         const content = await recipeModules[path]();
         const recipe = JSON.parse(content);
@@ -85,9 +78,9 @@ function HomePage({ onSelectRecipe, onSelectCategory }) {
         const recipeName = pathParts[pathParts.length - 2]; // folder name
         const category = pathParts[pathParts.length - 3]; // category folder
         
-        // Try to find corresponding image with normalized path
-        const imagePath = path.replace('.json', '.png').normalize('NFC');
-        const recipeImage = normalizedImageMap[imagePath] || null;
+        // Try to find corresponding image
+        const imagePath = path.replace('.json', '.png');
+        const recipeImage = imageModules[imagePath] || null;
         
         loadedRecipes.push({
           ...recipe,
