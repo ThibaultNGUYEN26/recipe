@@ -1,0 +1,68 @@
+{
+  "name": "Pancakes",
+  "categories": ["cakes", "breakfast"],
+  "description": "Soft and fluffy pancakes, perfect for a delicious breakfast.",
+  "image": "🦓🍰",
+  "info": {
+    "prepTime": "10 min",
+    "cookTime": "10 min",
+    "totalTime": "20 min",
+    "servings": 4,
+    "difficulty": "Easy"
+  },
+  "nutrition": {
+    "calories": "80 kcal",
+    "protéines": "1.5g",
+    "lipides": "4g",
+    "glucides": "10g"
+  },
+  "ingredients": [
+    {
+      "items": [
+        "250g flour",
+        "30g sugar",
+        "1 packet baking powder",
+        "65g unsalted butter",
+        "1 pinch of salt",
+        "2 eggs",
+        "30cl milk"
+      ]
+    }
+  ],
+  "instructions": [
+    {
+      "step": 1,
+      "text": "Melt the butter in a saucepan over low heat or in the microwave."
+    },
+    {
+      "step": 2,
+      "text": "Put the flour, baking powder, and sugar in a mixing bowl. Mix and make a well."
+    },
+    {
+      "step": 3,
+      "text": "Add the whole eggs and whisk everything together."
+    },
+    {
+      "step": 4,
+      "text": "Gradually incorporate the melted butter and milk, continuing to mix to avoid lumps."
+    },
+    {
+      "step": 5,
+      "text": "Let the batter rest for 30 minutes at room temperature."
+    },
+    {
+      "step": 6,
+      "text": "In a hot, lightly oiled pan, pour a ladle of batter and cook until bubbles form on the surface. Flip and cook the other side until golden."
+    },
+    {
+      "step": 7,
+      "text": "Repeat until all the batter is used. Serve hot with the toppings of your choice."
+    }
+  ],
+  "tips": [
+    "For even fluffier pancakes, you can add a little plain yoghurt to the batter.",
+    "Using a pancake pan makes cooking easier and helps achieve evenly shaped pancakes.",
+    "You can store cooked pancakes in an airtight container in the refrigerator for 2 days. Reheat slightly before serving."
+  ],
+  "tags": ["cake", "pancakes", "breakfast", "sweet"]
+}

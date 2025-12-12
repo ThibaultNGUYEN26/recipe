@@ -1,0 +1,68 @@
+{
+  "name": "Pancakes",
+  "categories": ["cakes", "breakfast"],
+  "description": "Des pancakes moelleux et légers, parfaits pour un petit-déjeuner gourmand.",
+  "image": "🦓🍰",
+  "info": {
+    "prepTime": "10 min",
+    "cookTime": "10 min",
+    "totalTime": "20 min",
+    "servings": 4,
+    "difficulty": "Facile"
+  },
+  "nutrition": {
+    "calories": "80 kcal",
+    "protéines": "1.5g",
+    "lipides": "4g",
+    "glucides": "10g"
+  },
+  "ingredients": [
+    {
+      "items": [
+        "250g de farine",
+        "30g de sucre",
+        "1 sachet de levure chimique",
+        "65g de beurre doux",
+        "1 pincée de sel",
+        "2 oeufs",
+        "30cL de lait"
+      ]
+    }
+  ],
+  "instructions": [
+    {
+      "step": 1,
+      "text": "Faire fondre le beurre, dans une casserole à feu doux ou au micro-ondes."
+    },
+    {
+      "step": 2,
+      "text": "Mettre la farine, la levure et le sucre dans un saladier. Mélanger et creuser un puit."
+    },
+    {
+      "step": 3,
+      "text": "Ajouter les oeufs entiers et fouetter l'ensemble."
+    },
+    {
+      "step": 4,
+      "text": "Incorporer le beurre fondu et le lait petit à petit, en continuant de mélanger afin d'éviter les grumeaux."
+    },
+    {
+      "step": 5,
+      "text": "Laisser reposer la pâte pendant 30 minutes à température ambiante."
+    },
+    {
+      "step": 6,
+      "text": "Dans une poêle chaude et légèrement huilée, verser une louche de pâte et cuire jusqu'à ce que des bulles se forment à la surface. Retourner et cuire l'autre côté jusqu'à ce qu'il soit doré."
+    },
+    {
+      "step": 7,
+      "text": "Répéter l'opération jusqu'à épuisement de la pâte. Servir chaud avec les garnitures de votre choix."
+    }
+  ],
+  "tips": [
+    "Pour des pancakes encore plus moelleux, vous pouvez ajouter un peu de yaourt nature à la pâte.",
+    "L'utilisation d'une crépière adaptée aux pancakes est plus simple pour la cuisson et la forme homogène des pancakes.",
+    "Vous pouvez conserver les pancakes cuits dans une boîte hermétique au réfrigérateur pendant 2 jours. Réchauffez-les légèrement avant de servir."
+  ],
+  "tags": ["cake", "pancakes", "petit-déjeuner", "sucré"]
+}

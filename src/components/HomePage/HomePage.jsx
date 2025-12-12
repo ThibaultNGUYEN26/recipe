@@ -43,7 +43,13 @@ function HomePage({ onSelectRecipe, onSelectCategory }) {
 
     // Filter by category
     if (activeCategory !== 'all') {
-      filtered = filtered.filter(recipe => recipe.category === activeCategory);
+      filtered = filtered.filter(recipe => {
+        // Support both single category (string) and multiple categories (array)
+        if (Array.isArray(recipe.categories)) {
+          return recipe.categories.includes(activeCategory);
+        }
+        return recipe.category === activeCategory;
+      });
     }
 
     // Filter by search query (name, description, tags, ingredients)
