@@ -1,5 +1,5 @@
 const e=`{\r
-  "name": "Cháo Gà (Porridge Vietnamien de Riz et Poulet)",\r
+  "name": "Cháo Gà (Porridge Vietnamien au Poulet)",\r
   "category": "main-dishes",\r
   "description": "Un plat vietnamien réconfortant à base de riz et de poulet, parfait pour les journées fraîches.",\r
   "image": "🍲🍗",\r
@@ -34,38 +34,38 @@ const e=`{\r
   "instructions": [\r
     {\r
       "step": 1,\r
-      "text": "Rincez le riz. Pelez et émincez l'ail et le gingembre. Coupez l'oignon vert en fines rondelles."\r
+      "text": "Rincer le riz. Peler et émincer l'ail et le gingembre. Couper l'oignon vert en fines rondelles."\r
     },\r
     {\r
       "step": 2,\r
-      "text": "Dans la casserole, faites revenir l'ail émincé avec un peu d'huile jusqu'à ce qu'il soit doré."\r
+      "text": "Dans la casserole, faire revenir l'ail émincé avec un peu d'huile jusqu'à ce qu'il soit doré."\r
     },\r
     {\r
       "step": 3,\r
-      "text": "Réservez l'ail et ajoutez le riz dans la casserole avec 1,2L d'eau. Portez à ébullition."\r
+      "text": "Réserver l'ail et ajouter le riz dans la casserole avec 1,2L d'eau. Porter à ébullition."\r
     },\r
     {\r
       "step": 4,\r
-      "text": "Une fois à ébullition, ajoutez les cubes de bouillon, le gingembre tranché et le blanc de poulet."\r
+      "text": "Une fois à ébullition, ajouter les cubes de bouillon, le gingembre tranché et le blanc de poulet."\r
     },\r
     {\r
       "step": 5,\r
-      "text": "Réduisez le feu (feu moyen) et laissez mijoter pendant 30 minutes semi couvert, en écumant."\r
+      "text": "Réduire le feu (feu moyen) et laisser mijoter pendant 30 minutes semi couvert, en écumant."\r
     },\r
     {\r
       "step": 6,\r
-      "text": "Retirez le poulet, effilochez-le. Assaisonnez avec le nuoc mam, selon votre goût."\r
+      "text": "Retirer le poulet, effilocher-le. Assaisonner avec le nuoc mam, selon votre goût."\r
     },\r
     {\r
       "step": 7,\r
-      "text": "Servez dans un bol un peu de riz et de l'eau. Ajoutez du poulet effiloché, de l'oignon vert, de la coriandre, l'ail frit et du sel poivre."\r
+      "text": "Servir dans un bol un peu de riz et de l'eau. Ajouter du poulet effiloché, de l'oignon vert, de la coriandre, l'ail frit et du sel poivre."\r
     }\r
   ],\r
   "tips": [\r
-    "Ne mettez pas de coriandre si vous n'aimez pas ça",\r
+    "Ne pas mettre de coriandre si vous n'aimez pas ça",\r
     "Vous pouvez utiliser des cuisses de poulet et faire griller la peau que vous émiettez dans le cháo pour plus de saveur",\r
     "Vous pouvez mettre n'importe quelle viande à la place du poulet",\r
-    "Pour une version végétarienne, utilisez du bouillon de légumes et ajoutez des champignons"\r
+    "Pour une version végétarienne, utiliser du bouillon de légumes et ajoutez des champignons"\r
   ],\r
   "tags": ["vietnamien", "riz", "poulet", "confort", "soupe", "facile"]\r
 }\r

@@ -1,5 +1,5 @@
 const n=`{\r
-  "name": "Cháo Gà (Vietnamese Rice and Chicken Porridge)",\r
+  "name": "Cháo Gà (Vietnamese Chicken Porridge)",\r
   "category": "main-dishes",\r
   "description": "A comforting Vietnamese dish made with rice and chicken, perfect for cooler days.",\r
   "image": "🍲🍗",\r

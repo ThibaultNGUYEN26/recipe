@@ -34,41 +34,41 @@ const e=`{\r
   "instructions": [\r
     {\r
       "step": 1,\r
-      "text": "Fouettez le sucre, les oeufs et la vanille dans un grand bol."\r
+      "text": "Fouetter le sucre, les oeufs et la vanille dans un grand bol."\r
     },\r
     {\r
       "step": 2,\r
-      "text": "Ajoutez l'huile et le lait, continuez à mélanger"\r
+      "text": "Ajouter l'huile et le lait, continuer à mélanger."\r
     },\r
     {\r
       "step": 3,\r
-      "text": "Ajoutez la levure, le sel et la farine. Mélangez jusqu'à obtenir une pâte lisse."\r
+      "text": "Ajouter la levure, le sel et la farine. Mélanger jusqu'à obtenir une pâte lisse."\r
     },\r
     {\r
       "step": 4,\r
-      "text": "Divisez la pâte en deux parts égales. Incorporez le cacao en poudre dans une des moitiés et mélangez bien."\r
+      "text": "Diviser la pâte en deux parts égales. Incorporer le cacao en poudre dans une des moitiés et mélanger bien."\r
     },\r
     {\r
       "step": 5,\r
-      "text": "Préchauffez le four à 180°C."\r
+      "text": "Préchauffer le four à 180°C."\r
     },\r
     {\r
       "step": 6,\r
-      "text": "Dans un moule beurré, déposez un peu de pâte nature au centre. Ajoutez par-dessus un peu de pâte au cacao. Répétez l'opération en alternant les pâtes jusqu'à épuisement."\r
+      "text": "Dans un moule beurré, déposer un peu de pâte nature au centre. Ajouter par-dessus un peu de pâte au cacao. Répéter l'opération en alternant les pâtes jusqu'à épuisement."\r
     },\r
     {\r
       "step": 7,\r
-      "text": "Déposez des cuillères à soupe bombées de pâte sur des plaques de cuisson non graissées, en les espaçant de 5 cm."\r
+      "text": "Déposer des cuillères à soupe bombées de pâte sur des plaques de cuisson non graissées, en les espaçant de 5 cm."\r
     },\r
     {\r
       "step": 8,\r
-      "text": "Enfournez pendant 35 minutes."\r
+      "text": "Enfourner pendant 35 minutes."\r
     }\r
   ],\r
   "tips": [\r
-    "Enfoncez un cure-dent ou un couteau au centre du cake pour vérifier la cuisson",\r
-    "Laissez refroidir avant de démouler pour éviter qu'il ne se casse",\r
-    "Pour un goût plus intense, ajoutez une cuillère à café d'extrait de café dans la pâte au cacao",\r
+    "Enfoncer un cure-dent ou un couteau au centre du cake pour vérifier la cuisson",\r
+    "Laisser refroidir avant de démouler pour éviter qu'il ne se casse",\r
+    "Pour un goût plus intense, ajouter une cuillère à café d'extrait de café dans la pâte au cacao",\r
     "Vous pouvez décorer le dessus du cake avec un glaçage au chocolat ou du sucre glace"\r
   ],\r
   "tags": ["zébré", "marbré", "chocolat", "dessert", "pâtisserie", "facile", "goûter", "cake"]\r
