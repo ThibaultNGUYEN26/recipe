@@ -1,0 +1,75 @@
+{
+  "name": "Zebra Cake",
+  "category": "cakes",
+  "description": "A visually impressive cake, with a zebra effect in every slice.",
+  "image": "🦓🍰",
+  "info": {
+    "prepTime": "30 min",
+    "cookTime": "35 min",
+    "totalTime": "1h05 min",
+    "servings": 8,
+    "difficulty": "Easy"
+  },
+  "nutrition": {
+    "calories": "320 kcal",
+    "protéines": "6g",
+    "lipides": "15g",
+    "glucides": "40g"
+  },
+  "ingredients": [
+    {
+      "items": [
+        "300g flour",
+        "150mL milk",
+        "150mL vegetable oil",
+        "200g sugar",
+        "1 tsp vanilla extract",
+        "4 eggs",
+        "1 tsp baking powder",
+        "1 pinch of salt",
+        "2 tbsp unsweetened cocoa powder"
+      ]
+    }
+  ],
+  "instructions": [
+    {
+      "step": 1,
+      "text": "Whisk the sugar, eggs, and vanilla in a large bowl."
+    },
+    {
+      "step": 2,
+      "text": "Add the oil and milk, continue mixing."
+    },
+    {
+      "step": 3,
+      "text": "Add the baking powder, salt, and flour. Mix until you get a smooth batter."
+    },
+    {
+      "step": 4,
+      "text": "Divide the batter into two equal parts. Add the cocoa powder to one half and mix well."
+    },
+    {
+      "step": 5,
+      "text": "Preheat the oven to 180°C."
+    },
+    {
+      "step": 6,
+      "text": "In a buttered pan, place a small amount of plain batter in the centre. Add a small amount of cocoa batter on top. Repeat the process, alternating the batters, until used up."
+    },
+    {
+      "step": 7,
+      "text": "Place heaped tablespoons of batter onto ungreased baking trays, spacing them 5 cm apart."
+    },
+    {
+      "step": 8,
+      "text": "Bake for 35 minutes."
+    }
+  ],
+  "tips": [
+    "Insert a toothpick or a knife into the centre of the cake to check doneness",
+    "Let cool before removing from the pan to prevent it from breaking",
+    "For a more intense flavour, add a teaspoon of coffee extract to the cocoa batter",
+    "You can decorate the top of the cake with chocolate icing or icing sugar"
+  ],
+  "tags": ["zebra", "marbled", "chocolate", "dessert", "baking", "easy", "snack", "cake"]
+}

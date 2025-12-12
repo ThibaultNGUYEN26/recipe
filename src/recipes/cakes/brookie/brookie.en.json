@@ -1,0 +1,106 @@
+{
+  "name": "Brookie (Brownie + Cookie)",
+  "category": "cakes",
+  "description": "The perfect fusion between a brownie and a cookie in one delicious treat!",
+  "image": "🍪🍫",
+  "info": {
+    "prepTime": "30 min",
+    "cookTime": "30 min",
+    "totalTime": "1h",
+    "servings": 8,
+    "difficulty": "Medium"
+  },
+  "nutrition": {
+    "calories": "620 kcal",
+    "proteines": "8g",
+    "lipides": "30g",
+    "glucides": "80g"
+  },
+  "ingredients": [
+    {
+      "section": "For the cookie dough",
+      "items": [
+        "100g dark baking chocolate",
+        "100g butter (softened)",
+        "200g brown sugar",
+        "1 tsp vanilla extract",
+        "200g flour",
+        "1/2 tsp salt",
+        "1 tsp baking powder",
+        "1 egg"
+      ]
+    },
+    {
+      "section": "For the brownie batter",
+      "items": [
+        "100g dark baking chocolate",
+        "100g butter",
+        "100g sugar",
+        "100g flour",
+        "2 eggs"
+      ]
+    }
+  ],
+  "instructions": [
+    {
+      "step": 1,
+      "text": "Cut the chocolate into large chunks, then place them in the fridge."
+    },
+    {
+      "step": 2,
+      "text": "Cream the softened butter with the sugar and vanilla."
+    },
+    {
+      "step": 3,
+      "text": "Add the egg."
+    },
+    {
+      "step": 4,
+      "text": "Mix in the flour combined with the salt and baking powder."
+    },
+    {
+      "step": 5,
+      "text": "Finally, add the chocolate chunks and put everything back in the fridge."
+    },
+    {
+      "step": 6,
+      "text": "Preheat the oven to 150°C (gas mark 5)."
+    },
+    {
+      "step": 7,
+      "text": "Melt the chocolate with the butter using a bain-marie or the microwave. Smooth the mixture well."
+    },
+    {
+      "step": 8,
+      "text": "Off the heat, add the sugar, then the eggs one by one. Finally, mix in the flour."
+    },
+    {
+      "step": 9,
+      "text": "Pour the mixture into a buttered baking tin."
+    },
+    {
+      "step": 10,
+      "text": "Pre-bake the brownie for 15 minutes."
+    },
+    {
+      "step": 11,
+      "text": "Remove the brownie from the oven and crumble the cookie dough over the top, covering the entire surface."
+    },
+    {
+      "step": 12,
+      "text": "Bake for an additional 15–25 minutes, until the top is golden and cracked."
+    },
+    {
+      "step": 13,
+      "text": "Let cool before cutting into squares and enjoying."
+    }
+  ],
+  "tips": [
+    "Do not overbake! The centre should remain slightly soft for the best fudgy texture",
+    "Let cool completely before cutting for clean slices",
+    "You can add nuts (walnuts or pecans) to either layer for extra crunch",
+    "Store in an airtight container at room temperature for up to 4 days, or freeze for up to 3 months",
+    "For an extra indulgent treat, serve warm with a scoop of vanilla ice cream or custard"
+  ],
+  "tags": ["dessert", "chocolate", "brownie", "cookie", "baking", "sweet", "brookie"]
+}

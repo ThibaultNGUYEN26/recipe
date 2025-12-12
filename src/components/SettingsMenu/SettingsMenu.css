@@ -1,0 +1,163 @@
+.settings-menu {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+}
+
+.settings-button {
+  background: white;
+  border: 2px solid #667eea;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.settings-button:hover {
+  transform: rotate(90deg) scale(1.05);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+  background: #f8f9ff;
+}
+
+.settings-button:active {
+  transform: rotate(90deg) scale(0.98);
+}
+
+.settings-dropdown {
+  position: absolute;
+  top: 60px;
+  right: 0;
+  background: white;
+  border-radius: 15px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  min-width: 220px;
+  overflow: hidden;
+  animation: slideDown 0.2s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.settings-section {
+  padding: 15px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.settings-section:last-child {
+  border-bottom: none;
+}
+
+.settings-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #999;
+  text-transform: uppercase;
+  margin: 0 0 10px 0;
+  letter-spacing: 0.5px;
+}
+
+.settings-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 15px;
+  background: white;
+  border: 2px solid transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 8px;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.settings-option:last-child {
+  margin-bottom: 0;
+}
+
+.settings-option:hover {
+  background: #f8f9ff;
+  border-color: #e0e4ff;
+  transform: translateX(3px);
+}
+
+.settings-option.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #667eea;
+  color: white;
+}
+
+.settings-option.active .option-text {
+  color: white;
+  font-weight: 600;
+}
+
+.option-icon {
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.option-text {
+  font-size: 1rem;
+  color: #333;
+  font-weight: 500;
+}
+
+.settings-option.active .option-text {
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .settings-menu {
+    top: 15px;
+    right: 15px;
+  }
+
+  .settings-button {
+    width: 45px;
+    height: 45px;
+    font-size: 1.3rem;
+  }
+
+  .settings-dropdown {
+    min-width: 200px;
+    top: 55px;
+  }
+
+  .settings-option {
+    padding: 10px 12px;
+  }
+
+  .option-icon {
+    font-size: 1.3rem;
+  }
+
+  .option-text {
+    font-size: 0.95rem;
+  }
+}

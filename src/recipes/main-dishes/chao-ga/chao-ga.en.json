@@ -1,0 +1,71 @@
+{
+  "name": "Cháo Gà (Vietnamese Rice and Chicken Porridge)",
+  "category": "main-dishes",
+  "description": "A comforting Vietnamese dish made with rice and chicken, perfect for cooler days.",
+  "image": "🍲🍗",
+  "info": {
+    "prepTime": "15 min",
+    "cookTime": "50 min",
+    "totalTime": "1h05 min",
+    "servings": 4,
+    "difficulty": "Easy"
+  },
+  "nutrition": {
+    "calories": "80 kcal",
+    "protéines": "1.5g",
+    "lipides": "3.75g",
+    "glucides": "10g"
+  },
+  "ingredients": [
+    {
+      "items": [
+        "150g jasmine rice (1 cup of rice)",
+        "1 clove of garlic",
+        "2 chicken stock cubes",
+        "Nuoc mam (fish sauce)",
+        "1 spring onion",
+        "1 piece of ginger (2 cm)",
+        "200g chicken breast",
+        "Salt and pepper",
+        "Fresh coriander"
+      ]
+    }
+  ],
+  "instructions": [
+    {
+      "step": 1,
+      "text": "Rinse the rice. Peel and finely slice the garlic and ginger. Slice the spring onion into thin rounds."
+    },
+    {
+      "step": 2,
+      "text": "In a pot, sauté the sliced garlic with a little oil until golden."
+    },
+    {
+      "step": 3,
+      "text": "Set the garlic aside and add the rice to the pot with 1.2L of water. Bring to a boil."
+    },
+    {
+      "step": 4,
+      "text": "Once boiling, add the stock cubes, sliced ginger, and the chicken breast."
+    },
+    {
+      "step": 5,
+      "text": "Lower the heat (medium heat) and let simmer for 30 minutes, partially covered, skimming if necessary."
+    },
+    {
+      "step": 6,
+      "text": "Remove the chicken and shred it. Season with nuoc mam, to taste."
+    },
+    {
+      "step": 7,
+      "text": "Serve in a bowl with some rice and broth. Add shredded chicken, spring onion, coriander, fried garlic, and salt and pepper."
+    }
+  ],
+  "tips": [
+    "Do not add coriander if you do not like it",
+    "You can use chicken thighs and grill the skin, then crumble it into the cháo for extra flavour",
+    "You can use any meat instead of chicken",
+    "For a vegetarian version, use vegetable stock and add mushrooms"
+  ],
+  "tags": ["vietnamese", "rice", "chicken", "comfort", "soup", "easy"]
+}

@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import SearchBar from '../SearchBar/SearchBar';
+import { useLanguage } from '../../contexts/LanguageContext';
+import { getTranslation } from '../../translations/translations';
 import './HomePage.css';
 
 function HomePage({ onSelectRecipe, onSelectCategory }) {
@@ -8,20 +10,21 @@ function HomePage({ onSelectRecipe, onSelectCategory }) {
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const carouselRef = useRef(null);
+  const { language } = useLanguage();
 
   const categories = [
-    { id: 'all', name: 'Toutes', emoji: '🍽️', color: '#667eea' },
-    { id: 'cakes', name: 'Gâteaux & Desserts', emoji: '🍰', color: '#ff9a9e' },
-    { id: 'main-dishes', name: 'Plats Principaux', emoji: '🍝', color: '#feca57' },
-    { id: 'appetizers', name: 'Entrées', emoji: '🥗', color: '#48dbfb' },
-    { id: 'drinks', name: 'Boissons', emoji: '🍹', color: '#ff6b6b' },
-    { id: 'breakfast', name: 'Petit-déjeuner', emoji: '🥞', color: '#ffeaa7' },
-    { id: 'snacks', name: 'En-cas', emoji: '🍿', color: '#a29bfe' }
+    { id: 'all', name: language === 'fr' ? 'Toutes' : 'All', emoji: '🍽️', color: '#667eea' },
+    { id: 'cakes', name: language === 'fr' ? 'Gâteaux & Desserts' : 'Cakes & Desserts', emoji: '🍰', color: '#ff9a9e' },
+    { id: 'main-dishes', name: getTranslation(language, 'categories_list.main-dishes'), emoji: '🍝', color: '#feca57' },
+    { id: 'appetizers', name: getTranslation(language, 'categories_list.appetizers'), emoji: '🥗', color: '#48dbfb' },
+    { id: 'drinks', name: getTranslation(language, 'categories_list.drinks'), emoji: '🍹', color: '#ff6b6b' },
+    { id: 'breakfast', name: language === 'fr' ? 'Petit-déjeuner' : 'Breakfast', emoji: '🥞', color: '#ffeaa7' },
+    { id: 'snacks', name: language === 'fr' ? 'En-cas' : 'Snacks', emoji: '🍿', color: '#a29bfe' }
   ];
 
   useEffect(() => {
     loadAllRecipes();
-  }, []);
+  }, [language]);
 
   useEffect(() => {
     filterRecipes();
@@ -50,12 +53,12 @@ function HomePage({ onSelectRecipe, onSelectCategory }) {
         const matchesName = normalizeText(recipe.name).includes(query);
         const matchesDescription = normalizeText(recipe.description).includes(query);
         const matchesTags = recipe.tags && recipe.tags.some(tag => normalizeText(tag).includes(query));
-        
+
         // Search in ingredients
-        const matchesIngredients = recipe.ingredients && recipe.ingredients.some(section => 
+        const matchesIngredients = recipe.ingredients && recipe.ingredients.some(section =>
           section.items && section.items.some(item => normalizeText(item).includes(query))
         );
-        
+
         return matchesName || matchesDescription || matchesTags || matchesIngredients;
       });
     }
@@ -70,18 +73,33 @@ function HomePage({ onSelectRecipe, onSelectCategory }) {
       const loadedRecipes = [];
 
       for (const path in recipeModules) {
+        // Skip files that don't match the current language or don't have language suffix
+        const fileName = path.split('/').pop();
+
+        // Check if file has language suffix
+        if (fileName.includes('.fr.json') || fileName.includes('.en.json')) {
+          const expectedSuffix = `.${language}.json`;
+          if (!fileName.endsWith(expectedSuffix)) {
+            continue; // Skip files not matching current language
+          }
+        }
+        // If no language suffix, include only for French (backward compatibility)
+        else if (language === 'en') {
+          continue;
+        }
+
         const content = await recipeModules[path]();
         const recipe = JSON.parse(content);
-        
+
         // Extract folder path and recipe name
         const pathParts = path.split('/');
         const recipeName = pathParts[pathParts.length - 2]; // folder name
         const category = pathParts[pathParts.length - 3]; // category folder
-        
+
         // Try to find corresponding image
-        const imagePath = path.replace('.json', '.png');
+        const imagePath = path.replace(/\.(fr|en)?\.json$/, '.png');
         const recipeImage = imageModules[imagePath] || null;
-        
+
         loadedRecipes.push({
           ...recipe,
           id: recipeName,
@@ -113,12 +131,12 @@ function HomePage({ onSelectRecipe, onSelectCategory }) {
   return (
     <div className="home-page-container">
       <div className="header">
-        <h1>🍳 Mon Carnet de Recettes 🍰</h1>
-        
+        <h1>{getTranslation(language, 'title')}</h1>
+
         {/* Search Bar */}
-        <SearchBar 
-          searchQuery={searchQuery} 
-          onSearchChange={setSearchQuery} 
+        <SearchBar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
         />
       </div>
 
@@ -148,15 +166,15 @@ function HomePage({ onSelectRecipe, onSelectCategory }) {
       {/* All Recipes Grid */}
       <div className="all-recipes-section">
         <h2>
-          {activeCategory === 'all' 
-            ? `Toutes les recettes (${filteredRecipes.length})` 
+          {activeCategory === 'all'
+            ? `${language === 'fr' ? 'Toutes les recettes' : 'All recipes'} (${filteredRecipes.length})`
             : `${categories.find(c => c.id === activeCategory)?.name} (${filteredRecipes.length})`}
         </h2>
 
         {filteredRecipes.length === 0 ? (
           <div className="no-recipes">
-            <p>Aucune recette disponible pour le moment !</p>
-            <p className="hint">Ajoutez des fichiers .json dans src/recipes/</p>
+            <p>{language === 'fr' ? 'Aucune recette disponible pour le moment !' : 'No recipes available at the moment!'}</p>
+            <p className="hint">{language === 'fr' ? 'Ajoutez des fichiers .json dans src/recipes/' : 'Add .json files in src/recipes/'}</p>
           </div>
         ) : (
           <div className="recipes-grid">
@@ -167,8 +185,8 @@ function HomePage({ onSelectRecipe, onSelectCategory }) {
                 onClick={() => onSelectRecipe(recipe)}
               >
                 {recipe.imagePath ? (
-                  <div 
-                    className="recipe-image recipe-image-photo" 
+                  <div
+                    className="recipe-image recipe-image-photo"
                     style={{
                       backgroundImage: `url(${recipe.imagePath})`,
                       backgroundSize: 'cover',

@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
+import { useLanguage } from '../../contexts/LanguageContext';
+import { getTranslation } from '../../translations/translations';
 import './RecipeCard.css';
 
 function RecipeCard({ recipe, onBack }) {
   const [servings, setServings] = useState(recipe.info.servings);
   const multiplier = servings / recipe.info.servings;
+  const { language } = useLanguage();
 
   const adjustQuantity = (text) => {
     // Match numbers (including decimals and fractions) followed by units
@@ -16,10 +19,10 @@ function RecipeCard({ recipe, onBack }) {
       } else {
         value = parseFloat(number.replace(',', '.'));
       }
-      
+
       // Calculate new value
       const newValue = value * multiplier;
-      
+
       // Format the result
       let formatted;
       if (newValue % 1 === 0) {
@@ -27,7 +30,7 @@ function RecipeCard({ recipe, onBack }) {
       } else {
         formatted = newValue.toFixed(1).replace('.0', '');
       }
-      
+
       return unit ? `${formatted} ${unit}` : `${formatted}`;
     });
   };
@@ -41,7 +44,7 @@ function RecipeCard({ recipe, onBack }) {
     <div className="recipe-card-container">
       <div className="recipe-header">
         <button className="back-button" onClick={onBack}>
-          ← Retour à l'accueil
+          {getTranslation(language, 'backToHome')}
         </button>
         <div className="recipe-title-section">
           <div className="recipe-hero">
@@ -70,22 +73,22 @@ function RecipeCard({ recipe, onBack }) {
       <div className="recipe-content">
         {/* Info Card */}
         <div className="card info-card">
-          <h2>📋 Informations</h2>
+          <h2>{getTranslation(language, 'information')}</h2>
           <div className="info-grid">
             <div className="info-item">
-              <span className="info-label">Préparation</span>
+              <span className="info-label">{getTranslation(language, 'preparation')}</span>
               <span className="info-value">{recipe.info.prepTime}</span>
             </div>
             <div className="info-item">
-              <span className="info-label">Cuisson</span>
+              <span className="info-label">{getTranslation(language, 'cooking')}</span>
               <span className="info-value">{recipe.info.cookTime}</span>
             </div>
             <div className="info-item">
-              <span className="info-label">Temps Total</span>
+              <span className="info-label">{getTranslation(language, 'total')}</span>
               <span className="info-value">{recipe.info.totalTime}</span>
             </div>
             <div className="info-item info-item-portions">
-              <span className="info-label">Portions</span>
+              <span className="info-label">{getTranslation(language, 'servings')}</span>
               <div className="servings-adjuster">
                 <button className="adjust-btn" onClick={() => handleServingsChange(-1)}>−</button>
                 <span className="servings-number">{servings}</span>
@@ -93,7 +96,7 @@ function RecipeCard({ recipe, onBack }) {
               </div>
             </div>
             <div className="info-item">
-              <span className="info-label">Difficulté</span>
+              <span className="info-label">{getTranslation(language, 'difficulty')}</span>
               <span className="info-value">{recipe.info.difficulty}</span>
             </div>
           </div>
@@ -101,8 +104,8 @@ function RecipeCard({ recipe, onBack }) {
 
         {/* Nutrition Card */}
         <div className="card nutrition-card">
-          <h2>🥗 Valeurs Nutritionnelles</h2>
-          <p className="per-serving">Par portion</p>
+          <h2>{getTranslation(language, 'nutrition')}</h2>
+          <p className="per-serving">{getTranslation(language, 'perServing')}</p>
           <div className="nutrition-grid">
             {Object.entries(recipe.nutrition).map(([key, value]) => (
               <div key={key} className="nutrition-item">
@@ -117,10 +120,12 @@ function RecipeCard({ recipe, onBack }) {
 
         {/* Ingredients Card */}
         <div className="card ingredients-card">
-          <h2>🛒 Ingrédients</h2>
+          <h2>{getTranslation(language, 'ingredients')}</h2>
           {multiplier !== 1 && (
             <p className="ingredients-note">
-              ✨ Quantités ajustées pour {servings} personnes (recette originale : {recipe.info.servings})
+              ✨ {language === 'fr'
+                ? `Quantités ajustées pour ${servings} personnes (recette originale : ${recipe.info.servings})`
+                : `Quantities adjusted for ${servings} servings (original recipe: ${recipe.info.servings})`}
             </p>
           )}
           {recipe.ingredients.map((section, index) => (
@@ -137,7 +142,7 @@ function RecipeCard({ recipe, onBack }) {
 
         {/* Instructions Card */}
         <div className="card instructions-card">
-          <h2>👨‍🍳 Préparation</h2>
+          <h2>{getTranslation(language, 'instructions')}</h2>
           <div className="instructions-list">
             {recipe.instructions.map((instruction) => (
               <div key={instruction.step} className="instruction-step">
@@ -151,7 +156,7 @@ function RecipeCard({ recipe, onBack }) {
         {/* Tips Card */}
         {recipe.tips && recipe.tips.length > 0 && (
           <div className="card tips-card">
-            <h2>💡 Astuces</h2>
+            <h2>{getTranslation(language, 'tips')}</h2>
             <ul className="tips-list">
               {recipe.tips.map((tip, index) => (
                 <li key={index}>{tip}</li>
