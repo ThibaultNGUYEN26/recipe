@@ -33,7 +33,7 @@ export const translations = {
     tags: "🏷️ Tags",
 
     // SearchBar
-    searchPlaceholder: "Rechercher une recette ou un ingrédient",
+    searchPlaceholder: "Rechercher une recette ou un ingrédient...",
 
     // Difficulties
     easy: "Facile",
