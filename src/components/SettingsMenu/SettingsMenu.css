@@ -8,14 +8,16 @@
 .settings-button {
   background: var(--bg-secondary);
   border: 2px solid var(--accent-primary);
-  border-radius: 50%;
+  border-radius: 12px;
   width: 50px;
   height: 50px;
   cursor: pointer;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
+  gap: 5px;
+  padding: 12px;
   box-shadow: var(--shadow-md);
   transition: all 0.3s ease;
   user-select: none;
@@ -25,14 +27,37 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+.burger-line {
+  width: 100%;
+  height: 3px;
+  background: var(--accent-primary);
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
 .settings-button:hover {
-  transform: rotate(90deg) scale(1.05);
   box-shadow: var(--shadow-lg);
   background: var(--bg-hover);
 }
 
+.settings-button:hover .burger-line {
+  background: var(--accent-secondary);
+}
+
+.settings-button.active .burger-line:nth-child(1) {
+  transform: translateY(8px) rotate(45deg);
+}
+
+.settings-button.active .burger-line:nth-child(2) {
+  opacity: 0;
+}
+
+.settings-button.active .burger-line:nth-child(3) {
+  transform: translateY(-8px) rotate(-45deg);
+}
+
 .settings-button:active {
-  transform: rotate(90deg) scale(0.98);
+  transform: scale(0.95);
 }
 
 .settings-dropdown {
@@ -155,14 +180,27 @@
 
 @media (max-width: 768px) {
   .settings-menu {
-    top: 15px;
-    right: 15px;
+    top: 17px;
+    right: 7px;
   }
 
   .settings-button {
-    width: 45px;
-    height: 45px;
-    font-size: 1.3rem;
+    width: 40px;
+    height: 40px;
+    gap: 4px;
+    padding: 10px;
+  }
+
+  .burger-line {
+    height: 2.5px;
+  }
+
+  .settings-button.active .burger-line:nth-child(1) {
+    transform: translateY(6.5px) rotate(45deg);
+  }
+
+  .settings-button.active .burger-line:nth-child(3) {
+    transform: translateY(-6.5px) rotate(-45deg);
   }
 
   .settings-dropdown {

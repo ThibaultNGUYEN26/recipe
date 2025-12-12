@@ -1,7 +1,7 @@
 export const translations = {
   fr: {
     // HomePage
-    title: "🍳 Mon Carnet de Recettes 🍰",
+    title: "🍳 Carnet de Recettes 🍰",
     subtitle: "Découvrez mes meilleures recettes faites maison",
     categories: "Catégories",
 
@@ -52,7 +52,7 @@ export const translations = {
   },
   en: {
     // HomePage
-    title: "🍳 My Recipe Book 🍰",
+    title: "🍳 Recipe Book 🍰",
     subtitle: "Discover my best homemade recipes",
     categories: "Categories",
 

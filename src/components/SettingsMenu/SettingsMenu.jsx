@@ -32,11 +32,13 @@ function SettingsMenu() {
   return (
     <div className="settings-menu" ref={menuRef}>
       <button
-        className="settings-button"
+        className={`settings-button ${isOpen ? 'active' : ''}`}
         onClick={() => setIsOpen(!isOpen)}
-        aria-label="Settings menu"
+        aria-label="Menu"
       >
-        ⚙️
+        <span className="burger-line"></span>
+        <span className="burger-line"></span>
+        <span className="burger-line"></span>
       </button>
 
       {isOpen && (
