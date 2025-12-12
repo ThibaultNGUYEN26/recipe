@@ -1,8 +1,10 @@
 .settings-menu {
-  position: fixed;
+  position: absolute;
   top: 20px;
   right: 20px;
   z-index: 1000;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 
 .settings-button {
