@@ -11,7 +11,7 @@
 
 .header h1 {
   font-size: 3rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 50%, #f093fb 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -21,7 +21,7 @@
 
 .subtitle {
   font-size: 1.3rem;
-  color: #666;
+  color: var(--text-secondary);
   font-style: italic;
 }
 
@@ -33,13 +33,13 @@
 }
 
 .category-card {
-  background: white;
+  background: var(--bg-secondary);
   border-radius: 20px;
   padding: 40px 30px;
   text-align: center;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-md);
   position: relative;
   overflow: hidden;
 }
@@ -59,7 +59,7 @@
 
 .category-card:hover {
   transform: translateY(-10px) scale(1.02);
-  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-lg);
 }
 
 .category-card:hover::before {
@@ -80,7 +80,7 @@
 
 .category-name {
   font-size: 1.3rem;
-  color: #333;
+  color: var(--text-primary);
   font-weight: 600;
   position: relative;
   z-index: 1;

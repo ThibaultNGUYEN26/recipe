@@ -1,10 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import './SettingsMenu.css';
 
 function SettingsMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const { language, setLanguage } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
   const menuRef = useRef(null);
 
   // Close menu when clicking outside
@@ -21,7 +23,10 @@ function SettingsMenu() {
 
   const handleLanguageChange = (lang) => {
     setLanguage(lang);
-    setIsOpen(false);
+  };
+
+  const handleThemeToggle = () => {
+    toggleTheme();
   };
 
   return (
@@ -37,37 +42,44 @@ function SettingsMenu() {
       {isOpen && (
         <div className="settings-dropdown">
           <div className="settings-section">
-            <h3 className="settings-title">
-              {language === 'fr' ? 'Langue' : 'Language'}
-            </h3>
-            <button
-              className={`settings-option ${language === 'fr' ? 'active' : ''}`}
-              onClick={() => handleLanguageChange('fr')}
-            >
-              <span className="option-icon">FR</span>
-              <span className="option-text">Français</span>
-            </button>
-            <button
-              className={`settings-option ${language === 'en' ? 'active' : ''}`}
-              onClick={() => handleLanguageChange('en')}
-            >
-              <span className="option-icon">EN</span>
-              <span className="option-text">English</span>
-            </button>
+            <div className="settings-header">
+              <span className="settings-title">
+                {language === 'fr' ? 'Langue' : 'Language'}
+              </span>
+              <div className="toggle-container">
+                <span className={`toggle-label ${language === 'fr' ? 'active' : ''}`}>FR</span>
+                <label className="toggle-switch">
+                  <input
+                    type="checkbox"
+                    checked={language === 'en'}
+                    onChange={() => handleLanguageChange(language === 'fr' ? 'en' : 'fr')}
+                  />
+                  <span className="toggle-slider"></span>
+                </label>
+                <span className={`toggle-label ${language === 'en' ? 'active' : ''}`}>EN</span>
+              </div>
+            </div>
           </div>
 
-          {/* Placeholder for future dark theme option */}
-          {/* <div className="settings-section">
-            <h3 className="settings-title">
-              {language === 'fr' ? 'Thème' : 'Theme'}
-            </h3>
-            <button className="settings-option">
-              <span className="option-icon">🌙</span>
-              <span className="option-text">
-                {language === 'fr' ? 'Mode sombre' : 'Dark mode'}
+          <div className="settings-section">
+            <div className="settings-header">
+              <span className="settings-title">
+                {language === 'fr' ? 'Thème' : 'Theme'}
               </span>
-            </button>
-          </div> */}
+              <div className="toggle-container">
+                <span className={`toggle-label ${theme === 'light' ? 'active' : ''}`}>☀️</span>
+                <label className="toggle-switch">
+                  <input
+                    type="checkbox"
+                    checked={theme === 'dark'}
+                    onChange={handleThemeToggle}
+                  />
+                  <span className="toggle-slider"></span>
+                </label>
+                <span className={`toggle-label ${theme === 'dark' ? 'active' : ''}`}>🌙</span>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

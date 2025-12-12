@@ -10,7 +10,7 @@
 }
 
 .back-button {
-  background: white;
+  background: var(--bg-secondary);
   border: 2px solid #667eea;
   color: #667eea;
   padding: 12px 24px;
@@ -24,17 +24,17 @@
 }
 
 .back-button:hover {
-  background: #667eea;
+  background: var(--accent-primary);
   color: white;
   transform: translateX(-5px);
 }
 
 .recipe-title-section {
   text-align: center;
-  background: white;
+  background: var(--bg-secondary);
   padding: 40px;
   border-radius: 20px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-md);
 }
 
 .recipe-emoji {
@@ -44,13 +44,13 @@
 
 .recipe-title-section h1 {
   font-size: 3rem;
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 15px;
 }
 
 .recipe-description {
   font-size: 1.2rem;
-  color: #666;
+  color: var(--text-secondary);
   line-height: 1.6;
 }
 
@@ -61,15 +61,15 @@
 }
 
 .card {
-  background: white;
+  background: var(--bg-secondary);
   padding: 30px;
   border-radius: 20px;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-md);
 }
 
 .card h2 {
   font-size: 1.8rem;
-  color: #333;
+  color: var(--text-primary);
   margin-bottom: 20px;
   display: flex;
   align-items: center;
@@ -87,21 +87,21 @@
   display: flex;
   flex-direction: column;
   padding: 15px;
-  background: #f8f9fa;
+  background: var(--bg-tertiary);
   border-radius: 10px;
   text-align: center;
 }
 
 .info-label {
   font-size: 0.9rem;
-  color: #888;
+  color: var(--text-tertiary);
   margin-bottom: 5px;
   font-weight: 500;
 }
 
 .info-value {
   font-size: 1.2rem;
-  color: #333;
+  color: var(--text-primary);
   font-weight: 600;
 }
 
@@ -127,9 +127,9 @@
   min-width: 28px;
   min-height: 28px;
   border-radius: 50% !important;
-  border: 2px solid #667eea;
-  background: white;
-  color: #667eea;
+  border: 2px solid var(--accent-primary);
+  background: var(--bg-secondary);
+  color: var(--accent-primary);
   font-size: 1.2rem;
   font-weight: bold;
   cursor: pointer;
@@ -139,16 +139,16 @@
   transition: all 0.2s ease;
   line-height: 1;
   padding: 0;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+  box-shadow: var(--shadow-sm);
   flex-shrink: 0;
   user-select: none;
 }
 
 .adjust-btn:hover {
-  background: #667eea;
+  background: var(--accent-primary);
   color: white;
   transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: var(--shadow-md);
 }
 
 .adjust-btn:active {
@@ -157,7 +157,7 @@
 
 .servings-number {
   font-size: 1.2rem;
-  color: #333;
+  color: var(--text-primary);
   font-weight: 600;
   min-width: 40px;
   text-align: center;
@@ -181,30 +181,30 @@
   display: flex;
   justify-content: space-between;
   padding: 12px;
-  background: #f8f9fa;
+  background: var(--bg-tertiary);
   border-radius: 8px;
 }
 
 .nutrition-label {
-  color: #666;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
 .nutrition-value {
-  color: #333;
+  color: var(--text-primary);
   font-weight: 600;
 }
 
 /* Ingredients Card */
 .ingredients-note {
-  background: #e3f2fd;
-  color: #1565c0;
+  background: var(--info-bg);
+  color: var(--info-text);
   padding: 12px 16px;
   border-radius: 8px;
   margin-bottom: 20px;
   font-size: 0.95rem;
   font-weight: 500;
-  border-left: 4px solid #1976d2;
+  border-left: 4px solid var(--info-border);
 }
 
 .ingredient-section {
@@ -216,7 +216,7 @@
 }
 
 .ingredient-section h3 {
-  color: #667eea;
+  color: var(--accent-primary);
   font-size: 1.3rem;
   margin-bottom: 15px;
   font-weight: 600;
@@ -230,7 +230,7 @@
 .ingredient-section li {
   padding: 10px 0;
   padding-left: 30px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border-color);
   position: relative;
 }
 
@@ -242,7 +242,7 @@
   content: '✓';
   position: absolute;
   left: 0;
-  color: #667eea;
+  color: var(--accent-primary);
   font-weight: bold;
 }
 
@@ -257,13 +257,13 @@
   display: flex;
   gap: 20px;
   padding: 20px;
-  background: #f8f9fa;
+  background: var(--bg-tertiary);
   border-radius: 10px;
   transition: all 0.3s ease;
 }
 
 .instruction-step:hover {
-  background: #e9ecef;
+  background: var(--bg-hover);
   transform: translateX(5px);
 }
 
@@ -283,7 +283,7 @@
 
 .step-text {
   flex: 1;
-  color: #333;
+  color: var(--text-primary);
   line-height: 1.6;
   font-size: 1.05rem;
 }
@@ -297,10 +297,10 @@
 .tips-list li {
   padding: 15px;
   margin-bottom: 10px;
-  background: #fff3cd;
-  border-left: 4px solid #ffc107;
+  background: var(--tip-bg);
+  border-left: 4px solid var(--tip-border);
   border-radius: 5px;
-  color: #856404;
+  color: var(--tip-text);
   line-height: 1.6;
 }
 

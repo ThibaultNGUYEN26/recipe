@@ -1,3 +1,59 @@
+:root {
+  /* Light theme colors */
+  --bg-primary: #f5f7fa;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f8f9fa;
+  --bg-hover: #f8f9ff;
+  --text-primary: #333333;
+  --text-secondary: #666666;
+  --text-tertiary: #999999;
+  --border-color: #e0e0e0;
+  --border-hover: #e0e4ff;
+  --shadow-sm: 0 2px 8px rgba(102, 126, 234, 0.2);
+  --shadow-md: 0 5px 15px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 15px 30px rgba(0, 0, 0, 0.15);
+  --accent-primary: #667eea;
+  --accent-secondary: #764ba2;
+  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --gradient-card: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  /* Info colors */
+  --info-bg: #e3f2fd;
+  --info-text: #1565c0;
+  --info-border: #1976d2;
+  /* Tip colors */
+  --tip-bg: #fff3cd;
+  --tip-text: #856404;
+  --tip-border: #ffc107;
+}
+
+[data-theme='dark'] {
+  /* Dark theme colors */
+  --bg-primary: #1a1a2e;
+  --bg-secondary: #16213e;
+  --bg-tertiary: #1f2a44;
+  --bg-hover: #2d3a52;
+  --text-primary: #eaeaea;
+  --text-secondary: #b8b8b8;
+  --text-tertiary: #888888;
+  --border-color: #2d3a52;
+  --border-hover: #3d4a62;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 5px 15px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 15px 30px rgba(0, 0, 0, 0.6);
+  --accent-primary: #667eea;
+  --accent-secondary: #764ba2;
+  --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --gradient-card: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  /* Info colors for dark mode */
+  --info-bg: #1a3a52;
+  --info-text: #64b5f6;
+  --info-border: #42a5f5;
+  /* Tip colors for dark mode */
+  --tip-bg: #3a3020;
+  --tip-text: #ffcc80;
+  --tip-border: #ffa726;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -7,12 +63,15 @@
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   overflow-x: hidden;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .recipe-container {
   min-height: 100vh;
   position: relative;
-  background: #f5f7fa;
+  background: var(--bg-primary);
   overflow-x: hidden;
 }
 
