@@ -1,7 +1,7 @@
 {
-  "name": "Crêpes",
+  "name": "Crepes",
   "categories": ["cakes", "breakfast"],
-  "description": "Light and tasty crêpes, perfect for breakfast or dessert.",
+  "description": "Light and tasty crepes, perfect for breakfast or dessert.",
   "image": "🥞",
   "info": {
     "prepTime": "10 min",
@@ -47,11 +47,11 @@
     },
     {
       "step": 5,
-      "text": "Cook the crêpes in a hot, lightly oiled pan, pouring in a ladle of batter and spreading it quickly. Cook each side until golden."
+      "text": "Cook the crepes in a hot, lightly oiled pan, pouring in a ladle of batter and spreading it quickly. Cook each side until golden."
     },
     {
       "step": 6,
-      "text": "Cook until the crêpe is golden, flip it, and let it cook for about 1 minute."
+      "text": "Cook until the crepe is golden, flip it, and let it cook for about 1 minute."
     },
     {
       "step": 7,
@@ -59,10 +59,10 @@
     }
   ],
   "tips": [
-    "Using a crêpe pan makes cooking easier and helps achieve evenly shaped crêpes.",
-    "You can store cooked crêpes in an airtight container in the refrigerator for 2 days. Reheat slightly before serving.",
+    "Using a crepe pan makes cooking easier and helps achieve evenly shaped crepes.",
+    "You can store cooked crepes in an airtight container in the refrigerator for 2 days. Reheat slightly before serving.",
     "You can add a little rum or orange blossom water to the batter for extra flavour.",
-    "You can cook the crêpes in batches and store the batter in the refrigerator for up to 24 hours, covered with plastic wrap."
+    "You can cook the crepes in batches and store the batter in the refrigerator for up to 24 hours, covered with plastic wrap."
   ],
-  "tags": ["cake", "crêpes", "breakfast", "snack", "sweet"]
+  "tags": ["cake", "crepes", "breakfast", "snack", "sweet"]
 }
