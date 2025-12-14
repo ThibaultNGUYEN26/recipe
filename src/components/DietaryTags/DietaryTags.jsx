@@ -7,11 +7,12 @@ function DietaryTags({ tags }) {
   }
 
   const tagConfig = {
+    vege: { emoji: '🥬', label: 'Vegetarian', color: '#4CAF50' },
     vegetarian: { emoji: '🥬', label: 'Vegetarian', color: '#4CAF50' },
     vegan: { emoji: '🌱', label: 'Vegan', color: '#8BC34A' },
-    halal: { emoji: '☪️', label: 'Halal', color: '#2196F3' },
-    kosher: { emoji: '✡️', label: 'Kosher', color: '#3F51B5' },
     'gluten-free': { emoji: '🌾', label: 'Gluten-Free', color: '#FF9800' },
+    pork: { emoji: '🐷', label: 'Pork', color: '#C2185B' },
+    kosher: { emoji: '✡️', label: 'Kosher', color: '#3F51B5' },
     'dairy-free': { emoji: '🥛', label: 'Dairy-Free', color: '#00BCD4' },
     'nut-free': { emoji: '🥜', label: 'Nut-Free', color: '#795548' },
     pescatarian: { emoji: '🐟', label: 'Pescatarian', color: '#009688' }
