@@ -3,6 +3,7 @@ const e=`{\r
   "categories": ["cakes", "breakfast"],\r
   "description": "Des pancakes moelleux et légers, parfaits pour un petit-déjeuner gourmand.",\r
   "image": "🦓🍰",\r
+  "dietaryTags": ["vegetarian"],\r
   "info": {\r
     "prepTime": "10 min",\r
     "cookTime": "10 min",\r

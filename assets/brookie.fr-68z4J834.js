@@ -3,6 +3,7 @@ const e=`{\r
   "category": "cakes",\r
   "description": "La fusion parfaite entre un brownie et un cookie en une seule délicieuse gourmandise !",\r
   "image": "🍪🍫",\r
+  "dietaryTags": ["vegetarian"],\r
   "info": {\r
     "prepTime": "30 min",\r
     "cookTime": "30 min",\r

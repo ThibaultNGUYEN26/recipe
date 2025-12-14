@@ -3,6 +3,7 @@ const e=`{\r
   "categories": ["cakes", "breakfast"],\r
   "description": "Des crêpes légères et savoureuses, parfaites pour le petit-déjeuner ou le dessert.",\r
   "image": "🥞",\r
+  "dietaryTags": ["vegetarian"],\r
   "info": {\r
     "prepTime": "10 min",\r
     "cookTime": "15 min",\r

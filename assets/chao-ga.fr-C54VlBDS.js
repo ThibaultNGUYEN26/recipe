@@ -3,6 +3,7 @@ const e=`{\r
   "category": "main-dishes",\r
   "description": "Un plat vietnamien réconfortant à base de riz et de poulet, parfait pour les journées fraîches.",\r
   "image": "🍲🍗",\r
+  "dietaryTags": ["halal"],\r
   "info": {\r
     "prepTime": "15 min",\r
     "cookTime": "50 min",\r

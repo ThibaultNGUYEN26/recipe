@@ -3,6 +3,7 @@ const e=`{\r
   "categories": ["cakes", "breakfast"],\r
   "description": "Light and tasty crepes, perfect for breakfast or dessert.",\r
   "image": "🥞",\r
+  "dietaryTags": ["vegetarian"],\r
   "info": {\r
     "prepTime": "10 min",\r
     "cookTime": "15 min",\r

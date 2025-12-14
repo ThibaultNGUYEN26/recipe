@@ -3,6 +3,7 @@ const e=`{\r
   "category": "cakes",\r
   "description": "A visually impressive cake, with a zebra effect in every slice.",\r
   "image": "🦓🍰",\r
+  "dietaryTags": ["vegetarian"],\r
   "info": {\r
     "prepTime": "30 min",\r
     "cookTime": "35 min",\r

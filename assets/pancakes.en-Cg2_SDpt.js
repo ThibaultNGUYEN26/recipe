@@ -3,6 +3,7 @@ const n=`{\r
   "categories": ["cakes", "breakfast"],\r
   "description": "Soft and fluffy pancakes, perfect for a delicious breakfast.",\r
   "image": "🦓🍰",\r
+  "dietaryTags": ["vegetarian"],\r
   "info": {\r
     "prepTime": "10 min",\r
     "cookTime": "10 min",\r

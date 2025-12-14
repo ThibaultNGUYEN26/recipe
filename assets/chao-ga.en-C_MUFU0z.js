@@ -3,6 +3,7 @@ const n=`{\r
   "category": "main-dishes",\r
   "description": "A comforting Vietnamese dish made with rice and chicken, perfect for cooler days.",\r
   "image": "🍲🍗",\r
+  "dietaryTags": ["halal"],\r
   "info": {\r
     "prepTime": "15 min",\r
     "cookTime": "50 min",\r

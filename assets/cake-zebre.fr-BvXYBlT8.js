@@ -3,6 +3,7 @@ const e=`{\r
   "category": "cakes",\r
   "description": "Un cake visuellement impressionnant, effet zébré à chaque tranche.",\r
   "image": "🦓🍰",\r
+  "dietaryTags": ["vegetarian"],\r
   "info": {\r
     "prepTime": "30 min",\r
     "cookTime": "35 min",\r

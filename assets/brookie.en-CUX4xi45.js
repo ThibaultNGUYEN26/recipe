@@ -2,8 +2,7 @@ const e=`{\r
   "name": "Brookie (Brownie + Cookie)",\r
   "category": "cakes",\r
   "description": "The perfect fusion between a brownie and a cookie in one delicious treat!",\r
-  "image": "🍪🍫",\r
-  "info": {\r
+  "image": "🍪🍫",  "dietaryTags": ["vegetarian"],  "info": {\r
     "prepTime": "30 min",\r
     "cookTime": "30 min",\r
     "totalTime": "1h",\r
