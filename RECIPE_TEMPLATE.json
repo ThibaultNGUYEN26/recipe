@@ -3,6 +3,7 @@
   "category": "cakes",
   "description": "Une brève description de votre recette",
   "image": "",
+  "dietaryTags": ["vegetarian", "halal"],
   "info": {
     "prepTime": "20 min",
     "cookTime": "30 min",

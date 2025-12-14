@@ -3,6 +3,7 @@
   "category": "cakes",
   "description": "Un cake visuellement impressionnant, effet zébré à chaque tranche.",
   "image": "🦓🍰",
+  "dietaryTags": ["vegetarian"],
   "info": {
     "prepTime": "30 min",
     "cookTime": "35 min",

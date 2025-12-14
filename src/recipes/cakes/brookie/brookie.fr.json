@@ -3,6 +3,7 @@
   "category": "cakes",
   "description": "La fusion parfaite entre un brownie et un cookie en une seule délicieuse gourmandise !",
   "image": "🍪🍫",
+  "dietaryTags": ["vegetarian"],
   "info": {
     "prepTime": "30 min",
     "cookTime": "30 min",

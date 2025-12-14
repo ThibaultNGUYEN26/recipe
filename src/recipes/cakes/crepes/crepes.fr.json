@@ -3,6 +3,7 @@
   "categories": ["cakes", "breakfast"],
   "description": "Des crêpes légères et savoureuses, parfaites pour le petit-déjeuner ou le dessert.",
   "image": "🥞",
+  "dietaryTags": ["vegetarian"],
   "info": {
     "prepTime": "10 min",
     "cookTime": "15 min",

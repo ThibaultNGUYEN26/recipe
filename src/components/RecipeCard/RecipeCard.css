@@ -42,6 +42,10 @@
   margin-bottom: 20px;
 }
 
+.recipe-emoji-wrapper {
+  position: relative;
+}
+
 .recipe-title-section h1 {
   font-size: 3rem;
   color: var(--text-primary);

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { getTranslation } from '../../translations/translations';
+import DietaryTags from '../DietaryTags/DietaryTags';
 import './RecipeCard.css';
 
 function RecipeCard({ recipe, onBack }) {
@@ -57,11 +58,15 @@ function RecipeCard({ recipe, onBack }) {
                 width: '100%',
                 height: '300px',
                 borderRadius: '15px',
-                marginBottom: '20px'
-              }}></div>
+                marginBottom: '20px',
+                position: 'relative'
+              }}>
+                <DietaryTags tags={recipe.dietaryTags} />
+              </div>
             ) : (
-              <div className="recipe-emoji-wrapper">
+              <div className="recipe-emoji-wrapper" style={{ position: 'relative' }}>
                 <div className="recipe-emoji">{recipe.image || '🍽️'}</div>
+                <DietaryTags tags={recipe.dietaryTags} />
               </div>
             )}
           </div>

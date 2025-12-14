@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import SearchBar from '../SearchBar/SearchBar';
+import DietaryTags from '../DietaryTags/DietaryTags';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { getTranslation } from '../../translations/translations';
 import './HomePage.css';
@@ -198,10 +199,13 @@ function HomePage({ onSelectRecipe, onSelectCategory }) {
                       backgroundSize: 'cover',
                       backgroundPosition: 'center'
                     }}
-                  ></div>
+                  >
+                    <DietaryTags tags={recipe.dietaryTags} />
+                  </div>
                 ) : (
                   <div className="recipe-image">
                     {recipe.image || '🍽️'}
+                    <DietaryTags tags={recipe.dietaryTags} />
                   </div>
                 )}
                 <div className="recipe-preview-content">

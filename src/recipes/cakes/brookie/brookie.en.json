@@ -2,8 +2,7 @@
   "name": "Brookie (Brownie + Cookie)",
   "category": "cakes",
   "description": "The perfect fusion between a brownie and a cookie in one delicious treat!",
-  "image": "🍪🍫",
-  "info": {
+  "image": "🍪🍫",  "dietaryTags": ["vegetarian"],  "info": {
     "prepTime": "30 min",
     "cookTime": "30 min",
     "totalTime": "1h",

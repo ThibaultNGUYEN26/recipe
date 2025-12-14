@@ -1,0 +1,75 @@
+.dietary-tags {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 10;
+}
+
+.dietary-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  color: white;
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(4px);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dietary-tag:hover {
+  transform: translateX(-5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.tag-emoji {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.tag-label {
+  white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .dietary-tags {
+    top: 8px;
+    right: 8px;
+    gap: 6px;
+  }
+
+  .dietary-tag {
+    padding: 5px 10px;
+    font-size: 0.75rem;
+  }
+
+  .tag-emoji {
+    font-size: 0.9rem;
+  }
+}
+
+/* For small screens, show only emojis */
+@media (max-width: 480px) {
+  .tag-label {
+    display: none;
+  }
+
+  .dietary-tag {
+    padding: 6px;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    justify-content: center;
+  }
+
+  .tag-emoji {
+    font-size: 1.1rem;
+  }
+}

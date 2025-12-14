@@ -3,6 +3,7 @@
   "categories": ["cakes", "breakfast"],
   "description": "Light and tasty crepes, perfect for breakfast or dessert.",
   "image": "🥞",
+  "dietaryTags": ["vegetarian"],
   "info": {
     "prepTime": "10 min",
     "cookTime": "15 min",

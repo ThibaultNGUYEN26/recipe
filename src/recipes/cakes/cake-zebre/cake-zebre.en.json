@@ -3,6 +3,7 @@
   "category": "cakes",
   "description": "A visually impressive cake, with a zebra effect in every slice.",
   "image": "🦓🍰",
+  "dietaryTags": ["vegetarian"],
   "info": {
     "prepTime": "30 min",
     "cookTime": "35 min",

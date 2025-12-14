@@ -3,6 +3,7 @@
   "categories": ["cakes", "breakfast"],
   "description": "Soft and fluffy pancakes, perfect for a delicious breakfast.",
   "image": "🦓🍰",
+  "dietaryTags": ["vegetarian"],
   "info": {
     "prepTime": "10 min",
     "cookTime": "10 min",

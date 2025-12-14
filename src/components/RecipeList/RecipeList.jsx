@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import DietaryTags from '../DietaryTags/DietaryTags';
 import './RecipeList.css';
 
 function RecipeList({ category, onSelectRecipe, onBack }) {
@@ -19,16 +20,16 @@ function RecipeList({ category, onSelectRecipe, onBack }) {
       for (const path in recipeModules) {
         const content = await recipeModules[path]();
         const recipe = JSON.parse(content);
-        
+
         if (recipe.category === categoryName) {
           // Extract folder path and recipe name
           const pathParts = path.split('/');
           const recipeName = pathParts[pathParts.length - 2];
-          
+
           // Try to find corresponding image
           const imagePath = path.replace('.json', '.png');
           const recipeImage = imageModules[imagePath] || null;
-          
+
           loadedRecipes.push({
             ...recipe,
             id: recipeName,
@@ -80,7 +81,10 @@ function RecipeList({ category, onSelectRecipe, onBack }) {
               className="recipe-preview-card"
               onClick={() => onSelectRecipe(recipe)}
             >
-              <div className="recipe-image">{recipe.image || '🍽️'}</div>
+              <div className="recipe-image">
+                {recipe.image || '🍽️'}
+                <DietaryTags tags={recipe.dietaryTags} />
+              </div>
               <div className="recipe-preview-content">
                 <h3>{recipe.name}</h3>
                 <p className="recipe-description">{recipe.description}</p>
