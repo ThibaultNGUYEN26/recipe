@@ -1,7 +1,7 @@
-const r=`{\r
-  "name": "Crêpes",\r
+const e=`{\r
+  "name": "Crepes",\r
   "categories": ["cakes", "breakfast"],\r
-  "description": "Light and tasty crêpes, perfect for breakfast or dessert.",\r
+  "description": "Light and tasty crepes, perfect for breakfast or dessert.",\r
   "image": "🥞",\r
   "info": {\r
     "prepTime": "10 min",\r
@@ -47,11 +47,11 @@ const r=`{\r
     },\r
     {\r
       "step": 5,\r
-      "text": "Cook the crêpes in a hot, lightly oiled pan, pouring in a ladle of batter and spreading it quickly. Cook each side until golden."\r
+      "text": "Cook the crepes in a hot, lightly oiled pan, pouring in a ladle of batter and spreading it quickly. Cook each side until golden."\r
     },\r
     {\r
       "step": 6,\r
-      "text": "Cook until the crêpe is golden, flip it, and let it cook for about 1 minute."\r
+      "text": "Cook until the crepe is golden, flip it, and let it cook for about 1 minute."\r
     },\r
     {\r
       "step": 7,\r
@@ -59,11 +59,11 @@ const r=`{\r
     }\r
   ],\r
   "tips": [\r
-    "Using a crêpe pan makes cooking easier and helps achieve evenly shaped crêpes.",\r
-    "You can store cooked crêpes in an airtight container in the refrigerator for 2 days. Reheat slightly before serving.",\r
+    "Using a crepe pan makes cooking easier and helps achieve evenly shaped crepes.",\r
+    "You can store cooked crepes in an airtight container in the refrigerator for 2 days. Reheat slightly before serving.",\r
     "You can add a little rum or orange blossom water to the batter for extra flavour.",\r
-    "You can cook the crêpes in batches and store the batter in the refrigerator for up to 24 hours, covered with plastic wrap."\r
+    "You can cook the crepes in batches and store the batter in the refrigerator for up to 24 hours, covered with plastic wrap."\r
   ],\r
-  "tags": ["cake", "crêpes", "breakfast", "snack", "sweet"]\r
+  "tags": ["cake", "crepes", "breakfast", "snack", "sweet"]\r
 }\r
-`;export{r as default};
+`;export{e as default};
