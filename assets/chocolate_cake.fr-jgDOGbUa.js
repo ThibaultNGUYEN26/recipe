@@ -8,14 +8,14 @@ const e=`{\r
     "prepTime": "15 min",\r
     "cookTime": "30 min",\r
     "totalTime": "45 min",\r
-    "servings": 4,\r
+    "servings": 8,\r
     "difficulty": "Easy"\r
   },\r
   "nutrition": {\r
-    "calories": "350 kcal",\r
-    "protéines": "6g",\r
-    "lipides": "20g",\r
-    "glucides": "40g"\r
+    "calories": "219 kcal",\r
+    "protéines": "3.8g",\r
+    "lipides": "12.5g",\r
+    "glucides": "25g"\r
   },\r
   "ingredients": [\r
     {\r
