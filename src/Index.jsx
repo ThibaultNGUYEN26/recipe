@@ -1,5 +1,5 @@
 import React from 'react';
-import { HashRouter, Routes, Route, useParams, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useParams, useNavigate } from 'react-router-dom';
 import './Index.css';
 import HomePage from './components/HomePage/HomePage';
 import RecipeCard from './components/RecipeCard/RecipeCard';
@@ -112,12 +112,12 @@ function HomePageWrapper() {
 
 function Index() {
   return (
-    <HashRouter>
+    <BrowserRouter basename="/recipe">
       <Routes>
         <Route path="/" element={<HomePageWrapper />} />
         <Route path="/:recipeId" element={<RecipePage />} />
       </Routes>
-    </HashRouter>
+    </BrowserRouter>
   );
 }
 
