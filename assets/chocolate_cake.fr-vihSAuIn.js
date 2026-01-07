@@ -1,0 +1,61 @@
+const e=`{
+  "name": "Moelleux Au Chocolat",
+  "categories": ["cakes", "breakfast"],
+  "description": "Délicieux moelleux au chocolat, aérien et fondant.",
+  "image": "🍫",
+  "dietaryTags": ["vegetarian"],
+  "info": {
+    "prepTime": "15 min",
+    "cookTime": "30 min",
+    "totalTime": "45 min",
+    "servings": 8,
+    "difficulty": "Easy"
+  },
+  "nutrition": {
+    "calories": "219 kcal",
+    "protéines": "3.8g",
+    "lipides": "12.5g",
+    "glucides": "25g"
+  },
+  "ingredients": [
+    {
+      "items": [
+        "200g de chocolat noir pâtissier",
+        "125g de beurre",
+        "125g de sucre",
+        "125g de farine",
+        "4 oeufs",
+        "1 sachet de levure chimique"
+      ]
+    }
+  ],
+  "instructions": [
+    {
+      "step": 1,
+      "text": "Faire fondre le chocolat et le beurre au bain-marie."
+    },
+    {
+      "step": 2,
+      "text": "Séparer les blancs des jaunes d'œufs. Battre les jaunes avec le sucre avec un peu d'eau jusqu'à ce que le mélange devienne mousseux."
+    },
+    {
+      "step": 3,
+      "text": "Incorporer la farine et la levure au mélange de jaunes d'œufs."
+    },
+    {
+      "step": 4,
+      "text": "Monter les blancs en neige et les incorporer délicatement à la préparation."
+    },
+    {
+      "step": 5,
+      "text": "Verser la pâte dans un moule beurré et fariné, puis enfourner à 180°C pendant environ 30 minutes."
+    }
+  ],
+  "tips": [
+    "Vérifier la cuisson avec la pointe d'un couteau : elle doit ressortir sèche.",
+    "Pour un moelleux encore plus fondant, ajouter une cuillère à soupe de crème fraîche à la pâte.",
+    "Server avec une boule de glace à la vanille ou une sauce au chocolat pour plus de gourmandise."
+  ],
+  "tags": ["gateau", "chocolat", "petit-déjeuner", "dessert", "facile", "rapide"]
+}
+`;export{e as default};

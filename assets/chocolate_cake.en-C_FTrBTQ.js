@@ -1,0 +1,61 @@
+const e=`{
+  "name": "Chocolate Cake",
+  "categories": ["cakes", "breakfast"],
+  "description": "Delicious chocolate cake, light and melting.",
+  "image": "🥞",
+  "dietaryTags": ["vegetarian"],
+  "info": {
+    "prepTime": "15 min",
+    "cookTime": "30 min",
+    "totalTime": "45 min",
+    "servings": 8,
+    "difficulty": "Easy"
+  },
+  "nutrition": {
+    "calories": "219 kcal",
+    "protéines": "3.8g",
+    "lipides": "12.5g",
+    "glucides": "25g"
+  },
+  "ingredients": [
+    {
+      "items": [
+        "200g dark baking chocolate",
+        "125g butter",
+        "125g sugar",
+        "125g flour",
+        "4 eggs",
+        "1 packet of baking powder"
+      ]
+    }
+  ],
+  "instructions": [
+    {
+      "step": 1,
+      "text": "Melt the chocolate and butter in a bain-marie."
+    },
+    {
+      "step": 2,
+      "text": "Separate the egg whites from the yolks. Beat the yolks with the sugar and a little water until the mixture becomes frothy."
+    },
+    {
+      "step": 3,
+      "text": "Incorporate the flour and baking powder into the egg yolk mixture."
+    },
+    {
+      "step": 4,
+      "text": "Whisk the egg whites until stiff and gently fold them into the batter."
+    },
+    {
+      "step": 5,
+      "text": "Pour the batter into a buttered and floured pan, then bake at 180°C for about 30 minutes."
+    }
+  ],
+  "tips": [
+    "Check the baking with the tip of a knife: it should come out dry.",
+    "For an even more melting cake, add a tablespoon of crème fraîche to the batter.",
+    "Serve with a scoop of vanilla ice cream or a chocolate sauce for more indulgence."
+  ],
+  "tags": ["cake", "chocolate", "breakfast", "dessert", "easy", "quick"]
+}
+`;export{e as default};

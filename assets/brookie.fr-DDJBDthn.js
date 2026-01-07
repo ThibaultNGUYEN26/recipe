@@ -1,0 +1,108 @@
+const e=`{
+  "name": "Brookie (Brownie + Cookie)",
+  "category": "cakes",
+  "description": "La fusion parfaite entre un brownie et un cookie en une seule délicieuse gourmandise !",
+  "image": "🍪🍫",
+  "dietaryTags": ["vegetarian"],
+  "info": {
+    "prepTime": "30 min",
+    "cookTime": "30 min",
+    "totalTime": "1h",
+    "servings": 8,
+    "difficulty": "Moyen"
+  },
+  "nutrition": {
+    "calories": "310 kcal",
+    "proteines": "4g",
+    "lipides": "15g",
+    "glucides": "40g"
+  },
+  "ingredients": [
+    {
+      "section": "Pour la pâte à cookie",
+      "items": [
+        "100g de chocolat noir pâtissier",
+        "100g de beurre (ramolli)",
+        "200g de sucre roux",
+        "1 c. à café d'extrait de vanille",
+        "200g de farine",
+        "1/2 c. à café de sel",
+        "1 c. à café de levure chimique",
+        "1 oeuf"
+      ]
+    },
+    {
+      "section": "Pour la pâte à brownie",
+      "items": [
+        "100g de chocolat noir pâtissier",
+        "100g de beurre",
+        "100g de sucre",
+        "100g de farine",
+        "2 oeufs"
+      ]
+    }
+  ],
+  "instructions": [
+    {
+      "step": 1,
+      "text": "Découper le chocolat en grosses pépites, puis les placer au frigo."
+    },
+    {
+      "step": 2,
+      "text": "Travailler le beurre ramolli avec le sucre et la vanille."
+    },
+    {
+      "step": 3,
+      "text": "Ajouter l'oeuf."
+    },
+    {
+      "step": 4,
+      "text": "Incorporer la farine mélangée au sel et à la levure chimique."
+    },
+    {
+      "step": 5,
+      "text": "Enfin, ajouter les pépites de chocolat et remettre le tout au frigo."
+    },
+    {
+      "step": 6,
+      "text": "Préchauffer le four à 150°C. (thermostat 5)"
+    },
+    {
+      "step": 7,
+      "text": "Faire fondre le chocolat avec le beurre au bain-marie ou au micro-ondes. Lisser bien le mélange."
+    },
+    {
+      "step": 8,
+      "text": "Hors du feu, ajouter le sucre, puis les oeufs un à un. Incorporer enfin la farine."
+    },
+    {
+      "step": 9,
+      "text": "Verser la préparation dans un moule beurré."
+    },
+    {
+      "step": 10,
+      "text": "Pré-cuire le brownie pendant 15 minutes."
+    },
+    {
+      "step": 11,
+      "text": "Sortir le brownie du four et émietter la pâte à cookie par-dessus en recouvrant toute la surface."
+    },
+    {
+      "step": 12,
+      "text": "Enfourner pour 15-25 minutes supplémentaires, jusqu'à ce que le dessus soit doré et craquelé."
+    },
+    {
+      "step": 13,
+      "text": "Laisser refroidir avant de découper en carrés et de déguster."
+    }
+  ],
+  "tips": [
+    "Ne pas trop cuire ! Le centre doit rester légèrement moelleux pour obtenir la meilleure texture fondante",
+    "Laisser refroidir complètement avant de découper pour des tranches nettes",
+    "Vous pouvez ajouter des noix (noix de Grenoble ou pacanes) à l'une ou l'autre couche pour plus de croquant",
+    "Conserver dans un récipient hermétique à température ambiante jusqu'à 4 jours, ou congeler jusqu'à 3 mois",
+    "Pour un régal encore plus gourmand, servir tiède avec une boule de glace vanille ou de la crème anglaise"
+  ],
+  "tags": ["dessert", "chocolat", "brownie", "cookie", "pâtisserie", "sucré", "brookie"]
+}
+`;export{e as default};
