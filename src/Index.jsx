@@ -36,13 +36,19 @@ function Index() {
         setRecipes(loadedRecipes);
 
         // Check URL path after recipes are loaded
-        const path = window.location.pathname;
-        if (path.startsWith('/recipe/')) {
-          const recipeId = path.substring(8); // Remove '/recipe/'
+        // Also check sessionStorage for GitHub Pages redirect
+        const storedPath = sessionStorage.redirect;
+        delete sessionStorage.redirect;
+        
+        const path = storedPath || window.location.pathname;
+        if (path.startsWith('/recipe/') && path !== '/recipe/' && path !== '/recipe') {
+          const recipeId = path.substring(8).replace(/\/$/, ''); // Remove '/recipe/' and trailing slash
           const recipe = loadedRecipes.find(r => r.id === recipeId);
           if (recipe) {
             setSelectedRecipe(recipe);
             setView('recipe');
+            // Update URL without page reload
+            window.history.replaceState({ view: 'recipe', recipe: recipe }, '', path);
           }
         }
       } catch (error) {
