@@ -112,7 +112,7 @@ function HomePageWrapper() {
 
 function Index() {
   return (
-    <BrowserRouter basename="/recipe">
+    <BrowserRouter>
       <Routes>
         <Route path="/" element={<HomePageWrapper />} />
         <Route path="/:recipeId" element={<RecipePage />} />
