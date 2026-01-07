@@ -1,0 +1,2 @@
+# Netlify redirects for SPA
+/recipe/*  /recipe/index.html  200
