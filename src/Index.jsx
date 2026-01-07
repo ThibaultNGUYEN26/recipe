@@ -20,8 +20,8 @@ function RecipePage() {
       console.log('Current language:', language);
       
       try {
-        const recipeModules = import.meta.glob('../recipes/**/*.json', { as: 'raw' });
-        const imageModules = import.meta.glob('../recipes/**/*.png', { eager: true, import: 'default' });
+        const recipeModules = import.meta.glob('./recipes/**/*.json', { as: 'raw' });
+        const imageModules = import.meta.glob('./recipes/**/*.png', { eager: true, import: 'default' });
 
         console.log('Available recipe paths:', Object.keys(recipeModules));
 
