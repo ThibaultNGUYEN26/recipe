@@ -5,9 +5,9 @@
   <script>
     // GitHub Pages SPA redirect
     // Store the path and redirect to index.html
-    sessionStorage.redirect = location.pathname;
+    sessionStorage.setItem('redirect', window.location.pathname);
+    window.location.replace('/recipe/');
   </script>
-  <meta http-equiv="refresh" content="0;URL='/recipe/'"></meta>
 </head>
 <body>
 </body>

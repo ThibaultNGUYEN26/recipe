@@ -37,8 +37,10 @@ function Index() {
 
         // Check URL path after recipes are loaded
         // Also check sessionStorage for GitHub Pages redirect
-        const storedPath = sessionStorage.redirect;
-        delete sessionStorage.redirect;
+        const storedPath = sessionStorage.getItem('redirect');
+        if (storedPath) {
+          sessionStorage.removeItem('redirect');
+        }
         
         const path = storedPath || window.location.pathname;
         if (path.startsWith('/recipe/') && path !== '/recipe/' && path !== '/recipe') {
