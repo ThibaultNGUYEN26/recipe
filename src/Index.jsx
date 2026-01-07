@@ -4,11 +4,13 @@ import './Index.css';
 import HomePage from './components/HomePage/HomePage';
 import RecipeCard from './components/RecipeCard/RecipeCard';
 import SettingsMenu from './components/SettingsMenu/SettingsMenu';
+import { useLanguage } from './contexts/LanguageContext';
 
 // Recipe page component that loads the recipe by ID
 function RecipePage() {
   const { recipeId } = useParams();
   const navigate = useNavigate();
+  const { language } = useLanguage();
   const [recipe, setRecipe] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
 
@@ -23,10 +25,23 @@ function RecipePage() {
           const recipeName = pathParts[pathParts.length - 2];
           
           if (recipeName === recipeId) {
+            const fileName = path.split('/').pop();
+            
+            // Check if file matches language or has no language suffix
+            const hasLanguageSuffix = fileName.includes('.fr.json') || fileName.includes('.en.json');
+            const expectedSuffix = `.${language}.json`;
+            
+            if (hasLanguageSuffix && !fileName.endsWith(expectedSuffix)) {
+              continue; // Skip files not matching current language
+            }
+            if (!hasLanguageSuffix && language === 'en') {
+              continue; // Old format files are French only
+            }
+            
             const content = await recipeModules[path]();
             const recipeData = JSON.parse(content);
             
-            const imagePath = path.replace('.json', '.png');
+            const imagePath = path.replace(/\.(fr|en)?\.json$/, '.png');
             const recipeImage = imageModules[imagePath] || null;
             
             setRecipe({
@@ -48,7 +63,7 @@ function RecipePage() {
     };
 
     loadRecipe();
-  }, [recipeId, navigate]);
+  }, [recipeId, language, navigate]);
 
   if (loading) {
     return <div className="recipe-container">Loading...</div>;
