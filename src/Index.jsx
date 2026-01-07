@@ -68,8 +68,19 @@ function RecipePage() {
 function HomePageWrapper() {
   const navigate = useNavigate();
 
+  // Check for GitHub Pages redirect on mount
+  React.useEffect(() => {
+    const storedPath = sessionStorage.getItem('redirect');
+    if (storedPath) {
+      sessionStorage.removeItem('redirect');
+      // Navigate to the stored path, removing /recipe/ prefix since basename handles it
+      const pathWithoutBase = storedPath.replace('/recipe/', '/').replace('/recipe', '/');
+      navigate(pathWithoutBase, { replace: true });
+    }
+  }, [navigate]);
+
   const handleSelectRecipe = (recipe) => {
-    navigate(`/recipe/${recipe.id}`);
+    navigate(`/${recipe.id}`);
   };
 
   return (
