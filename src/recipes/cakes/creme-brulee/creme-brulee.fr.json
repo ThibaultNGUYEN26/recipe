@@ -1,0 +1,73 @@
+{
+  "name": "Crèmes Brulées",
+  "categories": ["cakes"],
+  "description": "Des crèmes brulées onctueuses avec une croûte caramélisée parfaite.",
+  "image": "🍮",
+  "dietaryTags": ["vegetarian"],
+  "info": {
+    "prepTime": "15 min",
+    "cookTime": "45 min",
+    "totalTime": "60 min",
+    "servings": 4,
+    "difficulty": "Facile"
+  },
+  "nutrition": {
+    "calories": "20 kcal",
+    "protéines": "0.38g",
+    "lipides": "1g",
+    "glucides": "2.5g"
+  },
+  "ingredients": [
+    {
+      "items": [
+        "4 jaunes d'œufs",
+        "50g de sucre",
+        "300ml de crème liquide entière",
+        "75ml de lait entier",
+        "1 gousse de vanille",
+        "40g de sucre roux"
+      ]
+    }
+  ],
+  "instructions": [
+    {
+      "step": 1,
+      "text": "Fendre la gousse de vanille en deux et gratter les graines."
+    },
+    {
+      "step": 2,
+      "text": "Dans une casserole, chauffer la crème liquide, le lait, les graines et la gousse de vanille jusqu'à ébullition. Retirer du feu et laisser infuser pendant 1h."
+    },
+    {
+      "step": 3,
+      "text": "Fouetter les jaunes d'œufs avec le sucre jusqu'à ce que le mélange blanchisse."
+    },
+    {
+      "step": 4,
+      "text": "Ôter la gousse de vanille de la crème infusée. Refaire chauffer. Une fois chaud, verser lentement la crème sur les jaunes d'œufs en fouettant constamment."
+    },
+    {
+      "step": 5,
+      "text": "Préchauffer le four à 140°C et répartir la préparation dans des ramequins."
+    },
+    {
+      "step": 6,
+      "text": "Placer les ramequins dans un plat allant au four et ajouter de l'eau chaude jusqu'à mi-hauteur des ramequins. Cuire au bain-marie pendant 45 minutes."
+    },
+    {
+      "step": 7,
+      "text": "Laisser refroidir à température ambiante, puis réfrigérer pendant au moins 4 heures."
+    },
+    {
+      "step": 8,
+      "text": "Saupoudrer uniformément le dessus des crèmes avec le sucre roux. Caraméliser le sucre à l'aide d'un chalumeau de cuisine."
+    }
+  ],
+  "tips": [
+    "Vérifier la cuisson des crèmes après cuisson au four. Il faut qu'elles soient prises mais encore légèrement tremblotantes au centre.",
+    "Si vous n'avez pas de chalumeau, vous pouvez passer les crèmes sous le gril du four pendant quelques minutes pour caraméliser le sucre.",
+    "Conserver les crèmes brulées au réfrigérateur et les consommer dans les 2 jours pour une meilleure fraîcheur.",
+    "Pour une variante, vous pouvez ajouter des zestes d'orange ou de citron à la crème avant cuisson pour une touche d'agrumes."
+  ],
+  "tags": ["cake", "dessert", "french", "creme-brulee", "vanilla"]
+}

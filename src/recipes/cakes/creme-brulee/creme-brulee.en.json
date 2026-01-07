@@ -1,0 +1,73 @@
+{
+  "name": "Crème Brûlées",
+  "categories": ["cakes"],
+  "description": "Creamy crème brûlées with a perfect caramelized crust.",
+  "image": "🍮",
+  "dietaryTags": ["vegetarian"],
+  "info": {
+    "prepTime": "15 min",
+    "cookTime": "45 min",
+    "totalTime": "60 min",
+    "servings": 4,
+    "difficulty": "Easy"
+  },
+  "nutrition": {
+    "calories": "20 kcal",
+    "protéines": "0.38g",
+    "lipides": "1g",
+    "glucides": "2.5g"
+  },
+  "ingredients": [
+    {
+      "items": [
+        "4 egg yolks",
+        "50g sugar",
+        "300ml full-fat liquid cream",
+        "75ml whole milk",
+        "1 vanilla pod",
+        "40g brown sugar"
+      ]
+    }
+  ],
+  "instructions": [
+    {
+      "step": 1,
+      "text": "Split the vanilla pod in half and scrape out the seeds."
+    },
+    {
+      "step": 2,
+      "text": "In a saucepan, heat the liquid cream, milk, seeds, and vanilla pod until boiling. Remove from the heat and let infuse for 1 hour."
+    },
+    {
+      "step": 3,
+      "text": "Whisk the egg yolks with the sugar until the mixture becomes pale."
+    },
+    {
+      "step": 4,
+      "text": "Remove the vanilla pod from the infused cream. Heat again. Once hot, slowly pour the cream over the egg yolks while whisking constantly."
+    },
+    {
+      "step": 5,
+      "text": "Preheat the oven to 140°C and divide the mixture into ramekins."
+    },
+    {
+      "step": 6,
+      "text": "Place the ramekins in an ovenproof dish and add hot water halfway up the sides of the ramekins. Cook in a bain-marie for 45 minutes."
+    },
+    {
+      "step": 7,
+      "text": "Let cool at room temperature, then refrigerate for at least 4 hours."
+    },
+    {
+      "step": 8,
+      "text": "Evenly sprinkle the tops of the creams with the brown sugar. Caramelize the sugar using a kitchen torch."
+    }
+  ],
+  "tips": [
+    "Check the doneness of the creams after baking. They should be set but still slightly wobbly in the center.",
+    "If you do not have a torch, you can place the creams under the oven grill for a few minutes to caramelize the sugar.",
+    "Store the crème brûlées in the refrigerator and consume within 2 days for best freshness.",
+    "For a variation, you can add orange or lemon zest to the cream before baking for a citrus touch."
+  ],
+  "tags": ["cake", "dessert", "french", "creme-brulee", "vanilla"]
+}
