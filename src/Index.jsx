@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, useParams, useNavigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, useParams, useNavigate } from 'react-router-dom';
 import './Index.css';
 import HomePage from './components/HomePage/HomePage';
 import RecipeCard from './components/RecipeCard/RecipeCard';
@@ -40,10 +40,10 @@ function RecipePage() {
         }
         
         // Recipe not found, redirect to home
-        navigate('/recipe/', { replace: true });
+        navigate('/', { replace: true });
       } catch (error) {
         console.error('Error loading recipe:', error);
-        navigate('/recipe/', { replace: true });
+        navigate('/', { replace: true });
       }
     };
 
@@ -58,7 +58,7 @@ function RecipePage() {
     <div className="recipe-container">
       <RecipeCard
         recipe={recipe}
-        onBack={() => navigate('/recipe/')}
+        onBack={() => navigate('/')}
       />
     </div>
   );
@@ -67,17 +67,6 @@ function RecipePage() {
 // Home page wrapper
 function HomePageWrapper() {
   const navigate = useNavigate();
-
-  // Check for GitHub Pages redirect on mount
-  React.useEffect(() => {
-    const storedPath = sessionStorage.getItem('redirect');
-    if (storedPath) {
-      sessionStorage.removeItem('redirect');
-      // Navigate to the stored path, removing /recipe/ prefix since basename handles it
-      const pathWithoutBase = storedPath.replace('/recipe/', '/').replace('/recipe', '/');
-      navigate(pathWithoutBase, { replace: true });
-    }
-  }, [navigate]);
 
   const handleSelectRecipe = (recipe) => {
     navigate(`/${recipe.id}`);
@@ -93,12 +82,12 @@ function HomePageWrapper() {
 
 function Index() {
   return (
-    <BrowserRouter basename="/recipe">
+    <HashRouter>
       <Routes>
         <Route path="/" element={<HomePageWrapper />} />
         <Route path="/:recipeId" element={<RecipePage />} />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 
