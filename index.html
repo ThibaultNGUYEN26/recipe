@@ -5,6 +5,16 @@
     <link rel="icon" type="image/svg+xml" href="/recipe/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>recipe</title>
+    <script>
+      // GitHub Pages SPA redirect handler
+      (function() {
+        var redirect = sessionStorage.redirect;
+        delete sessionStorage.redirect;
+        if (redirect && redirect !== location.pathname) {
+          history.replaceState(null, null, redirect);
+        }
+      })();
+    </script>
     <script type="module" crossorigin src="/recipe/assets/index-BCm2Z8Od.js"></script>
     <link rel="stylesheet" crossorigin href="/recipe/assets/index-Cg7LFliu.css">
   </head>
