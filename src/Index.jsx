@@ -1,127 +1,93 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { BrowserRouter, Routes, Route, useParams, useNavigate } from 'react-router-dom';
 import './Index.css';
 import HomePage from './components/HomePage/HomePage';
 import RecipeCard from './components/RecipeCard/RecipeCard';
 import SettingsMenu from './components/SettingsMenu/SettingsMenu';
 
-function Index() {
-  const [view, setView] = useState('home'); // 'home', 'recipe'
-  const [selectedRecipe, setSelectedRecipe] = useState(null);
-  const [recipes, setRecipes] = useState([]);
+// Recipe page component that loads the recipe by ID
+function RecipePage() {
+  const { recipeId } = useParams();
+  const navigate = useNavigate();
+  const [recipe, setRecipe] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
 
-  // Load all recipes on mount
-  useEffect(() => {
-    const loadRecipes = async () => {
+  React.useEffect(() => {
+    const loadRecipe = async () => {
       try {
         const recipeModules = import.meta.glob('../recipes/**/*.json', { as: 'raw' });
         const imageModules = import.meta.glob('../recipes/**/*.png', { eager: true, import: 'default' });
-        const loadedRecipes = [];
 
         for (const path in recipeModules) {
-          const content = await recipeModules[path]();
-          const recipe = JSON.parse(content);
-          
           const pathParts = path.split('/');
           const recipeName = pathParts[pathParts.length - 2];
-          const imagePath = path.replace('.json', '.png');
-          const recipeImage = imageModules[imagePath] || null;
           
-          loadedRecipes.push({
-            ...recipe,
-            id: recipeName,
-            imagePath: recipeImage
-          });
-        }
-
-        setRecipes(loadedRecipes);
-
-        // Check URL path after recipes are loaded
-        // Also check sessionStorage for GitHub Pages redirect
-        const storedPath = sessionStorage.getItem('redirect');
-        if (storedPath) {
-          sessionStorage.removeItem('redirect');
-        }
-        
-        const path = storedPath || window.location.pathname;
-        if (path.startsWith('/recipe/') && path !== '/recipe/' && path !== '/recipe') {
-          const recipeId = path.substring(8).replace(/\/$/, ''); // Remove '/recipe/' and trailing slash
-          const recipe = loadedRecipes.find(r => r.id === recipeId);
-          if (recipe) {
-            setSelectedRecipe(recipe);
-            setView('recipe');
-            // Update URL without page reload
-            window.history.replaceState({ view: 'recipe', recipe: recipe }, '', path);
+          if (recipeName === recipeId) {
+            const content = await recipeModules[path]();
+            const recipeData = JSON.parse(content);
+            
+            const imagePath = path.replace('.json', '.png');
+            const recipeImage = imageModules[imagePath] || null;
+            
+            setRecipe({
+              ...recipeData,
+              id: recipeName,
+              imagePath: recipeImage
+            });
+            setLoading(false);
+            return;
           }
         }
+        
+        // Recipe not found, redirect to home
+        navigate('/recipe/', { replace: true });
       } catch (error) {
-        console.error('Error loading recipes:', error);
+        console.error('Error loading recipe:', error);
+        navigate('/recipe/', { replace: true });
       }
     };
 
-    loadRecipes();
-  }, []);
+    loadRecipe();
+  }, [recipeId, navigate]);
 
-  useEffect(() => {
-    // Handle browser back/forward buttons
-    const handlePopState = (event) => {
-      if (event.state && event.state.view === 'recipe' && event.state.recipe) {
-        setView('recipe');
-        setSelectedRecipe(event.state.recipe);
-      } else {
-        setView('home');
-        setSelectedRecipe(null);
-      }
-    };
+  if (loading) {
+    return <div className="recipe-container">Loading...</div>;
+  }
 
-    window.addEventListener('popstate', handlePopState);
+  return (
+    <div className="recipe-container">
+      <RecipeCard
+        recipe={recipe}
+        onBack={() => navigate('/recipe/')}
+      />
+    </div>
+  );
+}
 
-    // Set initial state if not already set
-    if (!window.history.state) {
-      const currentView = view === 'recipe' ? 'recipe' : 'home';
-      window.history.replaceState(
-        { view: currentView, recipe: selectedRecipe }, 
-        '', 
-        window.location.href
-      );
-    }
-
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, [view, selectedRecipe]);
+// Home page wrapper
+function HomePageWrapper() {
+  const navigate = useNavigate();
 
   const handleSelectRecipe = (recipe) => {
-    setSelectedRecipe(recipe);
-    setView('recipe');
-    // Add to browser history
-    window.history.pushState(
-      { view: 'recipe', recipe: recipe },
-      '',
-      `/recipe/${recipe.id}`
-    );
-  };
-
-  const handleBackToHome = () => {
-    setView('home');
-    setSelectedRecipe(null);
-    // Update URL to home
-    window.history.pushState({ view: 'home' }, '', '/recipe/');
+    navigate(`/recipe/${recipe.id}`);
   };
 
   return (
     <div className="recipe-container">
-      {view === 'home' && <SettingsMenu />}
-      {view === 'home' && (
-        <HomePage onSelectRecipe={handleSelectRecipe} />
-      )}
-
-      {view === 'recipe' && (
-        <RecipeCard
-          recipe={selectedRecipe}
-          onBack={handleBackToHome}
-        />
-      )}
+      <SettingsMenu />
+      <HomePage onSelectRecipe={handleSelectRecipe} />
     </div>
+  );
+}
+
+function Index() {
+  return (
+    <BrowserRouter basename="/recipe">
+      <Routes>
+        <Route path="/" element={<HomePageWrapper />} />
+        <Route path="/:recipeId" element={<RecipePage />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
