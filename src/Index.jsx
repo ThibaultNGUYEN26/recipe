@@ -7,6 +7,51 @@ import SettingsMenu from './components/SettingsMenu/SettingsMenu';
 function Index() {
   const [view, setView] = useState('home'); // 'home', 'recipe'
   const [selectedRecipe, setSelectedRecipe] = useState(null);
+  const [recipes, setRecipes] = useState([]);
+
+  // Load all recipes on mount
+  useEffect(() => {
+    const loadRecipes = async () => {
+      try {
+        const recipeModules = import.meta.glob('../recipes/**/*.json', { as: 'raw' });
+        const imageModules = import.meta.glob('../recipes/**/*.png', { eager: true, import: 'default' });
+        const loadedRecipes = [];
+
+        for (const path in recipeModules) {
+          const content = await recipeModules[path]();
+          const recipe = JSON.parse(content);
+          
+          const pathParts = path.split('/');
+          const recipeName = pathParts[pathParts.length - 2];
+          const imagePath = path.replace('.json', '.png');
+          const recipeImage = imageModules[imagePath] || null;
+          
+          loadedRecipes.push({
+            ...recipe,
+            id: recipeName,
+            imagePath: recipeImage
+          });
+        }
+
+        setRecipes(loadedRecipes);
+
+        // Check URL path after recipes are loaded
+        const path = window.location.pathname;
+        if (path.startsWith('/recipe/')) {
+          const recipeId = path.substring(8); // Remove '/recipe/'
+          const recipe = loadedRecipes.find(r => r.id === recipeId);
+          if (recipe) {
+            setSelectedRecipe(recipe);
+            setView('recipe');
+          }
+        }
+      } catch (error) {
+        console.error('Error loading recipes:', error);
+      }
+    };
+
+    loadRecipes();
+  }, []);
 
   useEffect(() => {
     // Handle browser back/forward buttons
@@ -22,15 +67,20 @@ function Index() {
 
     window.addEventListener('popstate', handlePopState);
 
-    // Set initial state
+    // Set initial state if not already set
     if (!window.history.state) {
-      window.history.replaceState({ view: 'home' }, '', window.location.pathname);
+      const currentView = view === 'recipe' ? 'recipe' : 'home';
+      window.history.replaceState(
+        { view: currentView, recipe: selectedRecipe }, 
+        '', 
+        window.location.href
+      );
     }
 
     return () => {
       window.removeEventListener('popstate', handlePopState);
     };
-  }, []);
+  }, [view, selectedRecipe]);
 
   const handleSelectRecipe = (recipe) => {
     setSelectedRecipe(recipe);
@@ -39,15 +89,15 @@ function Index() {
     window.history.pushState(
       { view: 'recipe', recipe: recipe },
       '',
-      `${window.location.pathname}#recipe-${recipe.id}`
+      `/recipe/${recipe.id}`
     );
   };
 
   const handleBackToHome = () => {
     setView('home');
     setSelectedRecipe(null);
-    // Go back in browser history
-    window.history.back();
+    // Update URL to home
+    window.history.pushState({ view: 'home' }, '', '/recipe/');
   };
 
   return (
