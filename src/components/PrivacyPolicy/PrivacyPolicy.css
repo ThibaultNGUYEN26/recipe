@@ -1,0 +1,32 @@
+.privacy-policy {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+  line-height: 1.7;
+}
+
+.privacy-policy h1 {
+  margin-bottom: 1.5rem;
+}
+
+.privacy-policy h2 {
+  margin-top: 2rem;
+}
+
+.last-update {
+  margin-top: 3rem;
+  font-size: 0.9rem;
+  opacity: 0.6;
+}
+
+.back-home {
+  display: inline-block;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  color: #5a67d8;
+  text-decoration: none;
+}
+
+.back-home:hover {
+  text-decoration: underline;
+}
