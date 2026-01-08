@@ -1,8 +1,9 @@
 {
-  "rewrites": [
+  "redirects": [
     {
       "source": "/(.*)",
-      "destination": "/index.html"
+      "destination": "https://recipe.thibault-nguyen.dev/$1",
+      "permanent": true
     }
   ]
 }
