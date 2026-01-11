@@ -75,7 +75,7 @@ function HomePage({ onSelectRecipe, onSelectCategory }) {
 
   const loadAllRecipes = async () => {
     try {
-      const recipeModules = import.meta.glob('../../recipes/**/*.json', { as: 'raw' });
+      const recipeModules = import.meta.glob('../../recipes/**/*.json', { query: '?raw', import: 'default' });
       const imageModules = import.meta.glob('../../recipes/**/*.png', { eager: true, import: 'default' });
       const loadedRecipes = [];
 

@@ -3,6 +3,7 @@
   padding: 0.75rem 1rem;
   background-color: #f7f8fb;
   border-top: 1px solid #e6e6e6;
+  color: #1f2937;
 }
 
 .footer-content {
@@ -34,5 +35,23 @@
 .footer-copy {
   margin-top: 0.25rem;
   font-size: 0.75rem;
+  opacity: 0.6;
+}
+
+/* ========================= */
+/* 🌙 DARK THEME */
+/* ========================= */
+
+.footer.dark {
+  background-color: #0f172a;
+  border-top: 1px solid #1e293b;
+  color: #e5e7eb;
+}
+
+.footer.dark .footer-links a {
+  color: #93c5fd;
+}
+
+.footer.dark .footer-copy {
   opacity: 0.6;
 }

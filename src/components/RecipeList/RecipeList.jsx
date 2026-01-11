@@ -13,7 +13,7 @@ function RecipeList({ category, onSelectRecipe, onBack }) {
   const loadRecipes = async (categoryName) => {
     try {
       // Dynamically import all .json recipe files
-      const recipeModules = import.meta.glob('../../recipes/**/*.json', { as: 'raw' });
+      const recipeModules = import.meta.glob('../../recipes/**/*.json', { query: '?raw', import: 'default' });
       const imageModules = import.meta.glob('../../recipes/**/*.png', { eager: true, import: 'default' });
       const loadedRecipes = [];
 

@@ -5,6 +5,24 @@
   line-height: 1.7;
 }
 
+.privacy-policy.dark {
+  background: var(--bg-secondary, #181a1b);
+  color: var(--text-primary, #f1f1f1);
+}
+
+.privacy-policy.dark h1,
+.privacy-policy.dark h2 {
+  color: var(--text-primary, #fff);
+}
+
+.privacy-policy.dark .last-update {
+  opacity: 0.7;
+}
+
+.privacy-policy.dark .back-home {
+  color: #a3bffa;
+}
+
 .privacy-policy h1 {
   margin-bottom: 1.5rem;
 }

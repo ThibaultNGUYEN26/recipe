@@ -1,9 +1,12 @@
+
 import { Link } from "react-router-dom";
 import "./PrivacyPolicy.css";
+import { useTheme } from '../../contexts/ThemeContext';
 
 export default function PrivacyPolicy() {
+  const { theme } = useTheme();
   return (
-    <div className="privacy-policy">
+    <div className={`privacy-policy${theme === 'dark' ? ' dark' : ''}`}>
       <Link to="/" className="back-home">
         ← Back to home
       </Link>
