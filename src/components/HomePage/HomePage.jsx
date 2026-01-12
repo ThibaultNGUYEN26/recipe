@@ -1,221 +1,175 @@
-import React, { useState, useEffect, useRef } from 'react';
-import SearchBar from '../SearchBar/SearchBar';
-import DietaryTags from '../DietaryTags/DietaryTags';
-import { useLanguage } from '../../contexts/LanguageContext';
-import { getTranslation } from '../../translations/translations';
-import './HomePage.css';
+import React, { useEffect, useRef, useState } from "react";
+import SearchBar from "../SearchBar/SearchBar";
+import DietaryTags from "../DietaryTags/DietaryTags";
+import { useLanguage } from "../../contexts/LanguageContext";
+import { getTranslation } from "../../translations/translations";
+import "./HomePage.css";
 
-function HomePage({ onSelectRecipe, onSelectCategory }) {
-  const [recipes, setRecipes] = useState([]);
-  const [filteredRecipes, setFilteredRecipes] = useState([]);
-  const [activeCategory, setActiveCategory] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const carouselRef = useRef(null);
+function HomePage({ onSelectRecipe }) {
   const { language } = useLanguage();
+  const carouselRef = useRef(null);
+
+  const [recipes, setRecipes] = useState([]);
+  const [activeCategory, setActiveCategory] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(true);
 
   const categories = [
-    { id: 'all', name: language === 'fr' ? 'Toutes' : 'All', emoji: '🍽️', color: '#667eea' },
-    { id: 'cakes', name: language === 'fr' ? 'Gâteaux & Desserts' : 'Cakes & Desserts', emoji: '🍰', color: '#ff9a9e' },
-    { id: 'main-dishes', name: getTranslation(language, 'categories_list.main-dishes'), emoji: '🍝', color: '#feca57' },
-    { id: 'appetizers', name: getTranslation(language, 'categories_list.appetizers'), emoji: '🥗', color: '#48dbfb' },
-    { id: 'drinks', name: getTranslation(language, 'categories_list.drinks'), emoji: '🍹', color: '#ff6b6b' },
-    { id: 'breakfast', name: language === 'fr' ? 'Petit-déjeuner' : 'Breakfast', emoji: '🥞', color: '#ffeaa7' },
-    { id: 'snacks', name: language === 'fr' ? 'En-cas' : 'Snacks', emoji: '🍿', color: '#a29bfe' }
+    { id: "all", name: language === "fr" ? "Toutes" : "All", emoji: "🍽️", color: "#667eea" },
+    { id: "cakes", name: "Gâteaux & Desserts", emoji: "🍰", color: "#ff9a9e" },
+    { id: "main-dishes", name: "Plats principaux", emoji: "🍝", color: "#feca57" },
+    { id: "appetizers", name: "Entrées", emoji: "🥗", color: "#48dbfb" },
+    { id: "drinks", name: "Boissons", emoji: "🍹", color: "#ff6b6b" },
+    { id: "breakfast", name: "Petit-déjeuner", emoji: "🥞", color: "#ffeaa7" },
+    { id: "snacks", name: "En-cas", emoji: "🍿", color: "#a29bfe" },
   ];
 
-  useEffect(() => {
-    loadAllRecipes();
-  }, [language]);
+  /* ---------------- FETCH FROM BACKEND ---------------- */
 
   useEffect(() => {
-    filterRecipes();
-  }, [activeCategory, recipes, searchQuery]);
+    fetchRecipes();
+  }, [language, activeCategory]);
 
-  // Helper function to normalize text (remove accents)
-  const normalizeText = (text) => {
-    return text
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '');
-  };
-
-  const filterRecipes = () => {
-    let filtered = recipes;
-
-    // Filter by category
-    if (activeCategory !== 'all') {
-      filtered = filtered.filter(recipe => {
-        // Support both single category (string) and multiple categories (array)
-        if (Array.isArray(recipe.categories)) {
-          return recipe.categories.includes(activeCategory);
-        }
-        return recipe.category === activeCategory;
-      });
-    }
-
-    // Filter by search query (name, description, tags, ingredients)
-    if (searchQuery.trim() !== '') {
-      const query = normalizeText(searchQuery);
-      filtered = filtered.filter(recipe => {
-        const matchesName = normalizeText(recipe.name).includes(query);
-        const matchesDescription = normalizeText(recipe.description).includes(query);
-        const matchesTags = recipe.tags && recipe.tags.some(tag => normalizeText(tag).includes(query));
-
-        // Search in ingredients
-        const matchesIngredients = recipe.ingredients && recipe.ingredients.some(section =>
-          section.items && section.items.some(item => normalizeText(item).includes(query))
-        );
-
-        return matchesName || matchesDescription || matchesTags || matchesIngredients;
-      });
-    }
-
-    setFilteredRecipes(filtered);
-  };
-
-  const loadAllRecipes = async () => {
+  const fetchRecipes = async () => {
     try {
-      const recipeModules = import.meta.glob('../../recipes/**/*.json', { query: '?raw', import: 'default' });
-      const imageModules = import.meta.glob('../../recipes/**/*.png', { eager: true, import: 'default' });
-      const loadedRecipes = [];
+      setLoading(true);
 
-      for (const path in recipeModules) {
-        // Skip files that don't match the current language or don't have language suffix
-        const fileName = path.split('/').pop();
-
-        // Check if file has language suffix
-        if (fileName.includes('.fr.json') || fileName.includes('.en.json')) {
-          const expectedSuffix = `.${language}.json`;
-          if (!fileName.endsWith(expectedSuffix)) {
-            continue; // Skip files not matching current language
-          }
-        }
-        // If no language suffix, include only for French (backward compatibility)
-        else if (language === 'en') {
-          continue;
-        }
-
-        const content = await recipeModules[path]();
-        const recipe = JSON.parse(content);
-
-        // Extract folder path and recipe name
-        const pathParts = path.split('/');
-        const recipeName = pathParts[pathParts.length - 2]; // folder name
-        const category = pathParts[pathParts.length - 3]; // category folder
-
-        // Try to find corresponding image
-        const imagePath = path.replace(/\.(fr|en)?\.json$/, '.png');
-        const recipeImage = imageModules[imagePath] || null;
-
-        loadedRecipes.push({
-          ...recipe,
-          id: recipeName,
-          imagePath: recipeImage
-        });
-      }
-
-      setRecipes(loadedRecipes);
-      setFilteredRecipes(loadedRecipes);
-    } catch (error) {
-      console.error('Error loading recipes:', error);
-    }
-  };
-
-  const handleCategoryClick = (categoryId) => {
-    setActiveCategory(categoryId);
-  };
-
-  const scrollCarousel = (direction) => {
-    if (carouselRef.current) {
-      const scrollAmount = 300;
-      carouselRef.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth'
+      const params = new URLSearchParams({
+        lang: language,
+        ...(activeCategory !== "all" && { category: activeCategory }),
       });
+
+      const res = await fetch(
+        `http://localhost:4000/api/recipes?${params}`
+      );
+      const data = await res.json();
+
+      setRecipes(data);
+    } catch (err) {
+      console.error("Error fetching recipes:", err);
+    } finally {
+      setLoading(false);
     }
   };
+
+  /* ---------------- SEARCH (client-side only) ---------------- */
+
+  const normalize = (str) =>
+    str
+      ?.toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
+  const filteredRecipes = recipes.filter((r) => {
+    if (!searchQuery) return true;
+
+    const q = normalize(searchQuery);
+    return (
+      normalize(r.title)?.includes(q) ||
+      normalize(r.description)?.includes(q) ||
+      r.tags?.some((t) => normalize(t).includes(q))
+    );
+  });
+
+  /* ---------------- UI HELPERS ---------------- */
+
+  const scrollCarousel = (dir) => {
+    carouselRef.current?.scrollBy({
+      left: dir === "left" ? -300 : 300,
+      behavior: "smooth",
+    });
+  };
+
+  /* ---------------- RENDER ---------------- */
 
   return (
     <div className="home-page-container">
       <div className="header">
-        <h1>{getTranslation(language, 'title')}</h1>
-
-        {/* Search Bar */}
+        <h1>{getTranslation(language, "title")}</h1>
         <SearchBar
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
         />
       </div>
 
-      {/* Category Carousel */}
+      {/* -------- CATEGORY CAROUSEL -------- */}
       <div className="carousel-section">
-        <button className="carousel-btn left" onClick={() => scrollCarousel('left')}>
+        <button className="carousel-btn left" onClick={() => scrollCarousel("left")}>
           ‹
         </button>
+
         <div className="categories-carousel" ref={carouselRef}>
-          {categories.map(category => (
+          {categories.map((cat) => (
             <div
-              key={category.id}
-              className={`category-card ${activeCategory === category.id ? 'active' : ''}`}
-              style={{ '--card-color': category.color }}
-              onClick={() => handleCategoryClick(category.id)}
+              key={cat.id}
+              className={`category-card ${activeCategory === cat.id ? "active" : ""}`}
+              style={{ "--card-color": cat.color }}
+              onClick={() => setActiveCategory(cat.id)}
             >
-              <div className="category-emoji">{category.emoji}</div>
-              <h3 className="category-name">{category.name}</h3>
+              <div className="category-emoji">{cat.emoji}</div>
+              <h3 className="category-name">{cat.name}</h3>
             </div>
           ))}
         </div>
-        <button className="carousel-btn right" onClick={() => scrollCarousel('right')}>
+
+        <button className="carousel-btn right" onClick={() => scrollCarousel("right")}>
           ›
         </button>
       </div>
 
-      {/* All Recipes Grid */}
+      {/* -------- RECIPES GRID -------- */}
       <div className="all-recipes-section">
         <h2>
-          {activeCategory === 'all'
-            ? `${language === 'fr' ? 'Toutes les recettes' : 'All recipes'} (${filteredRecipes.length})`
-            : `${categories.find(c => c.id === activeCategory)?.name} (${filteredRecipes.length})`}
+          {activeCategory === "all"
+            ? `Toutes les recettes (${filteredRecipes.length})`
+            : `${categories.find((c) => c.id === activeCategory)?.name} (${filteredRecipes.length})`}
         </h2>
 
-        {filteredRecipes.length === 0 ? (
+        {loading ? (
           <div className="no-recipes">
-            <p>{language === 'fr' ? 'Aucune recette disponible pour le moment !' : 'No recipes available at the moment!'}</p>
-            <p className="hint">{language === 'fr' ? 'Ajoutez des fichiers .json dans src/recipes/' : 'Add .json files in src/recipes/'}</p>
+            <p>Chargement des recettes…</p>
+          </div>
+        ) : filteredRecipes.length === 0 ? (
+          <div className="no-recipes">
+            <p>Aucune recette trouvée.</p>
           </div>
         ) : (
           <div className="recipes-grid">
-            {filteredRecipes.map(recipe => (
+            {filteredRecipes.map((recipe) => (
               <div
-                key={recipe.id}
+                key={recipe.slug}
                 className="recipe-preview-card"
-                onClick={() => onSelectRecipe(recipe)}
+                onClick={() => onSelectRecipe(recipe.slug)}
               >
-                {recipe.imagePath ? (
-                  <div
-                    className="recipe-image recipe-image-photo"
-                    style={{
-                      backgroundImage: `url(${recipe.imagePath})`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center'
-                    }}
-                  >
-                    <DietaryTags tags={recipe.dietaryTags} />
+                <div className="recipe-image">
+                  {recipe.image ? (
+                    <img
+                      src={`http://localhost:4000${recipe.image}`}
+                      alt={recipe.title}
+                      className="recipe-image-img"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="recipe-image-fallback">🍽️</div>
+                  )}
+
+                  <div className="recipe-image-overlay">
+                    <DietaryTags tags={recipe.dietaryTags || []} />
                   </div>
-                ) : (
-                  <div className="recipe-image">
-                    {recipe.image || '🍽️'}
-                    <DietaryTags tags={recipe.dietaryTags} />
-                  </div>
-                )}
+                </div>
+
+
                 <div className="recipe-preview-content">
-                  <h3>{recipe.name}</h3>
+                  <h3>{recipe.title}</h3>
                   <p className="recipe-description">{recipe.description}</p>
-                  <div className="recipe-meta">
-                    <span>⏱️ {recipe.info.totalTime}</span>
-                    <span>👥 {recipe.info.servings}</span>
-                    <span>📊 {recipe.info.difficulty}</span>
-                  </div>
+
+                  {recipe.info && (
+                    <div className="recipe-meta">
+                      <span>⏱️ {recipe.info.totalTime}</span>
+                      <span>👥 {recipe.info.servings}</span>
+                      <span>📊 {recipe.info.difficulty}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

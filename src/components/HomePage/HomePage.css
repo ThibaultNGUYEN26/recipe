@@ -207,17 +207,17 @@
 
 .recipe-image {
   height: 200px;
-  background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 5rem;
   position: relative;
+  overflow: hidden;
 }
 
-.recipe-image-photo {
-  background: none;
-  font-size: 0;
+/* Image owns its ratio */
+.recipe-image-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* keeps your old look */
+  display: block;      /* 👈 VERY important */
+  margin: 0 auto;      /* centers horizontally only */
 }
 
 .recipe-preview-content {
