@@ -30,7 +30,7 @@ export default function PrivacyPolicy() {
         personalized advertisements.
       </p>
 
-      <h2>Google AdSense</h2>
+      {/* <h2>Google AdSense</h2>
       <p>
         This site uses Google AdSense, a service provided by Google Inc. Google
         uses cookies, including the DoubleClick cookie, to serve ads based on
@@ -39,7 +39,7 @@ export default function PrivacyPolicy() {
       <p>
         Users may opt out of personalized advertising by visiting the Google Ads
         Settings.
-      </p>
+      </p> */}
 
       <h2>Third-Party Services</h2>
       <p>
