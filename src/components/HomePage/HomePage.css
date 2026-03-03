@@ -336,6 +336,8 @@
 
   .recipe-description {
     font-size: 0.95rem;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
   }
 
   .recipe-meta {
