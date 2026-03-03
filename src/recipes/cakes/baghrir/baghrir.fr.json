@@ -1,0 +1,74 @@
+{
+  "name": "Baghrir (Crêpe aux mille trous)",
+  "category": "cakes",
+  "description": "Une délicieuse crêpe marocaine, légère et aérée, parsemée de milliers de petits trous qui capturent parfaitement le miel et amlou !",
+  "image": "🥞🍯",
+  "dietaryTags": ["vegetarian"],
+  "info": {
+    "prepTime": "15 min",
+    "cookTime": "20 min",
+    "totalTime": "35 min",
+    "servings": 8,
+    "difficulty": "Facile"
+  },
+  "nutrition": {
+    "calories": "150 kcal",
+    "protéines": "4g",
+    "lipides": "1g",
+    "glucides": "30g"
+  },
+  "ingredients": [
+    {
+      "items": [
+        "250g de semoule fine",
+        "150g de farine",
+        "1 c. à café de sucre",
+        "1 c. à café de sel",
+        "5g de levure boulangère sèche",
+        "2 sachets de levure chimique",
+        "650mL d'eau tiède"
+      ]
+    }
+  ],
+  "instructions": [
+    {
+      "step": 1,
+      "text": "Dans un récipient, mélanger la semoule, la farine, le sucre, le sel, et la levure boulangère."
+    },
+    {
+      "step": 2,
+      "text": "Verser l'eau tiède et mélanger brièvement pour éviter les grumeaux."
+    },
+    {
+      "step": 3,
+      "text": "Passer l'appareil au blendeur pendant 4 minutes pour obtenir une pâte lisse et homogène."
+    },
+    {
+      "step": 4,
+      "text": "Incorporer la levure chimique. Et repassez au blendeur pendant 1 minute pour bien l'incorporer."
+    },
+    {
+      "step": 5,
+      "text": "Laisser reposer la pâte 1 heure à température ambiante. Elled doit être bien liquide et former des bulles à la surface."
+    },
+    {
+      "step": 6,
+      "text": "Faire cuire les baghrir dans une poêle chaude. Cuire uniquement d'un côté, jusqu'à ce que la surface soit couverte de trous et que les bords soient secs."
+    },
+    {
+      "step": 7,
+      "text": "Réserver sur un torchon ou du papier absorbant pour éviter qu'ils ne s'humidifient et ne collent entre eux."
+    },
+    {
+      "step": 8,
+      "text": "Répéter l'opération jusqu'à ce que toute la pâte soit cuite."
+    }
+  ],
+  "tips": [
+    "L'utilisation d'une crépière est plus simple pour la cuisson et la forme homogène des baghrir.",
+    "Vous pouvez conserver les baghrir cuites dans une boîte hermétique au réfrigérateur pendant 2 jours. Réchauffez-les légèrement avant de servir.",
+    "Vous pouvez cuire les crêpes en plusieurs fois, conserver la pâte au réfrigérateur pendant 24 heures maximum en la couvrant d'un film plastique.",
+    "Vous pouvez utiliser de la semoule extra fine pour une texture encore plus légère et aérée."
+  ],
+  "tags": ["dessert", "pâtisserie", "sucré", "baghrir", "marocain", "crêpe", "semoule", "levure", "facile"]
+}

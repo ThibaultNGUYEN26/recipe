@@ -1,0 +1,74 @@
+{
+  "name": "Baghrir (Thousand-Hole Pancake)",
+  "category": "cakes",
+  "description": "A delicious Moroccan pancake, light and airy, sprinkled with thousands of tiny holes that perfectly capture honey and amlou!",
+  "image": "🥞🍯",
+  "dietaryTags": ["vegetarian"],
+  "info": {
+    "prepTime": "15 min",
+    "cookTime": "20 min",
+    "totalTime": "35 min",
+    "servings": 8,
+    "difficulty": "Easy"
+  },
+  "nutrition": {
+    "calories": "150 kcal",
+    "protéines": "4g",
+    "lipides": "1g",
+    "glucides": "30g"
+  },
+  "ingredients": [
+    {
+      "items": [
+        "250g fine semolina",
+        "150g flour",
+        "1 tsp sugar",
+        "1 tsp salt",
+        "5g active dry yeast",
+        "2 packets baking powder",
+        "650mL warm water"
+      ]
+    }
+  ],
+  "instructions": [
+    {
+      "step": 1,
+      "text": "In a bowl, mix the semolina, flour, sugar, salt, and active dry yeast."
+    },
+    {
+      "step": 2,
+      "text": "Pour in the warm water and mix briefly to avoid lumps."
+    },
+    {
+      "step": 3,
+      "text": "Blend the batter for 4 minutes to obtain a smooth and homogeneous mixture."
+    },
+    {
+      "step": 4,
+      "text": "Add the baking powder. Then blend again for 1 minute to incorporate it well."
+    },
+    {
+      "step": 5,
+      "text": "Let the batter rest for 1 hour at room temperature. It should be very liquid and form bubbles on the surface."
+    },
+    {
+      "step": 6,
+      "text": "Cook the baghrir in a hot pan. Cook only on one side, until the surface is covered with holes and the edges are dry."
+    },
+    {
+      "step": 7,
+      "text": "Set aside on a clean towel or paper towels to prevent them from getting damp and sticking to each other."
+    },
+    {
+      "step": 8,
+      "text": "Repeat until all the batter is cooked."
+    }
+  ],
+  "tips": [
+    "Using a crepe maker is easier for cooking and for a uniform baghrir shape.",
+    "You can store cooked baghrir in an airtight container in the refrigerator for 2 days. Warm them slightly before serving.",
+    "You can cook the pancakes in batches, store the batter in the refrigerator for up to 24 hours maximum, covering it with plastic wrap.",
+    "You can use extra-fine semolina for an even lighter, airier texture."
+  ],
+  "tags": ["dessert", "pastry", "sweet", "baghrir", "moroccan", "pancake", "semolina", "yeast", "easy"]
+}
