@@ -19,7 +19,7 @@ function RecipeList({ category, categoryInfo, onSelectRecipe, onBack }) {
         });
 
         const res = await fetch(
-          `http://localhost:4000/api/recipes?${params}`
+          `${import.meta.env.VITE_API_URL}/api/recipes?${params}`
         );
         const data = await res.json();
 
@@ -71,7 +71,7 @@ function RecipeList({ category, categoryInfo, onSelectRecipe, onBack }) {
               <div className="recipe-image">
                 {recipe.image ? (
                   <img
-                    src={`http://localhost:4000${recipe.image}`}
+                    src={`${import.meta.env.VITE_API_URL}${recipe.image}`}
                     alt={recipe.title}
                     className="recipe-image-img"
                   />

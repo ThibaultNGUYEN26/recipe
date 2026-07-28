@@ -1,15 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useAuth } from '../../contexts/AuthContext';
 import './SettingsMenu.css';
 
 function SettingsMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const { language, setLanguage } = useLanguage();
   const { theme, toggleTheme } = useTheme();
+  const { user, logout } = useAuth();
   const menuRef = useRef(null);
 
-  // Close menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
@@ -20,14 +22,6 @@ function SettingsMenu() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  const handleLanguageChange = (lang) => {
-    setLanguage(lang);
-  };
-
-  const handleThemeToggle = () => {
-    toggleTheme();
-  };
 
   return (
     <div className="settings-menu" ref={menuRef}>
@@ -54,7 +48,7 @@ function SettingsMenu() {
                   <input
                     type="checkbox"
                     checked={language === 'en'}
-                    onChange={() => handleLanguageChange(language === 'fr' ? 'en' : 'fr')}
+                    onChange={() => setLanguage(language === 'fr' ? 'en' : 'fr')}
                   />
                   <span className="toggle-slider"></span>
                 </label>
@@ -74,13 +68,36 @@ function SettingsMenu() {
                   <input
                     type="checkbox"
                     checked={theme === 'dark'}
-                    onChange={handleThemeToggle}
+                    onChange={toggleTheme}
                   />
                   <span className="toggle-slider"></span>
                 </label>
                 <span className={`toggle-label ${theme === 'dark' ? 'active' : ''}`}>🌙</span>
               </div>
             </div>
+          </div>
+
+          <div className="settings-section settings-auth">
+            {user ? (
+              <>
+                <span className="settings-user">
+                  👤 {user.name || user.email}
+                </span>
+                <Link to={`/profile/${user.id}`} className="settings-login" onClick={() => setIsOpen(false)}>
+                  {language === 'fr' ? 'Mon profil' : 'My profile'}
+                </Link>
+                <Link to="/settings/profile" className="settings-login" onClick={() => setIsOpen(false)}>
+                  {language === 'fr' ? 'Modifier le profil' : 'Edit profile'}
+                </Link>
+                <button className="settings-logout" onClick={() => { logout(); setIsOpen(false); }}>
+                  {language === 'fr' ? 'Déconnexion' : 'Log out'}
+                </button>
+              </>
+            ) : (
+              <Link to="/login" className="settings-login" onClick={() => setIsOpen(false)}>
+                {language === 'fr' ? 'Se connecter' : 'Log in'}
+              </Link>
+            )}
           </div>
         </div>
       )}

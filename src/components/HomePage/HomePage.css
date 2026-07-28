@@ -343,3 +343,30 @@
     gap: 10px;
   }
 }
+
+/* ---- Floating Action Button ---- */
+.fab-add {
+  align-items: center;
+  background: var(--gradient-primary);
+  border: none;
+  border-radius: 50%;
+  bottom: 2rem;
+  box-shadow: var(--shadow-lg);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  font-size: 2rem;
+  height: 60px;
+  justify-content: center;
+  line-height: 1;
+  position: fixed;
+  right: 2rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+  width: 60px;
+  z-index: 100;
+}
+
+.fab-add:hover {
+  box-shadow: 0 8px 30px rgba(102, 126, 234, 0.5);
+  transform: scale(1.1);
+}

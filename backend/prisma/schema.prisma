@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Category {
@@ -14,18 +14,35 @@ model Category {
   recipes Recipe[]
 }
 
+model User {
+  id           Int           @id @default(autoincrement())
+  email        String        @unique
+  passwordHash String
+  name         String?
+  bio          String?
+  avatarUrl    String?
+  createdAt    DateTime      @default(now())
+  followers    Follow[]      @relation("Following")
+  following    Follow[]      @relation("Follower")
+  ratings      Rating[]
+  savedRecipes SavedRecipe[]
+}
+
 model Recipe {
   id           Int                 @id @default(autoincrement())
   slug         String              @unique
   categoryId   Int
   category     Category            @relation(fields: [categoryId], references: [id])
   isPublic     Boolean             @default(true)
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
   translations RecipeTranslation[]
   images       RecipeImage[]
-  info        Json?
-  tags        Json?
+  info         Json?
+  tags         Json?
+  authorId     Int?
+  ratings      Rating[]
+  savedBy      SavedRecipe[]
 }
 
 model RecipeTranslation {
@@ -34,8 +51,8 @@ model RecipeTranslation {
   recipe       Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   language     String
   title        String
-  description String?
-  ingredients Json
+  description  String?
+  ingredients  Json
   instructions Json
   tips         Json?
   nutrition    Json?
@@ -44,11 +61,45 @@ model RecipeTranslation {
 }
 
 model RecipeImage {
-  id       Int    @id @default(autoincrement())
+  id       Int     @id @default(autoincrement())
   recipeId Int
-  recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  recipe   Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   url      String
   isMain   Boolean @default(true)
 
   @@unique([recipeId, isMain])
+}
+
+model Follow {
+  id          Int      @id @default(autoincrement())
+  followerId  Int
+  follower    User     @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId Int
+  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+}
+
+model Rating {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipeId  Int
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  score     Int
+  createdAt DateTime @default(now())
+
+  @@unique([userId, recipeId])
+}
+
+model SavedRecipe {
+  id       Int      @id @default(autoincrement())
+  userId   Int
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipeId Int
+  recipe   Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  savedAt  DateTime @default(now())
+
+  @@unique([userId, recipeId])
 }

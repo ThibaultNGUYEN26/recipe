@@ -66,6 +66,7 @@ body {
   background: var(--bg-primary);
   color: var(--text-primary);
   transition: background-color 0.3s ease, color 0.3s ease;
+  padding-bottom: calc(90px + env(safe-area-inset-bottom));
 }
 
 .recipe-container {

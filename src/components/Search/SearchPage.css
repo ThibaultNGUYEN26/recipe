@@ -1,0 +1,200 @@
+.search-page {
+  background: var(--bg-primary);
+  min-height: 100vh;
+  padding: 1rem;
+}
+
+.search-bar-wrap {
+  position: sticky;
+  top: 0;
+  background: var(--bg-primary);
+  padding: 0.5rem 0 1rem;
+  z-index: 10;
+}
+
+.search-input-row {
+  align-items: center;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.65rem 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.search-input-row:focus-within {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+}
+
+.search-icon {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  height: 18px;
+  width: 18px;
+}
+
+.search-input {
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  flex: 1;
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.search-input::placeholder { color: var(--text-tertiary); }
+
+.search-clear {
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0;
+  transition: color 0.2s;
+}
+
+.search-clear:hover { color: var(--text-primary); }
+
+.search-loading,
+.search-empty {
+  color: var(--text-secondary);
+  padding: 2rem;
+  text-align: center;
+}
+
+.search-placeholder {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 4rem;
+  text-align: center;
+  color: var(--text-tertiary);
+}
+
+.search-placeholder span { font-size: 3rem; }
+.search-placeholder p { font-size: 0.95rem; }
+
+.search-section {
+  margin-bottom: 2rem;
+}
+
+.search-section h2 {
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+}
+
+/* Users */
+.search-users {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.search-user-row {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  transition: background 0.15s;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.search-user-row:last-child { border-bottom: none; }
+.search-user-row:hover { background: var(--bg-hover); }
+
+.search-user-avatar {
+  align-items: center;
+  background: var(--gradient-primary);
+  border-radius: 50%;
+  display: flex;
+  flex-shrink: 0;
+  height: 40px;
+  justify-content: center;
+  overflow: hidden;
+  width: 40px;
+}
+
+.search-user-avatar img { height: 100%; object-fit: cover; width: 100%; }
+.search-user-avatar span { color: #fff; font-size: 1rem; font-weight: 700; }
+
+.search-user-name {
+  color: var(--text-primary);
+  flex: 1;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.search-chevron {
+  color: var(--text-tertiary);
+  flex-shrink: 0;
+  height: 16px;
+  width: 16px;
+}
+
+/* Recipes */
+.search-recipes {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.search-recipe-row {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  transition: background 0.15s;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.search-recipe-row:last-child { border-bottom: none; }
+.search-recipe-row:hover { background: var(--bg-hover); }
+
+.search-recipe-thumb {
+  align-items: center;
+  background: var(--bg-tertiary);
+  border-radius: 10px;
+  display: flex;
+  flex-shrink: 0;
+  height: 52px;
+  justify-content: center;
+  overflow: hidden;
+  width: 52px;
+}
+
+.search-recipe-thumb img { height: 100%; object-fit: cover; width: 100%; }
+.search-recipe-thumb span { font-size: 1.5rem; }
+
+.search-recipe-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.search-recipe-title {
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.search-recipe-cat {
+  color: var(--text-tertiary);
+  font-size: 0.78rem;
+}
