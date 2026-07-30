@@ -26,6 +26,7 @@ model User {
   following    Follow[]      @relation("Follower")
   ratings      Rating[]
   savedRecipes SavedRecipe[]
+  recipes      Recipe[]
 }
 
 model Recipe {
@@ -41,6 +42,7 @@ model Recipe {
   info         Json?
   tags         Json?
   authorId     Int?
+  author       User?         @relation(fields: [authorId], references: [id])
   ratings      Rating[]
   savedBy      SavedRecipe[]
 }

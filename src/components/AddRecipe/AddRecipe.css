@@ -433,4 +433,13 @@
   .ar-info-grid {
     grid-template-columns: 1fr;
   }
+
+  .ar-field input,
+  .ar-field textarea,
+  .ar-field select,
+  .ar-section-row input,
+  .ar-item-row input,
+  .ar-step-row textarea {
+    font-size: 1rem;
+  }
 }

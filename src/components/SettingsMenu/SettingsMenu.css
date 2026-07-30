@@ -223,6 +223,8 @@
 .settings-login:hover {
   text-decoration: underline;
 }
+
+@media (max-width: 768px) {
   .settings-menu {
     top: 17px;
     right: 7px;

@@ -51,15 +51,7 @@ function RecipeCard({ recipe, onBack }) {
           <div className="recipe-hero">
             {recipe.imagePath ? (
               <div className="recipe-image-header" style={{
-                backgroundImage: `url(${recipe.imagePath})`,
-                backgroundSize: '100% auto',
-                backgroundRepeat: 'no-repeat',
-                backgroundPosition: 'center center',
-                width: '100%',
-                height: '300px',
-                borderRadius: '15px',
-                marginBottom: '20px',
-                position: 'relative'
+                backgroundImage: `url(${recipe.imagePath})`
               }}>
                 <DietaryTags tags={recipe.dietaryTags} />
               </div>

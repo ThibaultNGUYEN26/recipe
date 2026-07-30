@@ -107,8 +107,13 @@
   font-size: 1rem;
   line-height: 1;
   padding: 0;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   position: absolute;
-  right: 0.75rem;
+  right: 0;
   top: 50%;
   transform: translateY(-50%);
   opacity: 0.6;
@@ -203,5 +208,9 @@
 @media (max-width: 768px) {
   .auth-card {
     padding: 2rem 1.25rem;
+  }
+
+  .auth-field input {
+    font-size: 1rem;
   }
 }

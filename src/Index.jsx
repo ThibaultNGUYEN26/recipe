@@ -30,18 +30,20 @@ function HomePageWrapper() {
 export default function Index() {
   return (
     <>
-      <Routes>
-        <Route path="/" element={<HomePageWrapper />} />
-        <Route path="/recipe/:slug" element={<RecipeDetail />} />
-        <Route path="/search" element={<SearchPage />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/add-recipe" element={<AddRecipe />} />
-        <Route path="/my-recipes" element={<MyRecipes />} />
-        <Route path="/profile/:userId" element={<ProfilePage />} />
-        <Route path="/settings/profile" element={<EditProfile />} />
-        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-      </Routes>
+      <div className="page-content">
+        <Routes>
+          <Route path="/" element={<HomePageWrapper />} />
+          <Route path="/recipe/:slug" element={<RecipeDetail />} />
+          <Route path="/search" element={<SearchPage />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/add-recipe" element={<AddRecipe />} />
+          <Route path="/my-recipes" element={<MyRecipes />} />
+          <Route path="/profile/:userId" element={<ProfilePage />} />
+          <Route path="/settings/profile" element={<EditProfile />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        </Routes>
+      </div>
 
       <BottomNav />
       <Footer />

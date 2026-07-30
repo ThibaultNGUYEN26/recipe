@@ -17,6 +17,8 @@ function SearchBar({ searchQuery, onSearchChange }) {
         placeholder={getTranslation(language, 'searchPlaceholder')}
         value={searchQuery}
         onChange={(e) => onSearchChange(e.target.value)}
+        inputMode="search"
+        enterKeyHint="search"
       />
       {searchQuery && (
         <button className="clear-search" onClick={handleClear}>

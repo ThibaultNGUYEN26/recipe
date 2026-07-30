@@ -84,6 +84,7 @@ app.get("/api/recipes", async (req, res) => {
         category: true,
         images: { where: { isMain: true } },
         translations: { where: { language: lang } },
+        author: { select: { id: true, name: true, avatarUrl: true } },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -96,6 +97,9 @@ app.get("/api/recipes", async (req, res) => {
         description: t?.description,
         image: r.images[0]?.url || null,
         category: { slug: r.category.slug, label: r.category.label },
+        authorId:     r.author?.id ?? null,
+        authorName:   r.author?.name ?? null,
+        authorAvatar: r.author?.avatarUrl ?? null,
       };
     });
 

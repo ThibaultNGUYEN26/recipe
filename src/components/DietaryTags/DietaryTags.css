@@ -28,14 +28,16 @@
   overflow: hidden;
 }
 
-.dietary-tag:hover {
+.dietary-tag:hover,
+.dietary-tag:active {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   border-radius: 20px;
   width: auto;
   padding: 6px 12px;
 }
 
-.dietary-tag:hover .tag-label {
+.dietary-tag:hover .tag-label,
+.dietary-tag:active .tag-label {
   display: inline;
   margin-right: 4px;
 }
@@ -57,5 +59,10 @@
     top: 8px;
     right: 8px;
     gap: 6px;
+  }
+
+  .dietary-tag {
+    width: 36px;
+    height: 36px;
   }
 }

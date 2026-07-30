@@ -71,7 +71,7 @@
 
 /* Label — always visible */
 .nav-label {
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.01em;
   line-height: 1;
@@ -143,4 +143,15 @@
   margin: 0 4px;
   opacity: 0.6;
   flex-shrink: 0;
+}
+
+@media (max-width: 390px) {
+  .dock-inner {
+    padding: 8px 16px;
+    gap: 8px;
+  }
+
+  .nav-item {
+    min-width: 48px;
+  }
 }

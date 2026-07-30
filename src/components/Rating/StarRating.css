@@ -18,6 +18,11 @@
   font-size: 1.5rem;
   line-height: 1;
   padding: 0;
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transition: color 0.15s, transform 0.1s;
 }
 
@@ -31,6 +36,11 @@
 }
 
 .star:hover:not(:disabled) {
+  transform: scale(1.15);
+  color: #f59e0b;
+}
+
+.star:active:not(:disabled) {
   transform: scale(1.15);
   color: #f59e0b;
 }

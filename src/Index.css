@@ -67,13 +67,26 @@ body {
   color: var(--text-primary);
   transition: background-color 0.3s ease, color 0.3s ease;
   padding-bottom: calc(90px + env(safe-area-inset-bottom));
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
 .recipe-container {
-  min-height: 100vh;
+  flex: 1;
   position: relative;
   background: var(--bg-primary);
   overflow-x: hidden;
+}
+
+.page-content {
+  flex: 1;
 }
 
 @media (max-width: 768px) {

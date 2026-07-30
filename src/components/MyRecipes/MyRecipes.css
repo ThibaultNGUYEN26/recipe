@@ -44,7 +44,7 @@
   background: rgba(239, 68, 68, 0.1);
 }
 
-
+.my-recipes-page {
   min-height: 100vh;
   background: var(--bg-primary);
   padding: 2rem 1.5rem;
