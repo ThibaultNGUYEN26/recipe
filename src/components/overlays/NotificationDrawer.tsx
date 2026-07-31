@@ -1,0 +1,196 @@
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useUI } from '../../contexts/UIContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { X, Bell, Heart, MessageSquare, UserPlus, Star, CheckCheck } from 'lucide-react';
+
+const API = import.meta.env.VITE_API_URL;
+
+interface Notification {
+  id: number;
+  type: 'follow' | 'comment' | 'rating';
+  read: boolean;
+  message: string | null;
+  createdAt: string;
+  actor: { id: number; name: string | null; avatarUrl: string | null };
+  recipeSlug: string | null;
+  recipeTitle: string | null;
+}
+
+const TYPE_ICON: Record<string, React.ReactNode> = {
+  follow: <UserPlus className="w-3.5 h-3.5 text-amber-700" />,
+  comment: <MessageSquare className="w-3.5 h-3.5 text-sky-500" />,
+  rating: <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />,
+  like: <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />,
+};
+
+function TYPE_MESSAGE(type: string, actorName: string | null, recipeTitle: string | null) {
+  const name = actorName ?? 'Someone';
+  switch (type) {
+    case 'follow': return `${name} started following you`;
+    case 'comment': return `${name} commented on${recipeTitle ? ` "${recipeTitle}"` : ' your recipe'}`;
+    case 'rating': return `${name} rated${recipeTitle ? ` "${recipeTitle}"` : ' your recipe'}`;
+    default: return `${name} interacted with${recipeTitle ? ` "${recipeTitle}"` : ' your recipe'}`;
+  }
+}
+
+function timeAgo(dateStr: string) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+
+function imgSrc(url: string | null | undefined) {
+  if (!url) return null;
+  return url.startsWith('/') ? `${API}${url}` : url;
+}
+
+export default function NotificationDrawer() {
+  const { notifDrawerOpen, closeNotifDrawer, unreadNotifCount, setUnreadNotifCount } = useUI();
+  const { user } = useAuth();
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!notifDrawerOpen || !user) return;
+    setLoading(true);
+    fetch(`${API}/api/notifications`, { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => {
+        setNotifications(Array.isArray(d) ? d : []);
+        // Sync count from fetched data
+        const unread = Array.isArray(d) ? d.filter((n: Notification) => !n.read).length : 0;
+        setUnreadNotifCount(unread);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [notifDrawerOpen, user]);
+
+  // SSE stream — connect when logged in, prepend new notifications in real time
+  useEffect(() => {
+    if (!user) return;
+    const es = new EventSource(`${API}/api/notifications/stream`, { withCredentials: true });
+    es.onmessage = (e) => {
+      try {
+        const n: Notification = JSON.parse(e.data);
+        setNotifications((prev) => [n, ...prev]);
+        setUnreadNotifCount((c) => c + 1);
+      } catch { /* ping */ }
+    };
+    return () => es.close();
+  }, [user?.id]);
+
+  async function markAllRead() {
+    await fetch(`${API}/api/notifications/read`, { method: 'PATCH', credentials: 'include' });
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    setUnreadNotifCount(0);
+  }
+
+  if (!notifDrawerOpen) return null;
+
+  const unreadCount = unreadNotifCount;
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end bg-stone-900/50 backdrop-blur-sm"
+      onClick={closeNotifDrawer}>
+      <div
+        className="w-full max-w-md h-full shadow-2xl flex flex-col border-l"
+        style={{ backgroundColor: '#FAF8F5', borderColor: 'rgba(214,211,209,0.8)' }}
+        onClick={(e) => e.stopPropagation()}>
+
+        {/* Header */}
+        <div className="px-5 py-4 flex items-center justify-between"
+          style={{ borderBottom: '1px solid rgba(214,211,209,0.8)', backgroundColor: '#FAF8F5' }}>
+          <div className="flex items-center gap-2">
+            <Bell className="w-5 h-5 text-amber-700" />
+            <h2 className="font-serif text-lg font-bold text-stone-900">Notifications</h2>
+            {unreadCount > 0 && (
+              <span className="bg-amber-600 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                {unreadCount}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {unreadCount > 0 && (
+              <button onClick={markAllRead}
+                className="text-xs font-semibold text-amber-800 hover:text-amber-900 flex items-center gap-1 hover:bg-amber-50 px-2.5 py-1 rounded-xl transition-colors">
+                <CheckCheck className="w-3.5 h-3.5" /> Mark all read
+              </button>
+            )}
+            <button onClick={closeNotifDrawer}
+              className="p-1.5 text-stone-400 hover:text-stone-800 rounded-full hover:bg-stone-100 transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* List */}
+        <div className="flex-1 overflow-y-auto divide-y divide-stone-100 p-2">
+          {loading ? (
+            <div className="space-y-3 p-3">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="flex gap-3 items-start animate-pulse">
+                  <div className="w-10 h-10 rounded-full bg-stone-200 shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 bg-stone-200 rounded w-3/4" />
+                    <div className="h-2.5 bg-stone-100 rounded w-1/3" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : notifications.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-64 text-center p-6">
+              <Bell className="w-10 h-10 stroke-1 mb-2 text-stone-300" />
+              <p className="text-sm font-bold text-stone-600">No notifications yet</p>
+              <p className="text-xs text-stone-400 mt-1">Interactions with your recipes will show up here.</p>
+            </div>
+          ) : (
+            notifications.map((n) => (
+              <div key={n.id}
+                className={`flex items-start gap-3 p-3.5 rounded-2xl transition-colors ${!n.read ? 'bg-amber-50/50 hover:bg-amber-50/80' : 'hover:bg-stone-50'}`}>
+
+                {/* Actor avatar + type icon badge */}
+                <div className="relative shrink-0">
+                  {n.type === 'follow' ? (
+                    <Link to={`/profile/${n.actor.id}`} onClick={closeNotifDrawer}>
+                      <div className="w-10 h-10 rounded-full bg-amber-800 text-white flex items-center justify-center font-bold overflow-hidden">
+                        {n.actor.avatarUrl
+                          ? <img src={imgSrc(n.actor.avatarUrl)!} alt="" className="w-full h-full object-cover" />
+                          : n.actor.name?.[0]?.toUpperCase() ?? '?'}
+                      </div>
+                    </Link>
+                  ) : (
+                    <Link to={n.recipeSlug ? `/recipe/${n.recipeSlug}` : '#'} onClick={closeNotifDrawer}>
+                      <div className="w-10 h-10 rounded-full bg-amber-800 text-white flex items-center justify-center font-bold overflow-hidden">
+                        {n.actor.avatarUrl
+                          ? <img src={imgSrc(n.actor.avatarUrl)!} alt="" className="w-full h-full object-cover" />
+                          : n.actor.name?.[0]?.toUpperCase() ?? '?'}
+                      </div>
+                    </Link>
+                  )}
+                  <div className="absolute -bottom-1 -right-1 bg-white p-1 rounded-full shadow-sm border border-stone-200">
+                    {TYPE_ICON[n.type] ?? TYPE_ICON.like}
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs text-stone-800 leading-snug">
+                    {n.message || TYPE_MESSAGE(n.type, n.actor.name, n.recipeTitle)}
+                  </p>
+                  <p className="text-[10px] text-stone-400 font-medium mt-1">{timeAgo(n.createdAt)}</p>
+                </div>
+
+                {!n.read && <span className="w-2 h-2 rounded-full bg-amber-600 shrink-0 mt-1" />}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

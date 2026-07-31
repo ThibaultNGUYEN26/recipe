@@ -27,6 +27,10 @@ model User {
   ratings      Rating[]
   savedRecipes SavedRecipe[]
   recipes      Recipe[]
+  comments     Comment[]
+  commentLikes CommentLike[]
+  notifications        Notification[] @relation("NotificationRecipient")
+  sentNotifications    Notification[] @relation("NotificationActor")
 }
 
 model Recipe {
@@ -45,6 +49,8 @@ model Recipe {
   author       User?         @relation(fields: [authorId], references: [id])
   ratings      Rating[]
   savedBy      SavedRecipe[]
+  comments     Comment[]
+  notifications Notification[]
 }
 
 model RecipeTranslation {
@@ -104,4 +110,42 @@ model SavedRecipe {
   savedAt  DateTime @default(now())
 
   @@unique([userId, recipeId])
+}
+
+model Comment {
+  id        Int           @id @default(autoincrement())
+  recipeId  Int
+  recipe    Recipe        @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User          @relation(fields: [userId], references: [id])
+  text      String
+  parentId  Int?
+  parent    Comment?      @relation("Replies", fields: [parentId], references: [id])
+  children  Comment[]     @relation("Replies")
+  likes     CommentLike[]
+  createdAt DateTime      @default(now())
+}
+
+model CommentLike {
+  id        Int     @id @default(autoincrement())
+  commentId Int
+  comment   Comment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User    @relation(fields: [userId], references: [id])
+
+  @@unique([commentId, userId])
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  actorId   Int
+  actor     User     @relation("NotificationActor", fields: [actorId], references: [id], onDelete: Cascade)
+  type      String
+  recipeId  Int?
+  recipe    Recipe?  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  message   String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
 }

@@ -1,0 +1,149 @@
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { useLanguage } from '../../contexts/LanguageContext';
+import RecipeCard from './RecipeCard';
+import type { RecipeListItem } from '../../types';
+import { Sparkles, Flame, Clock, Leaf, UtensilsCrossed, Star } from 'lucide-react';
+
+const API = import.meta.env.VITE_API_URL;
+
+const FEED_FILTERS = [
+  { key: 'all', label: 'All Recipes', Icon: Sparkles },
+  { key: 'following', label: 'Following Cooks', Icon: UtensilsCrossed },
+  { key: 'trending', label: 'Trending', Icon: Flame },
+  { key: 'quick', label: 'Under 30 Mins', Icon: Clock },
+  { key: 'vegetarian', label: 'Vegetarian', Icon: Leaf },
+] as const;
+
+function imgSrc(url: string | null | undefined) {
+  if (!url) return null;
+  return url.startsWith('/') ? `${API}${url}` : url;
+}
+
+function HeroCard({ recipe }: { recipe: RecipeListItem }) {
+  const info = recipe.info as Record<string, string> | null | undefined;
+  return (
+    <Link to={`/recipe/${recipe.slug}`}
+      className="relative rounded-3xl overflow-hidden bg-stone-900 text-white cursor-pointer shadow-xl group border border-stone-800 block">
+      <div className="relative aspect-[16/9] sm:aspect-[21/9] w-full">
+        {recipe.image ? (
+          <img src={imgSrc(recipe.image)!} alt={recipe.title ?? ''}
+            className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700 ease-out" />
+        ) : (
+          <div className="w-full h-full bg-stone-800 flex items-center justify-center text-6xl">🍽️</div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/40 to-transparent" />
+      </div>
+
+      <div className="absolute bottom-0 inset-x-0 p-5 sm:p-8">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="bg-amber-600 text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full flex items-center gap-1">
+            <Sparkles className="w-3 h-3" />
+            Featured Recipe
+          </span>
+          {recipe.authorName && (
+            <span className="text-stone-300 text-xs font-semibold">By {recipe.authorName}</span>
+          )}
+        </div>
+        <h2 className="font-serif text-2xl sm:text-3xl font-extrabold text-white leading-tight group-hover:text-amber-300 transition-colors">
+          {recipe.title}
+        </h2>
+        {recipe.description && (
+          <p className="text-stone-300 text-xs sm:text-sm line-clamp-2 mt-2 max-w-2xl font-light">
+            {recipe.description}
+          </p>
+        )}
+        <div className="flex items-center gap-4 text-xs font-medium text-stone-300 mt-4">
+          {info?.totalTime && <span>⏱ {info.totalTime}</span>}
+          {recipe.avgRating != null && (
+            <><span>•</span><span>⭐ {recipe.avgRating.toFixed(1)} rating</span></>
+          )}
+          {recipe.ratingCount != null && recipe.ratingCount > 0 && (
+            <><span>•</span><span>❤️ {recipe.ratingCount} cooks loved this</span></>
+          )}
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+export default function HomeFeed() {
+  const { language } = useLanguage();
+  const [recipes, setRecipes] = useState<RecipeListItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState<'all' | 'following' | 'trending' | 'quick' | 'vegetarian'>('all');
+
+  useEffect(() => {
+    setLoading(true);
+    fetch(`${API}/api/recipes?lang=${language}`, { credentials: 'include' })
+      .then((r) => r.json())
+      .then((data: RecipeListItem[]) => setRecipes(Array.isArray(data) ? data : []))
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, [language]);
+
+  const filteredRecipes = recipes.filter((r) => {
+    if (activeFilter === 'quick') {
+      const t = (r.info as Record<string, string> | null | undefined)?.totalTime;
+      if (!t) return false;
+      return parseInt(t) <= 30;
+    }
+    if (activeFilter === 'vegetarian') {
+      return (r.tags as string[] | undefined)?.some((t) => /veg/i.test(t));
+    }
+    return true;
+  });
+
+  const featuredRecipe = filteredRecipes[0];
+  const gridRecipes = filteredRecipes.slice(1);
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-4 space-y-6 pb-12">
+      {/* Featured hero */}
+      {featuredRecipe && activeFilter === 'all' && !loading && (
+        <HeroCard recipe={featuredRecipe} />
+      )}
+
+      {/* Feed filter bar */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none border-b pt-2"
+        style={{ borderColor: 'rgba(214,211,209,0.6)' }}>
+        {FEED_FILTERS.map(({ key, label, Icon }) => (
+          <button key={key} onClick={() => setActiveFilter(key)}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all shrink-0"
+            style={activeFilter === key
+              ? { backgroundColor: '#92400e', color: '#fff' }
+              : { backgroundColor: 'var(--color-surface)', color: '#78716c' }}>
+            <Icon className="w-3.5 h-3.5" />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Recipe grid */}
+      {loading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="rounded-3xl h-96 animate-pulse" style={{ backgroundColor: 'var(--color-border)' }} />
+          ))}
+        </div>
+      ) : filteredRecipes.length === 0 ? (
+        <div className="rounded-3xl p-12 text-center border"
+          style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
+          <UtensilsCrossed className="w-12 h-12 mx-auto mb-3" style={{ color: 'var(--color-border)' }} />
+          <h3 className="font-serif text-lg font-bold" style={{ color: 'var(--color-text)' }}>No recipes found</h3>
+          <p className="text-xs mt-1" style={{ color: 'var(--color-muted)' }}>Try switching feed filters</p>
+          <button onClick={() => setActiveFilter('all')}
+            className="mt-4 bg-amber-800 text-white text-xs font-semibold px-5 py-2.5 rounded-full hover:bg-amber-900 transition-colors">
+            Show All Recipes
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {(activeFilter === 'all' ? gridRecipes : filteredRecipes).map((r) => (
+            <RecipeCard key={r.slug} recipe={r} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

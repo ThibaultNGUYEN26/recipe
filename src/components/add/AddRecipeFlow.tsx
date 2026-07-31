@@ -1,0 +1,720 @@
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { useUI } from '../../contexts/UIContext';
+import { useLanguage } from '../../contexts/LanguageContext';
+import {
+  Plus, Trash2, MoveUp, MoveDown, Sparkles, Eye,
+  ArrowRight, ArrowLeft, X, Crop as CropIcon
+} from 'lucide-react';
+import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
+
+const API = import.meta.env.VITE_API_URL;
+
+const PRESET_IMAGES = [
+  { url: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600', name: 'Fresh Bowl' },
+  { url: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600', name: 'Pizza' },
+  { url: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=600', name: 'Pancakes' },
+  { url: 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=600', name: 'Colorful Dish' },
+  { url: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600', name: 'Burger' },
+  { url: 'https://images.unsplash.com/photo-1551782450-a2132b4ba21d?w=600', name: 'Steak' },
+  { url: 'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=600', name: 'Dessert' },
+  { url: 'https://images.unsplash.com/photo-1621996346565-e3d5d6281232?w=600', name: 'Pasta' },
+];
+
+const DIETARY_LIST = ['vegetarian', 'vegan', 'gluten-free', 'dairy-free', 'low-carb', 'nut-free', 'keto'];
+const DIFFICULTY_LIST = ['Facile', 'Moyen', 'Difficile'];
+
+interface IngRow { id: string; name: string; amount: string; unit: string }
+interface IngSection { id: string; section: string; rows: IngRow[] }
+interface StepRow { id: string; stepNumber: number; title: string; instruction: string; timerMinutes: string; tip: string }
+
+interface TranslationFields {
+  title: string;
+  description: string;
+  ingredients: IngSection[];
+  steps: StepRow[];
+  tips: string;
+}
+
+function emptyTranslation(): TranslationFields {
+  return {
+    title: '',
+    description: '',
+    ingredients: [{ id: '1', section: '', rows: [{ id: '1', name: '', amount: '', unit: '' }] }],
+    steps: [{ id: '1', stepNumber: 1, title: '', instruction: '', timerMinutes: '', tip: '' }],
+    tips: '',
+  };
+}
+
+export default function AddRecipeFlow() {
+  const { user } = useAuth();
+  const { showToast } = useUI();
+  const { language } = useLanguage();
+  const navigate = useNavigate();
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const [stepPage, setStepPage] = useState<1 | 2 | 3>(1);
+  const [editLang, setEditLang] = useState<'fr' | 'en'>('fr');
+  const [translations, setTranslations] = useState<Record<'fr' | 'en', TranslationFields>>({ fr: emptyTranslation(), en: emptyTranslation() });
+
+  // Shared fields
+  const [slug, setSlug] = useState('');
+  const [categoryId, setCategoryId] = useState('');
+  const [categories, setCategories] = useState<{ id: number; slug: string; label: string }[]>([]);
+  const [difficulty, setDifficulty] = useState('Facile');
+  const [prepTime, setPrepTime] = useState('');
+  const [cookTime, setCookTime] = useState('');
+  const [servings, setServings] = useState(4);
+  const [dietaryTags, setDietaryTags] = useState<string[]>([]);
+
+  // Image
+  const [coverImage, setCoverImage] = useState(PRESET_IMAGES[0].url);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [showImagePicker, setShowImagePicker] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+
+  // Crop
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [crop, setCrop] = useState<Crop>();
+  const [completedCrop, setCompletedCrop] = useState<Crop>();
+  const cropImgRef = useRef<HTMLImageElement>(null);
+
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    fetch(`${API}/api/categories`, { credentials: 'include' })
+      .then((r) => r.json())
+      .then(setCategories)
+      .catch(console.error);
+  }, []);
+
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 px-6">
+        <p className="text-center text-sm" style={{ color: 'var(--color-muted)' }}>Sign in to add recipes</p>
+        <Link to="/login" className="px-6 py-3 rounded-2xl bg-stone-900 text-white text-sm font-medium">Sign in</Link>
+      </div>
+    );
+  }
+
+  const tr = translations[editLang];
+
+  function setTr(updates: Partial<TranslationFields>) {
+    setTranslations((prev) => ({ ...prev, [editLang]: { ...prev[editLang], ...updates } }));
+  }
+
+  function slugify(s: string) {
+    return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  }
+
+  // Section helpers
+  function addSection() {
+    setTr({ ingredients: [...tr.ingredients, { id: Date.now().toString(), section: '', rows: [{ id: Date.now().toString() + 'r', name: '', amount: '', unit: '' }] }] });
+  }
+  function removeSection(sid: string) {
+    if (tr.ingredients.length <= 1) return;
+    setTr({ ingredients: tr.ingredients.filter((s) => s.id !== sid) });
+  }
+  function updateSection(sid: string, section: string) {
+    setTr({ ingredients: tr.ingredients.map((s) => s.id === sid ? { ...s, section } : s) });
+  }
+  // Ingredient row helpers
+  function addIngredient(sid: string) {
+    setTr({ ingredients: tr.ingredients.map((s) => s.id !== sid ? s : { ...s, rows: [...s.rows, { id: Date.now().toString(), name: '', amount: '', unit: '' }] }) });
+  }
+  function removeIngredient(sid: string, rid: string) {
+    setTr({ ingredients: tr.ingredients.map((s) => s.id !== sid ? s : { ...s, rows: s.rows.filter((r) => r.id !== rid) }) });
+  }
+  function updateIngredient(sid: string, rid: string, field: keyof IngRow, value: string) {
+    setTr({ ingredients: tr.ingredients.map((s) => s.id !== sid ? s : { ...s, rows: s.rows.map((r) => r.id === rid ? { ...r, [field]: value } : r) }) });
+  }
+
+  // Step helpers
+  function addStep() {
+    const next = tr.steps.length + 1;
+    setTr({ steps: [...tr.steps, { id: Date.now().toString(), stepNumber: next, title: '', instruction: '', timerMinutes: '', tip: '' }] });
+  }
+  function removeStep(id: string) {
+    setTr({ steps: tr.steps.filter((s) => s.id !== id).map((s, i) => ({ ...s, stepNumber: i + 1 })) });
+  }
+  function updateStep(id: string, field: keyof StepRow, value: string) {
+    setTr({ steps: tr.steps.map((s) => s.id === id ? { ...s, [field]: value } : s) });
+  }
+  function moveStep(idx: number, dir: 'up' | 'down') {
+    const arr = [...tr.steps];
+    const target = dir === 'up' ? idx - 1 : idx + 1;
+    if (target < 0 || target >= arr.length) return;
+    [arr[idx], arr[target]] = [arr[target], arr[idx]];
+    setTr({ steps: arr.map((s, i) => ({ ...s, stepNumber: i + 1 })) });
+  }
+
+  function toggleDietary(tag: string) {
+    setDietaryTags((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]);
+  }
+
+  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    // Reset input so same file can be re-selected
+    e.target.value = '';
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setCropSrc(reader.result as string);
+      setCrop(undefined);
+      setCompletedCrop(undefined);
+    };
+    reader.readAsDataURL(f);
+  }
+
+  function onCropImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
+    const { naturalWidth: w, naturalHeight: h } = e.currentTarget;
+    const initial = centerCrop(makeAspectCrop({ unit: '%', width: 90 }, 1, w, h), w, h);
+    setCrop(initial);
+  }
+
+  function applyCrop() {
+    const img = cropImgRef.current;
+    if (!img || !completedCrop) return;
+    const canvas = document.createElement('canvas');
+    const size = 800;
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d')!;
+    const scaleX = img.naturalWidth / img.width;
+    const scaleY = img.naturalHeight / img.height;
+    ctx.drawImage(
+      img,
+      completedCrop.x * scaleX,
+      completedCrop.y * scaleY,
+      completedCrop.width * scaleX,
+      completedCrop.height * scaleY,
+      0, 0, size, size
+    );
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const file = new File([blob], 'cover.jpg', { type: 'image/jpeg' });
+      setImageFile(file);
+      setCoverImage(URL.createObjectURL(blob));
+      setCropSrc(null);
+      showToast('Cover photo set!', undefined, 'success');
+    }, 'image/jpeg', 0.92);
+  }
+
+  async function publish() {
+    const frTr = translations.fr;
+    if (!frTr.title.trim()) { showToast('Title required', 'Please fill the FR title', 'error'); return; }
+    if (!slug) { showToast('Slug required', 'A URL slug is needed', 'error'); return; }
+    if (!categoryId) { showToast('Category required', undefined, 'error'); return; }
+    if (tr.ingredients.length > 1 && tr.ingredients.some((s) => !s.section.trim())) {
+      showToast('Section names required', 'Please name all ingredient sections', 'error'); return;
+    }
+
+    setSubmitting(true);
+    try {
+      const totalTime = prepTime && cookTime
+        ? `${parseInt(prepTime) + parseInt(cookTime)} min`
+        : prepTime ? `${prepTime} min` : cookTime ? `${cookTime} min` : undefined;
+
+      const info = {
+        prepTime: prepTime ? `${prepTime} min` : undefined,
+        cookTime: cookTime ? `${cookTime} min` : undefined,
+        totalTime,
+        servings,
+        difficulty,
+      };
+
+      const translationRows = (['fr', 'en'] as const)
+        .filter((l) => translations[l].title.trim())
+        .map((l) => {
+          const t = translations[l];
+          return {
+            language: l,
+            title: t.title.trim(),
+            description: t.description.trim() || undefined,
+            ingredients: t.ingredients.map((s) => ({
+              section: s.section || 'main',
+              items: s.rows.filter((r) => r.name.trim()).map((r) => `${r.amount} ${r.unit} ${r.name}`.trim()),
+            })).filter((s) => s.items.length > 0),
+            instructions: t.steps.filter((s) => s.instruction.trim()).map((s) => ({
+              step: s.stepNumber,
+              text: s.instruction.trim(),
+              timerMinutes: s.timerMinutes ? parseInt(s.timerMinutes) : undefined,
+            })),
+            tips: t.tips ? t.tips.split('\n').filter(Boolean) : undefined,
+          };
+        });
+
+      const fd = new FormData();
+      fd.append('slug', slug);
+      fd.append('categoryId', categoryId);
+      fd.append('info', JSON.stringify(info));
+      fd.append('tags', JSON.stringify(dietaryTags));
+      fd.append('translations', JSON.stringify(translationRows));
+      if (imageFile) {
+        fd.append('image', imageFile);
+      }
+
+      const res = await fetch(`${API}/api/recipes`, { method: 'POST', credentials: 'include', body: fd });
+      if (res.ok) {
+        const d = await res.json();
+        showToast('Recipe published!', undefined, 'success');
+        navigate(`/recipe/${d.slug}`);
+      } else {
+        const d = await res.json();
+        showToast(d.error ?? 'Failed to publish', undefined, 'error');
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  const inputCls = "w-full bg-stone-50 border border-stone-200 text-stone-900 text-sm rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-amber-800/30 font-medium";
+  const labelCls = "text-xs font-bold text-stone-700 uppercase tracking-wider";
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 space-y-6 py-4 pb-24">
+
+      {/* Header */}
+      <div className="p-5 rounded-3xl border border-stone-200/80 shadow-sm flex items-center justify-between"
+        style={{ backgroundColor: 'var(--color-surface)' }}>
+        <div>
+          <h1 className="font-serif text-2xl font-bold" style={{ color: 'var(--color-text)' }}>Publish New Recipe</h1>
+          <p className="text-xs mt-0.5" style={{ color: 'var(--color-muted)' }}>Share your culinary masterpiece with the world</p>
+        </div>
+        <button onClick={() => setShowPreview(true)}
+          className="flex items-center gap-1.5 text-xs font-bold text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-2 rounded-2xl transition-colors">
+          <Eye className="w-4 h-4 text-amber-800" /> Preview
+        </button>
+      </div>
+
+      {/* Stepper */}
+      <div className="grid grid-cols-3 gap-2 p-1.5 rounded-2xl border border-stone-200" style={{ backgroundColor: '#f5f5f4' }}>
+        {([1, 2, 3] as const).map((n) => (
+          <button key={n} onClick={() => setStepPage(n)}
+            className="py-2 text-xs font-bold rounded-xl transition-all"
+            style={stepPage === n ? { backgroundColor: '#92400e', color: '#fff' } : { color: '#57534e' }}>
+            {n === 1 ? '1. Basic Info' : n === 2 ? '2. Ingredients & Steps' : '3. Tags & Publish'}
+          </button>
+        ))}
+      </div>
+
+      {/* STEP 1: BASIC INFO */}
+      {stepPage === 1 && (
+        <section className="p-6 rounded-3xl border border-stone-200/80 shadow-sm space-y-5"
+          style={{ backgroundColor: 'var(--color-surface)' }}>
+
+          {/* Language toggle */}
+          <div className="flex items-center justify-between">
+            <span className={labelCls}>Language</span>
+            <div className="flex gap-1 p-1 rounded-xl" style={{ backgroundColor: '#f5f5f4' }}>
+              {(['fr', 'en'] as const).map((l) => (
+                <button key={l} onClick={() => setEditLang(l)}
+                  className="px-4 py-1.5 rounded-lg text-xs font-bold transition-all"
+                  style={editLang === l ? { backgroundColor: '#92400e', color: '#fff' } : { color: '#57534e' }}>
+                  {l === 'fr' ? '🇫🇷 Français' : '🇬🇧 English'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Cover image */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <label className={labelCls}>Cover Photo</label>
+              <button type="button" onClick={() => setShowImagePicker(true)}
+                className="text-amber-800 hover:underline text-xs font-semibold">
+                Choose preset
+              </button>
+            </div>
+            <div className="relative aspect-[16/9] w-full rounded-2xl overflow-hidden bg-stone-100 border border-stone-200 group">
+              <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-stone-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                <label className="bg-white text-stone-900 text-xs font-bold px-4 py-2 rounded-xl cursor-pointer hover:bg-stone-100 shadow-md">
+                  Upload File
+                  <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
+                </label>
+                <button type="button" onClick={() => setShowImagePicker(true)}
+                  className="bg-stone-900 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-amber-800 shadow-md">
+                  Presets
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Title & description */}
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <label className={labelCls}>Recipe Title ({editLang.toUpperCase()}) *</label>
+              <input type="text" value={tr.title}
+                onChange={(e) => { setTr({ title: e.target.value }); if (editLang === 'fr' && !slug) setSlug(slugify(e.target.value)); }}
+                placeholder="e.g. Truffle & Wild Mushroom Tagliatelle"
+                className={inputCls} />
+            </div>
+            <div className="space-y-1.5">
+              <label className={labelCls}>Short Description ({editLang.toUpperCase()})</label>
+              <textarea rows={3} value={tr.description} onChange={(e) => setTr({ description: e.target.value })}
+                placeholder="Describe the flavor, texture, and story…"
+                className="w-full bg-stone-50 border border-stone-200 text-stone-900 text-xs rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-amber-800/30 resize-none font-medium" />
+            </div>
+          </div>
+
+          {/* Slug & category */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className={labelCls}>URL Slug *</label>
+              <input type="text" value={slug} onChange={(e) => setSlug(slugify(e.target.value))}
+                placeholder="my-recipe-slug"
+                className="w-full bg-stone-50 border border-stone-200 text-stone-900 text-xs font-mono rounded-xl px-3 py-2.5 focus:outline-none" />
+            </div>
+            <div className="space-y-1.5">
+              <label className={labelCls}>Category *</label>
+              <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}
+                className="w-full bg-stone-50 border border-stone-200 text-stone-900 text-xs font-bold rounded-xl px-3 py-2.5 focus:outline-none">
+                <option value="">Select…</option>
+                {categories.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+              </select>
+            </div>
+          </div>
+
+          {/* Metrics */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { label: 'Prep (min)', value: prepTime, onChange: setPrepTime, placeholder: '15' },
+              { label: 'Cook (min)', value: cookTime, onChange: setCookTime, placeholder: '30' },
+            ].map(({ label, value, onChange, placeholder }) => (
+              <div key={label} className="space-y-1">
+                <label className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">{label}</label>
+                <input type="number" min={0} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
+                  className="w-full bg-stone-50 border border-stone-200 text-stone-900 text-xs font-bold rounded-xl px-3 py-2 focus:outline-none text-center" />
+              </div>
+            ))}
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">Servings</label>
+              <input type="number" min={1} value={servings} onChange={(e) => setServings(parseInt(e.target.value) || 1)}
+                className="w-full bg-stone-50 border border-stone-200 text-stone-900 text-xs font-bold rounded-xl px-3 py-2 focus:outline-none text-center" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">Difficulty</label>
+              <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)}
+                className="w-full bg-stone-50 border border-stone-200 text-stone-900 text-xs font-bold rounded-xl px-2 py-2 focus:outline-none">
+                {DIFFICULTY_LIST.map((d) => <option key={d} value={d}>{d}</option>)}
+              </select>
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-3">
+            <button onClick={() => setStepPage(2)}
+              className="flex items-center gap-2 bg-stone-900 text-white font-bold text-xs px-6 py-3 rounded-2xl hover:bg-amber-800 transition-colors shadow-md">
+              Next: Ingredients & Steps <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </section>
+      )}
+
+      {/* STEP 2: INGREDIENTS & STEPS */}
+      {stepPage === 2 && (
+        <div className="space-y-6">
+          {/* Language toggle */}
+          <div className="flex gap-1 p-1 rounded-xl self-start w-fit" style={{ backgroundColor: '#f5f5f4' }}>
+            {(['fr', 'en'] as const).map((l) => (
+              <button key={l} onClick={() => setEditLang(l)}
+                className="px-4 py-1.5 rounded-lg text-xs font-bold transition-all"
+                style={editLang === l ? { backgroundColor: '#92400e', color: '#fff' } : { color: '#57534e' }}>
+                {l === 'fr' ? '🇫🇷 Français' : '🇬🇧 English'}
+              </button>
+            ))}
+          </div>
+
+          {/* Ingredients */}
+          <section className="p-6 rounded-3xl border border-stone-200/80 shadow-sm space-y-4"
+            style={{ backgroundColor: 'var(--color-surface)' }}>
+            <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+              <div>
+                <h2 className="font-serif text-lg font-bold" style={{ color: 'var(--color-text)' }}>Ingredients List</h2>
+                <p className="text-xs" style={{ color: 'var(--color-muted)' }}>Group by section (e.g. Brownie, Cookie)</p>
+              </div>
+              <button type="button" onClick={addSection}
+                className="flex items-center gap-1 text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-xl transition-colors">
+                <Plus className="w-3.5 h-3.5" /> Add Section
+              </button>
+            </div>
+
+            <div className="space-y-5">
+              {tr.ingredients.map((sec) => (
+                <div key={sec.id} className="space-y-2">
+                  {/* Section header — only shown when there are multiple sections */}
+                  {tr.ingredients.length > 1 && (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        placeholder="Section name (e.g. Brownie batter) *"
+                        value={sec.section}
+                        onChange={(e) => updateSection(sec.id, e.target.value)}
+                        required
+                        className="flex-1 bg-white text-xs font-bold rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-800/30"
+                        style={{
+                          border: `1px solid ${sec.section.trim() === '' ? '#fca5a5' : 'var(--color-border)'}`,
+                          color: 'var(--color-text)',
+                        }}
+                      />
+                      <button type="button" onClick={() => removeSection(sec.id)}
+                        className="p-1.5 text-stone-400 hover:text-rose-600 rounded-lg hover:bg-stone-100 transition-colors">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Rows */}
+                  <div className="space-y-2 pl-3 border-l-2 border-stone-200">
+                    {sec.rows.map((row, idx) => (
+                      <div key={row.id} className="flex items-center gap-2 bg-stone-50 p-2.5 rounded-2xl border border-stone-200/80">
+                        <span className="text-xs font-mono text-stone-400 w-5 text-center shrink-0">{idx + 1}.</span>
+                        <input type="text" placeholder="Ingredient name…" value={row.name}
+                          onChange={(e) => updateIngredient(sec.id, row.id, 'name', e.target.value)}
+                          className="flex-1 bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 font-medium focus:outline-none" />
+                        <input type="text" value={row.amount} onChange={(e) => updateIngredient(sec.id, row.id, 'amount', e.target.value)}
+                          placeholder="200"
+                          className="w-16 bg-white text-xs border border-stone-200 rounded-xl px-2 py-2 font-bold text-center focus:outline-none" />
+                        <input type="text" placeholder="g / tbsp…" value={row.unit}
+                          onChange={(e) => updateIngredient(sec.id, row.id, 'unit', e.target.value)}
+                          className="w-20 bg-white text-xs border border-stone-200 rounded-xl px-2 py-2 focus:outline-none" />
+                        <button type="button" onClick={() => removeIngredient(sec.id, row.id)}
+                          disabled={sec.rows.length === 1}
+                          className="p-1.5 text-stone-400 hover:text-rose-600 rounded-lg hover:bg-stone-200 transition-colors disabled:opacity-30">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                    <button type="button" onClick={() => addIngredient(sec.id)}
+                      className="flex items-center gap-1 text-xs font-semibold text-stone-500 hover:text-amber-800 transition-colors ml-1">
+                      <Plus className="w-3.5 h-3.5" /> Add ingredient
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Steps */}
+          <section className="p-6 rounded-3xl border border-stone-200/80 shadow-sm space-y-4"
+            style={{ backgroundColor: 'var(--color-surface)' }}>
+            <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+              <div>
+                <h2 className="font-serif text-lg font-bold" style={{ color: 'var(--color-text)' }}>Preparation Steps</h2>
+                <p className="text-xs" style={{ color: 'var(--color-muted)' }}>Order steps logically, add timer durations</p>
+              </div>
+              <button type="button" onClick={addStep}
+                className="flex items-center gap-1 text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-xl transition-colors">
+                <Plus className="w-3.5 h-3.5" /> Add Step
+              </button>
+            </div>
+            <div className="space-y-4">
+              {tr.steps.map((st, idx) => (
+                <div key={st.id} className="bg-stone-50 p-4 rounded-2xl border border-stone-200 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-amber-900 bg-amber-100 px-2.5 py-1 rounded-full">Step {st.stepNumber}</span>
+                    <div className="flex items-center gap-1">
+                      <button type="button" onClick={() => moveStep(idx, 'up')} disabled={idx === 0}
+                        className="p-1 text-stone-500 hover:text-stone-900 disabled:opacity-30">
+                        <MoveUp className="w-3.5 h-3.5" />
+                      </button>
+                      <button type="button" onClick={() => moveStep(idx, 'down')} disabled={idx === tr.steps.length - 1}
+                        className="p-1 text-stone-500 hover:text-stone-900 disabled:opacity-30">
+                        <MoveDown className="w-3.5 h-3.5" />
+                      </button>
+                      <button type="button" onClick={() => removeStep(st.id)}
+                        className="p-1 text-stone-400 hover:text-rose-600 ml-2">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                  <input type="text" placeholder="Step title (e.g. Sear Mushrooms)" value={st.title}
+                    onChange={(e) => updateStep(st.id, 'title', e.target.value)}
+                    className="w-full bg-white text-xs font-bold border border-stone-200 rounded-xl px-3 py-2 focus:outline-none" />
+                  <textarea rows={2} placeholder="Step instructions…" value={st.instruction}
+                    onChange={(e) => updateStep(st.id, 'instruction', e.target.value)}
+                    className="w-full bg-white text-xs border border-stone-200 rounded-xl p-3 focus:outline-none resize-none" />
+                  <div className="flex gap-2">
+                    <input type="number" placeholder="Timer (mins)" value={st.timerMinutes}
+                      onChange={(e) => updateStep(st.id, 'timerMinutes', e.target.value)}
+                      className="w-32 bg-white text-xs border border-stone-200 rounded-xl px-3 py-1.5 focus:outline-none font-mono" />
+                    <input type="text" placeholder="Chef tip (optional)" value={st.tip}
+                      onChange={(e) => updateStep(st.id, 'tip', e.target.value)}
+                      className="flex-1 bg-white text-xs border border-stone-200 rounded-xl px-3 py-1.5 focus:outline-none" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <div className="flex items-center justify-between pt-2">
+            <button onClick={() => setStepPage(1)}
+              className="flex items-center gap-1.5 text-stone-700 bg-stone-100 font-bold text-xs px-5 py-3 rounded-2xl hover:bg-stone-200">
+              <ArrowLeft className="w-4 h-4" /> Back
+            </button>
+            <button onClick={() => setStepPage(3)}
+              className="flex items-center gap-2 bg-stone-900 text-white font-bold text-xs px-6 py-3 rounded-2xl hover:bg-amber-800 transition-colors shadow-md">
+              Next: Tags & Publish <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* STEP 3: TAGS & PUBLISH */}
+      {stepPage === 3 && (
+        <section className="p-6 rounded-3xl border border-stone-200/80 shadow-sm space-y-6"
+          style={{ backgroundColor: 'var(--color-surface)' }}>
+
+          {/* Dietary tags */}
+          <div className="space-y-2">
+            <label className={labelCls}>Dietary Tags</label>
+            <div className="flex flex-wrap gap-2">
+              {DIETARY_LIST.map((tag) => (
+                <button type="button" key={tag} onClick={() => toggleDietary(tag)}
+                  className="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all capitalize"
+                  style={dietaryTags.includes(tag)
+                    ? { backgroundColor: '#92400e', color: '#fff' }
+                    : { backgroundColor: '#f5f5f4', color: '#44403c' }}>
+                  {tag}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Tips */}
+          <div className="space-y-2">
+            <label className={labelCls}>Chef Advice & Substitutions ({editLang.toUpperCase()}) — one per line</label>
+            <textarea rows={3} value={tr.tips} onChange={(e) => setTr({ tips: e.target.value })}
+              placeholder={'e.g. Reserve pasta water before draining\nSubstitute with lemon juice'}
+              className="w-full bg-stone-50 border border-stone-200 text-stone-900 text-xs rounded-xl p-3 focus:outline-none resize-none font-medium" />
+          </div>
+
+          <div className="flex items-center justify-between pt-4 border-t border-stone-100">
+            <button type="button" onClick={() => setStepPage(2)}
+              className="flex items-center gap-1.5 text-stone-700 bg-stone-100 font-bold text-xs px-5 py-3 rounded-2xl hover:bg-stone-200">
+              <ArrowLeft className="w-4 h-4" /> Back
+            </button>
+            <button type="button" onClick={publish} disabled={submitting}
+              className="flex items-center gap-2 bg-amber-800 text-white font-bold text-xs px-8 py-3.5 rounded-2xl hover:bg-amber-900 transition-colors shadow-lg disabled:opacity-50">
+              <Sparkles className="w-4 h-4" />
+              {submitting ? 'Publishing…' : 'Publish Recipe Now'}
+            </button>
+          </div>
+        </section>
+      )}
+
+      {/* Crop Modal */}
+      {cropSrc && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/70 backdrop-blur-sm"
+          onClick={() => setCropSrc(null)}>
+          <div className="w-full max-w-lg bg-white rounded-3xl p-6 shadow-2xl border border-stone-100 space-y-4"
+            onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+              <div className="flex items-center gap-2">
+                <CropIcon className="w-5 h-5 text-amber-800" />
+                <h3 className="font-serif text-lg font-bold text-stone-900">Crop Cover Photo</h3>
+              </div>
+              <button onClick={() => setCropSrc(null)} className="p-1 text-stone-400 hover:text-stone-800">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-xs text-stone-500">Drag the selection to choose your cover area. The crop is always square.</p>
+            <div className="flex justify-center max-h-[55vh] overflow-auto rounded-2xl bg-stone-100">
+              <ReactCrop
+                crop={crop}
+                onChange={(c) => setCrop(c)}
+                onComplete={(c) => setCompletedCrop(c)}
+                aspect={1}
+                circularCrop={false}
+                className="max-w-full"
+              >
+                <img
+                  ref={cropImgRef}
+                  src={cropSrc}
+                  onLoad={onCropImageLoad}
+                  className="max-w-full max-h-[50vh] object-contain"
+                  alt="Crop source"
+                />
+              </ReactCrop>
+            </div>
+            <div className="flex gap-3 pt-1">
+              <button onClick={() => setCropSrc(null)}
+                className="flex-1 py-3 text-xs font-semibold text-stone-600 bg-stone-100 hover:bg-stone-200 rounded-xl transition-colors">
+                Cancel
+              </button>
+              <button onClick={applyCrop} disabled={!completedCrop}
+                className="flex-1 py-3 text-xs font-semibold text-white bg-amber-800 hover:bg-amber-900 rounded-xl transition-colors disabled:opacity-40 flex items-center justify-center gap-1.5">
+                <CropIcon className="w-3.5 h-3.5" /> Apply Crop
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Image Picker Modal */}
+      {showImagePicker && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm"
+          onClick={() => setShowImagePicker(false)}>
+          <div className="w-full max-w-lg bg-white rounded-3xl p-6 shadow-2xl border border-stone-100 max-h-[85vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between pb-3 border-b border-stone-100 mb-4">
+              <h3 className="font-serif text-lg font-bold text-stone-900">Select Food Photography</h3>
+              <button onClick={() => setShowImagePicker(false)} className="p-1 text-stone-400 hover:text-stone-800">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {PRESET_IMAGES.map((item) => (
+                <button key={item.url} onClick={() => { setCoverImage(item.url); setImageFile(null); setShowImagePicker(false); }}
+                  className="group relative aspect-square rounded-2xl overflow-hidden border border-stone-200 hover:ring-4 hover:ring-amber-700/50 transition-all">
+                  <img src={item.url} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-stone-950/80 via-transparent to-transparent flex items-end p-2.5">
+                    <span className="text-xs font-bold text-white">{item.name}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Preview Modal */}
+      {showPreview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm"
+          onClick={() => setShowPreview(false)}>
+          <div className="w-full max-w-2xl bg-[#FAF8F5] rounded-3xl p-6 shadow-2xl border border-stone-100 max-h-[90vh] overflow-y-auto space-y-4"
+            onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b border-stone-200 pb-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-amber-800">Recipe Preview</span>
+              <button onClick={() => setShowPreview(false)} className="p-1 text-stone-500 hover:text-stone-900">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="aspect-[16/9] rounded-2xl overflow-hidden bg-stone-200">
+              <img src={coverImage} alt="Preview" className="w-full h-full object-cover" />
+            </div>
+            <h2 className="font-serif text-2xl font-bold text-stone-900">{translations.fr.title || 'Untitled Recipe'}</h2>
+            <p className="text-xs text-stone-600">{translations.fr.description || 'No description.'}</p>
+            {translations.fr.ingredients.some((s) => s.rows.some((r) => r.name)) && (
+              <div className="bg-white p-4 rounded-2xl border border-stone-200">
+                <p className="text-xs font-bold text-stone-900 mb-2">Ingredients</p>
+                {translations.fr.ingredients.map((sec) => (
+                  <div key={sec.id} className="mb-2">
+                    {sec.section && <p className="text-[11px] font-bold text-amber-800 uppercase tracking-wide mb-1">{sec.section}</p>}
+                    <ul className="list-disc list-inside text-xs text-stone-700 space-y-0.5">
+                      {sec.rows.filter((r) => r.name).map((r) => (
+                        <li key={r.id}>{[r.amount, r.unit, r.name].filter(Boolean).join(' ')}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
