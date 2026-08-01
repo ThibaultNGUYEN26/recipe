@@ -1,5 +1,9 @@
 all: build deploy
 
+install:
+	npm ci
+	npm --prefix backend ci
+
 build:
 	npm run build
 
@@ -49,6 +53,6 @@ dev-frontend:
 
 # --------------------------------------------------
 
-.PHONY: all build deploy \
+.PHONY: all install build deploy \
         db-install db-start db-stop db-create db-setup db-reset \
         dev-backend dev-frontend

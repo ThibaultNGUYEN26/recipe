@@ -50,6 +50,12 @@ export default function UserProfile() {
   const isOwnProfile = me && userId && parseInt(userId) === me.id;
 
   useEffect(() => {
+    if (isOwnProfile && me?.avatarUrl) {
+      setProfile((current) => current ? { ...current, avatarUrl: me.avatarUrl } : current);
+    }
+  }, [isOwnProfile, me?.avatarUrl]);
+
+  useEffect(() => {
     if (!userId) return;
     setLoading(true);
     const promises: Promise<unknown>[] = [
@@ -106,9 +112,21 @@ export default function UserProfile() {
       if (res.ok) {
         const d = await res.json();
         setProfile((p) => p ? { ...p, name: d.user.name, bio: d.user.bio, avatarUrl: d.user.avatarUrl } : p);
-        updateUser({ name: d.user.name, avatarUrl: d.user.avatarUrl });
-        showToast('Profile updated!');
+        updateUser({
+          name: d.user.name,
+          avatarUrl: d.user.avatarUrl,
+          avatarPending: d.avatarStatus === 'pending' || d.avatarStatus === 'review_required',
+        });
+        if (d.avatarStatus === 'approved') showToast('Profile updated!', 'Your new photo is approved.', 'success');
+        else if (d.avatarStatus === 'rejected') showToast('Photo not accepted', 'Your previous profile picture is still visible. You can submit another.', 'error');
+        else if (d.avatarStatus) showToast('Profile updated', 'Your new photo is private while it is reviewed.', 'info');
+        else showToast('Profile updated!');
+        setEditAvatar(null);
+        setEditAvatarPreview(null);
         setIsEditOpen(false);
+      } else {
+        const d = await res.json();
+        showToast(d.error ?? 'Profile update failed', undefined, 'error');
       }
     } finally {
       setSaving(false);
@@ -119,6 +137,14 @@ export default function UserProfile() {
     const f = e.target.files?.[0];
     if (!f) return;
     e.target.value = '';
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(f.type)) {
+      showToast('Unsupported photo', 'Choose a JPEG, PNG, or WebP image.', 'error');
+      return;
+    }
+    if (f.size > 5 * 1024 * 1024) {
+      showToast('Photo is too large', 'Choose an image under 5 MB.', 'error');
+      return;
+    }
     const reader = new FileReader();
     reader.onloadend = () => {
       setCropSrc(reader.result as string);
@@ -356,7 +382,7 @@ export default function UserProfile() {
                     <Camera className="w-5 h-5 text-white" />
                   </div>
                 </div>
-                <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={pickAvatar} />
+                <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={pickAvatar} />
                 <button type="button" onClick={() => fileRef.current?.click()} className="text-xs text-amber-800 underline">Change photo</button>
               </div>
 

@@ -7,7 +7,7 @@ import { ArrowLeft, Camera } from 'lucide-react';
 const API = import.meta.env.VITE_API_URL;
 
 export default function EditProfile() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const { showToast } = useUI();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -22,6 +22,14 @@ export default function EditProfile() {
   function pickFile(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (!f) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(f.type)) {
+      showToast('Unsupported photo', 'Choose a JPEG, PNG, or WebP image.', 'error');
+      return;
+    }
+    if (f.size > 5 * 1024 * 1024) {
+      showToast('Photo is too large', 'Choose an image under 5 MB.', 'error');
+      return;
+    }
     setAvatarFile(f);
     setPreview(URL.createObjectURL(f));
   }
@@ -35,7 +43,16 @@ export default function EditProfile() {
     try {
       const res = await fetch(`${API}/api/users/me`, { method: 'PATCH', credentials: 'include', body: fd });
       if (res.ok) {
-        showToast('Profile updated!');
+        const d = await res.json();
+        updateUser({
+          name: d.user.name,
+          avatarUrl: d.user.avatarUrl,
+          avatarPending: d.avatarStatus === 'pending' || d.avatarStatus === 'review_required',
+        });
+        if (d.avatarStatus === 'approved') showToast('Profile updated!', 'Your new photo is approved.', 'success');
+        else if (d.avatarStatus === 'rejected') showToast('Photo not accepted', 'Your previous profile picture remains visible.', 'error');
+        else if (d.avatarStatus) showToast('Profile updated', 'Your new photo is private while it is reviewed.', 'info');
+        else showToast('Profile updated!');
         navigate(`/profile/${user.id}`);
       } else {
         const d = await res.json();
@@ -68,7 +85,7 @@ export default function EditProfile() {
             <Camera size={20} className="text-white" />
           </div>
         </div>
-        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={pickFile} />
+        <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={pickFile} />
         <button onClick={() => fileRef.current?.click()} className="mt-2 text-xs text-amber-800 underline">Change photo</button>
       </div>
 

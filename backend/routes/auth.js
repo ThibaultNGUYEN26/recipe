@@ -1,8 +1,10 @@
 import { Router } from "express";
+import process from "node:process";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { prisma } from "../lib/prisma.js";
 import { authenticate } from "../middleware/authenticate.js";
+import { DEFAULT_AVATAR_URL } from "../lib/media/config.js";
 
 const router = Router();
 
@@ -27,7 +29,7 @@ router.post("/register", async (req, res) => {
 
     const token = jwt.sign({ id: user.id, email: user.email, name: user.name }, process.env.JWT_SECRET, { expiresIn: "7d" });
     res.cookie("token", token, COOKIE_OPTIONS);
-    res.status(201).json({ user: { id: user.id, email: user.email, name: user.name } });
+    res.status(201).json({ user: { id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl || DEFAULT_AVATAR_URL, avatarPending: false } });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message || "Registration failed" });
@@ -46,7 +48,7 @@ router.post("/login", async (req, res) => {
 
     const token = jwt.sign({ id: user.id, email: user.email, name: user.name }, process.env.JWT_SECRET, { expiresIn: "7d" });
     res.cookie("token", token, COOKIE_OPTIONS);
-    res.json({ user: { id: user.id, email: user.email, name: user.name } });
+    res.json({ user: { id: user.id, email: user.email, name: user.name, avatarUrl: user.avatarUrl || DEFAULT_AVATAR_URL, avatarPending: Boolean(user.pendingAvatarId) } });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message || "Login failed" });
@@ -58,8 +60,14 @@ router.post("/logout", (_req, res) => {
   res.json({ ok: true });
 });
 
-router.get("/me", authenticate, (req, res) => {
-  res.json({ user: req.user });
+router.get("/me", authenticate, async (req, res) => {
+  const user = await prisma.user.findUnique({
+    where: { id: req.user.id },
+    select: { id: true, email: true, name: true, avatarUrl: true, pendingAvatarId: true },
+  });
+  if (!user) return res.status(401).json({ error: "User no longer exists" });
+  const { pendingAvatarId, ...publicUser } = user;
+  res.json({ user: { ...publicUser, avatarUrl: user.avatarUrl || DEFAULT_AVATAR_URL, avatarPending: Boolean(pendingAvatarId) } });
 });
 
 export default router;

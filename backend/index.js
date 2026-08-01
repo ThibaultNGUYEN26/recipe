@@ -1,4 +1,5 @@
 import "dotenv/config";
+import process from "node:process";
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -10,9 +11,13 @@ import recipesRouter from "./routes/recipes.js";
 import usersRouter from "./routes/users.js";
 import commentsRouter from "./routes/comments.js";
 import notificationsRouter from "./routes/notifications.js";
+import mediaRouter from "./routes/media.js";
 import { uploadsDir } from "./lib/upload.js";
+import { startMediaCleanup } from "./lib/media/cleanup.js";
+import { cleanupUnreferencedLegacyUploads } from "./lib/media/legacyCleanup.js";
+import { assertMediaInfrastructureReady } from "./lib/media/preflight.js";
 
-const app = express();
+export const app = express();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const allowedOrigins = process.env.CORS_ORIGIN
@@ -37,6 +42,7 @@ app.use("/api/recipes", recipesRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/recipes/:slug/comments", commentsRouter);
 app.use("/api/notifications", notificationsRouter);
+app.use("/api/media", mediaRouter);
 app.get("/api/categories", async (_req, res) => {
   const { prisma } = await import("./lib/prisma.js");
   try {
@@ -74,5 +80,10 @@ app.use("/api/my-recipes", async (req, res) => {
   });
 });
 
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`🚀 API running on port ${PORT}`));
+if (process.env.NODE_ENV !== "test") {
+  const PORT = process.env.PORT || 4000;
+  await assertMediaInfrastructureReady();
+  await cleanupUnreferencedLegacyUploads().catch((error) => console.error("Legacy upload cleanup failed", error));
+  app.listen(PORT, () => console.log(`🚀 API running on port ${PORT}`));
+  startMediaCleanup();
+}

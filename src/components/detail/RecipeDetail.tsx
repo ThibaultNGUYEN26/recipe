@@ -363,6 +363,21 @@ export default function RecipeDetail() {
           ))}
         </div>
 
+        {/* Cooking video */}
+        {recipe.videoUrl && (
+          <div>
+            <h2 className="font-serif text-lg font-semibold mb-3" style={{ color: 'var(--color-text)' }}>Cooking Video</h2>
+            <video
+              controls
+              preload="metadata"
+              src={imgSrc(recipe.videoUrl)!}
+              className="w-full rounded-3xl bg-black aspect-video"
+            >
+              Your browser does not support embedded videos.
+            </video>
+          </div>
+        )}
+
         {/* Instructions */}
         <div>
           <h2 className="font-serif text-lg font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Instructions</h2>

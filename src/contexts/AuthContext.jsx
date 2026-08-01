@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 
 const AuthContext = createContext(null);
 
@@ -6,15 +6,47 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/api/auth/me`, {
-      credentials: "include",
-    })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => setUser(data?.user ?? null))
-      .catch(() => setUser(null))
-      .finally(() => setLoading(false));
+  const refreshUser = useCallback(async ({ clearOnError = false } = {}) => {
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/me`, { credentials: "include" });
+      if (res.status === 401) {
+        setUser(null);
+        return null;
+      }
+      if (!res.ok) throw new Error("Failed to refresh session");
+      const data = await res.json();
+      setUser(data.user);
+      return data.user;
+    } catch (error) {
+      if (clearOnError) setUser(null);
+      throw error;
+    }
   }, []);
+
+  useEffect(() => {
+    refreshUser({ clearOnError: true })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [refreshUser]);
+
+  const authenticatedUserId = user?.id;
+  const avatarPending = Boolean(user?.avatarPending);
+
+  useEffect(() => {
+    if (!authenticatedUserId) return undefined;
+    const refresh = () => refreshUser().catch(() => {});
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") refresh();
+    };
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    const timer = avatarPending ? window.setInterval(refresh, 5000) : undefined;
+    return () => {
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      if (timer) window.clearInterval(timer);
+    };
+  }, [authenticatedUserId, avatarPending, refreshUser]);
 
   async function login(email, password) {
     const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
@@ -55,7 +87,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateUser, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

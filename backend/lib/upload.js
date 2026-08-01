@@ -23,3 +23,19 @@ export const upload = multer({
     cb(ok ? null : new Error("Only jpeg/png/webp allowed"), ok);
   },
 });
+
+export const recipeUpload = multer({
+  storage,
+  limits: { fileSize: 100 * 1024 * 1024, files: 2 },
+  fileFilter: (_req, file, cb) => {
+    const allowedTypes = file.fieldname === "image"
+      ? ["image/jpeg", "image/png", "image/webp"]
+      : ["video/mp4", "video/webm"];
+    const ok = allowedTypes.includes(file.mimetype);
+    cb(ok ? null : new Error(
+      file.fieldname === "image"
+        ? "Cover image must be jpeg, png, or webp"
+        : "Cooking video must be MP4 or WebM",
+    ), ok);
+  },
+});

@@ -11,7 +11,8 @@
     "db:generate": "prisma generate",
     "db:seed": "node prisma/seed.js",
     "db:import": "node prisma/importRecipes.js",
-    "build": "prisma generate"
+    "build": "prisma generate",
+    "test": "vitest run"
   },
   "keywords": [],
   "author": "",
@@ -25,9 +26,12 @@
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
-    "prisma": "^6.19.1"
+    "prisma": "^6.19.1",
+    "sharp": "^0.35.3"
   },
   "devDependencies": {
-    "nodemon": "^3.1.11"
+    "nodemon": "^3.1.11",
+    "supertest": "^7.2.2",
+    "vitest": "^4.1.10"
   }
 }

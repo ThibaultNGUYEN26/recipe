@@ -5,7 +5,7 @@ import { useUI } from '../../contexts/UIContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import {
   Plus, Trash2, MoveUp, MoveDown, Sparkles, Eye,
-  ArrowRight, ArrowLeft, X, Crop as CropIcon
+  ArrowRight, ArrowLeft, X, Crop as CropIcon, Video, Upload
 } from 'lucide-react';
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
@@ -68,6 +68,7 @@ export default function AddRecipeFlow() {
   const [cookTime, setCookTime] = useState('');
   const [servings, setServings] = useState(4);
   const [dietaryTags, setDietaryTags] = useState<string[]>([]);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
 
   // Image
   const [coverImage, setCoverImage] = useState(PRESET_IMAGES[0].url);
@@ -254,6 +255,9 @@ export default function AddRecipeFlow() {
       fd.append('translations', JSON.stringify(translationRows));
       if (imageFile) {
         fd.append('image', imageFile);
+      }
+      if (videoFile) {
+        fd.append('video', videoFile);
       }
 
       const res = await fetch(`${API}/api/recipes`, { method: 'POST', credentials: 'include', body: fd });
@@ -581,6 +585,44 @@ export default function AddRecipeFlow() {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Cooking video */}
+          <div className="space-y-2">
+            <label className={labelCls}>Cooking Video (optional)</label>
+            <label className="flex items-center gap-3 rounded-2xl border border-dashed border-stone-300 bg-stone-50 p-4 cursor-pointer hover:border-amber-700 transition-colors">
+              <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+                <Video className="w-5 h-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-stone-800 truncate">
+                  {videoFile ? videoFile.name : 'Add a video of you cooking'}
+                </p>
+                <p className="text-xs text-stone-500">
+                  {videoFile ? `${(videoFile.size / 1024 / 1024).toFixed(1)} MB` : 'MP4 or WebM, up to 100 MB'}
+                </p>
+              </div>
+              <Upload className="w-5 h-5 text-stone-500" />
+              <input
+                type="file"
+                accept="video/mp4,video/webm"
+                className="sr-only"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] ?? null;
+                  if (file && file.size > 100 * 1024 * 1024) {
+                    showToast('Video is too large', 'Choose a video under 100 MB', 'error');
+                    e.target.value = '';
+                    return;
+                  }
+                  setVideoFile(file);
+                }}
+              />
+            </label>
+            {videoFile && (
+              <button type="button" onClick={() => setVideoFile(null)} className="flex items-center gap-1 text-xs font-medium text-rose-700">
+                <X className="w-3.5 h-3.5" /> Remove video
+              </button>
+            )}
           </div>
 
           {/* Tips */}

@@ -3,10 +3,24 @@ import jwt from "jsonwebtoken";
 import fs from "fs";
 import { prisma } from "../lib/prisma.js";
 import { authenticate } from "../middleware/authenticate.js";
-import { upload } from "../lib/upload.js";
+import { recipeUpload } from "../lib/upload.js";
 import { createNotification } from "../lib/notify.js";
 
 const router = Router();
+const uploadRecipeMedia = recipeUpload.fields([
+  { name: "image", maxCount: 1 },
+  { name: "video", maxCount: 1 },
+]);
+
+function handleRecipeMedia(req, res, next) {
+  uploadRecipeMedia(req, res, (err) => {
+    if (!err) return next();
+    const message = err.code === "LIMIT_FILE_SIZE"
+      ? "Cooking video must be under 100 MB"
+      : err.message;
+    return res.status(400).json({ error: message });
+  });
+}
 
 // GET /api/recipes
 router.get("/", async (req, res) => {
@@ -107,6 +121,7 @@ router.get("/:slug", async (req, res) => {
       category: { slug: recipe.category.slug, label: recipe.category.label },
       info: recipe.info,
       tags: recipe.tags,
+      videoUrl: recipe.videoUrl,
       ingredients: t.ingredients,
       instructions: t.instructions,
       nutrition: t.nutrition,
@@ -128,7 +143,7 @@ router.get("/:slug", async (req, res) => {
 });
 
 // POST /api/recipes
-router.post("/", authenticate, upload.single("image"), async (req, res) => {
+router.post("/", authenticate, handleRecipeMedia, async (req, res) => {
   const {
     slug, categoryId, isPublic = "true",
     info, tags,
@@ -137,12 +152,23 @@ router.post("/", authenticate, upload.single("image"), async (req, res) => {
     lang = "fr", title, description, ingredients, instructions, tips, nutrition,
   } = req.body;
 
+  const imageFile = req.files?.image?.[0];
+  const videoFile = req.files?.video?.[0];
+  const uploadedFiles = [imageFile, videoFile].filter(Boolean);
+  const removeUploadedFiles = () => uploadedFiles.forEach((file) => fs.unlink(file.path, () => {}));
+
+  if (imageFile && imageFile.size > 5 * 1024 * 1024) {
+    removeUploadedFiles();
+    return res.status(400).json({ error: "Cover image must be under 5 MB" });
+  }
+
   if (!slug || !categoryId) {
-    if (req.file) fs.unlink(req.file.path, () => {});
+    removeUploadedFiles();
     return res.status(400).json({ error: "Missing required fields" });
   }
 
-  const imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
+  const imageUrl = imageFile ? `/uploads/${imageFile.filename}` : null;
+  const videoUrl = videoFile ? `/uploads/${videoFile.filename}` : null;
 
   try {
     // Support both multi-translation JSON payload and legacy single-lang fields
@@ -154,7 +180,7 @@ router.post("/", authenticate, upload.single("image"), async (req, res) => {
     }
 
     if (translationRows.length === 0) {
-      if (req.file) fs.unlink(req.file.path, () => {});
+      removeUploadedFiles();
       return res.status(400).json({ error: "At least one translation required" });
     }
 
@@ -167,6 +193,7 @@ router.post("/", authenticate, upload.single("image"), async (req, res) => {
           authorId: req.user.id,
           info: info ? JSON.parse(info) : null,
           tags: tags ? JSON.parse(tags) : null,
+          videoUrl,
         },
       });
 
@@ -194,7 +221,7 @@ router.post("/", authenticate, upload.single("image"), async (req, res) => {
 
     res.status(201).json({ slug: recipe.slug, id: recipe.id });
   } catch (err) {
-    if (req.file) fs.unlink(req.file.path, () => {});
+    removeUploadedFiles();
     console.error(err);
     if (err.code === "P2002") return res.status(409).json({ error: "Ce slug est déjà utilisé" });
     res.status(500).json({ error: err.message || "Failed to create recipe" });

@@ -36,6 +36,7 @@ export interface RecipeListItem {
 }
 
 export interface RecipeDetail extends RecipeListItem {
+  videoUrl?: string | null;
   ingredients: IngredientSection[];
   instructions: InstructionStep[];
   tips?: string[];

@@ -1,8 +1,11 @@
 import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { authenticate } from "../middleware/authenticate.js";
-import { upload } from "../lib/upload.js";
 import { createNotification } from "../lib/notify.js";
+import { submitAvatar, deleteOwnAvatar } from "../lib/media/avatarService.js";
+import { handleAvatarUpload } from "../lib/media/upload.js";
+import { DEFAULT_AVATAR_URL } from "../lib/media/config.js";
+import { uploadRateLimit } from "../middleware/uploadRateLimit.js";
 
 const router = Router();
 
@@ -89,24 +92,50 @@ router.get("/me/recipes", authenticate, async (req, res) => {
 });
 
 // PATCH /api/users/me
-router.patch("/me", authenticate, upload.single("avatar"), async (req, res) => {
+router.patch("/me", authenticate, uploadRateLimit, handleAvatarUpload, async (req, res) => {
   const { name, bio } = req.body;
-  const avatarUrl = req.file ? `/uploads/${req.file.filename}` : undefined;
 
   try {
+    let avatarResult = null;
+    if (req.file) {
+      avatarResult = await submitAvatar({ actorId: req.user.id, ownerId: req.user.id, file: req.file });
+    }
     const user = await prisma.user.update({
       where: { id: req.user.id },
       data: {
         ...(name !== undefined && { name }),
         ...(bio !== undefined && { bio }),
-        ...(avatarUrl !== undefined && { avatarUrl }),
       },
       select: { id: true, name: true, email: true, bio: true, avatarUrl: true },
     });
-    res.json({ user });
+    res.status(avatarResult?.status === "approved" || !avatarResult ? 200 : 202).json({
+      user: { ...user, avatarUrl: user.avatarUrl || DEFAULT_AVATAR_URL },
+      avatarStatus: avatarResult?.status ?? null,
+    });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: err.message || "Failed to update profile" });
+    res.status(err.statusCode || 500).json({ error: err.message || "Failed to update profile", code: err.code });
+  }
+});
+
+router.get("/me/avatar-status", authenticate, async (req, res) => {
+  const user = await prisma.user.findUnique({
+    where: { id: req.user.id },
+    select: {
+      avatarUrl: true,
+      pendingAvatar: { select: { id: true, status: true, rejectionCategory: true, createdAt: true } },
+    },
+  });
+  if (!user) return res.status(404).json({ error: "User not found" });
+  res.json({ approvedAvatarUrl: user.avatarUrl || DEFAULT_AVATAR_URL, pendingAvatar: user.pendingAvatar });
+});
+
+router.delete("/me/avatar", authenticate, async (req, res) => {
+  try {
+    const result = await deleteOwnAvatar({ ownerId: req.user.id });
+    res.json(result);
+  } catch (err) {
+    res.status(err.statusCode || 500).json({ error: err.message || "Failed to delete profile picture" });
   }
 });
 

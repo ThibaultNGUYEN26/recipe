@@ -15,48 +15,101 @@ model Category {
 }
 
 model User {
-  id           Int           @id @default(autoincrement())
-  email        String        @unique
-  passwordHash String
-  name         String?
-  bio          String?
-  avatarUrl    String?
-  createdAt    DateTime      @default(now())
-  followers    Follow[]      @relation("Following")
-  following    Follow[]      @relation("Follower")
-  ratings      Rating[]
-  savedRecipes SavedRecipe[]
-  recipes      Recipe[]
-  comments     Comment[]
-  commentLikes CommentLike[]
-  notifications        Notification[] @relation("NotificationRecipient")
-  sentNotifications    Notification[] @relation("NotificationActor")
+  id                Int            @id @default(autoincrement())
+  email             String         @unique
+  passwordHash      String
+  name              String?
+  isAdmin           Boolean        @default(false)
+  bio               String?
+  avatarUrl         String?        @default("/api/media/default-avatar.svg")
+  avatarMediaId     String?        @unique
+  avatarMedia       MediaAsset?    @relation("ApprovedAvatar", fields: [avatarMediaId], references: [id], onDelete: SetNull)
+  pendingAvatarId   String?        @unique
+  pendingAvatar     MediaAsset?    @relation("PendingAvatar", fields: [pendingAvatarId], references: [id], onDelete: SetNull)
+  mediaAssets       MediaAsset[]   @relation("MediaOwner")
+  createdAt         DateTime       @default(now())
+  followers         Follow[]       @relation("Following")
+  following         Follow[]       @relation("Follower")
+  ratings           Rating[]
+  savedRecipes      SavedRecipe[]
+  recipes           Recipe[]
+  comments          Comment[]
+  commentLikes      CommentLike[]
+  notifications     Notification[] @relation("NotificationRecipient")
+  sentNotifications Notification[] @relation("NotificationActor")
 }
 
 model Recipe {
-  id           Int                 @id @default(autoincrement())
-  slug         String              @unique
-  categoryId   Int
-  category     Category            @relation(fields: [categoryId], references: [id])
-  isPublic     Boolean             @default(true)
-  createdAt    DateTime            @default(now())
-  updatedAt    DateTime            @updatedAt
-  translations RecipeTranslation[]
-  images       RecipeImage[]
-  info         Json?
-  tags         Json?
-  authorId     Int?
-  author       User?         @relation(fields: [authorId], references: [id])
-  ratings      Rating[]
-  savedBy      SavedRecipe[]
-  comments     Comment[]
+  id            Int                 @id @default(autoincrement())
+  slug          String              @unique
+  categoryId    Int
+  category      Category            @relation(fields: [categoryId], references: [id])
+  isPublic      Boolean             @default(true)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  translations  RecipeTranslation[]
+  images        RecipeImage[]
+  info          Json?
+  tags          Json?
+  videoUrl      String?
+  authorId      Int?
+  author        User?               @relation(fields: [authorId], references: [id])
+  ratings       Rating[]
+  savedBy       SavedRecipe[]
+  comments      Comment[]
   notifications Notification[]
+  mediaAssets   MediaAsset[]
+}
+
+enum MediaKind {
+  AVATAR
+  RECIPE_IMAGE
+  RECIPE_VIDEO
+}
+
+enum MediaStatus {
+  UPLOADING
+  PENDING
+  APPROVED
+  REVIEW_REQUIRED
+  REJECTED
+  FAILED
+}
+
+model MediaAsset {
+  id                 String      @id @default(uuid())
+  kind               MediaKind
+  status             MediaStatus @default(UPLOADING)
+  ownerId            Int
+  owner              User        @relation("MediaOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  recipeId           Int?
+  recipe             Recipe?     @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  quarantineKey      String?
+  variants           Json?
+  verifiedMime       String?
+  sizeBytes          Int?
+  width              Int?
+  height             Int?
+  durationSeconds    Float?
+  moderationProvider String?
+  moderationScores   Json?
+  moderatedAt        DateTime?
+  rejectionCategory  String?
+  processingError    String?
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  approvedAvatarFor  User?       @relation("ApprovedAvatar")
+  pendingAvatarFor   User?       @relation("PendingAvatar")
+
+  @@index([ownerId, status])
+  @@index([recipeId, status])
+  @@index([status, createdAt])
 }
 
 model RecipeTranslation {
-  id           Int    @id @default(autoincrement())
+  id           Int     @id @default(autoincrement())
   recipeId     Int
-  recipe       Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  recipe       Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   language     String
   title        String
   description  String?
