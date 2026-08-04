@@ -37,6 +37,7 @@ export default function UserProfile() {
   // Edit modal
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editName, setEditName] = useState('');
+  const [editUsername, setEditUsername] = useState('');
   const [editBio, setEditBio] = useState('');
   const [editAvatar, setEditAvatar] = useState<File | null>(null);
   const [editAvatarPreview, setEditAvatarPreview] = useState<string | null>(null);
@@ -71,6 +72,7 @@ export default function UserProfile() {
         if (profileData.error) { navigate('/'); return; }
         setProfile(profileData);
         setEditName(profileData.name ?? '');
+        setEditUsername(profileData.username ?? '');
         setEditBio(profileData.bio ?? '');
         setRecipes(Array.isArray(r) ? r as RecipeListItem[] : []);
         if (me && Array.isArray(rest[0])) {
@@ -105,14 +107,16 @@ export default function UserProfile() {
     setSaving(true);
     const fd = new FormData();
     fd.append('name', editName);
+    fd.append('username', editUsername);
     fd.append('bio', editBio);
     if (editAvatar) fd.append('avatar', editAvatar);
     try {
       const res = await fetch(`${API}/api/users/me`, { method: 'PATCH', credentials: 'include', body: fd });
       if (res.ok) {
         const d = await res.json();
-        setProfile((p) => p ? { ...p, name: d.user.name, bio: d.user.bio, avatarUrl: d.user.avatarUrl } : p);
+        setProfile((p) => p ? { ...p, username: d.user.username, name: d.user.name, bio: d.user.bio, avatarUrl: d.user.avatarUrl } : p);
         updateUser({
+          username: d.user.username,
           name: d.user.name,
           avatarUrl: d.user.avatarUrl,
           avatarPending: d.avatarStatus === 'pending' || d.avatarStatus === 'review_required',
@@ -219,6 +223,7 @@ export default function UserProfile() {
             <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-3">
               <div>
                 <h1 className="font-serif text-2xl font-black" style={{ color: 'var(--color-text)' }}>{profile.name ?? 'Anonymous Chef'}</h1>
+                {profile.username && <p className="text-sm font-medium" style={{ color: 'var(--color-muted)' }}>@{profile.username}</p>}
               </div>
               {isOwnProfile ? (
                 <button onClick={() => setIsEditOpen(true)}
@@ -384,6 +389,17 @@ export default function UserProfile() {
                 </div>
                 <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={pickAvatar} />
                 <button type="button" onClick={() => fileRef.current?.click()} className="text-xs text-amber-800 underline">Change photo</button>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-stone-500 uppercase tracking-wider">Username</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-stone-500">@</span>
+                  <input type="text" required minLength={3} maxLength={30} value={editUsername}
+                    onChange={(e) => setEditUsername(e.target.value.replace(/^@+/, '').toLowerCase())}
+                    pattern="[a-z0-9._]+" autoCapitalize="none" autoCorrect="off" spellCheck={false}
+                    className="w-full bg-stone-50 border border-stone-200 text-xs font-bold rounded-xl pl-7 pr-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-amber-800/30" />
+                </div>
               </div>
 
               <div className="space-y-1">

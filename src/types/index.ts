@@ -60,6 +60,7 @@ export interface Comment {
 
 export interface UserProfile {
   id: number;
+  username: string | null;
   name: string | null;
   bio?: string | null;
   avatarUrl?: string | null;
@@ -72,6 +73,7 @@ export interface UserProfile {
 export interface AuthUser {
   id: number;
   email: string;
+  username: string | null;
   name: string | null;
   avatarUrl?: string | null;
 }

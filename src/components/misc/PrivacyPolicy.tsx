@@ -14,7 +14,7 @@ export default function PrivacyPolicy() {
         {[
           {
             title: '1. Information We Collect',
-            body: 'We collect information you provide directly to us, such as when you create an account (name, email, password), add a recipe, or interact with other users. We also collect usage data to improve the service.'
+            body: 'We collect information you provide directly to us, such as when you create an account (name, username, email, password), add a recipe, or interact with other users. We also collect usage data to improve the service.'
           },
           {
             title: '2. How We Use Your Information',

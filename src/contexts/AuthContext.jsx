@@ -61,12 +61,12 @@ export function AuthProvider({ children }) {
     return data.user;
   }
 
-  async function register(email, password, name) {
+  async function register(email, password, name, username) {
     const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ email, password, name }),
+      body: JSON.stringify({ email, password, name, username }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Registration failed");

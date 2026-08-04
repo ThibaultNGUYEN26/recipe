@@ -6,19 +6,41 @@ import { submitAvatar, deleteOwnAvatar } from "../lib/media/avatarService.js";
 import { handleAvatarUpload } from "../lib/media/upload.js";
 import { DEFAULT_AVATAR_URL } from "../lib/media/config.js";
 import { uploadRateLimit } from "../middleware/uploadRateLimit.js";
+import { normalizeUsername, validateUsername } from "../lib/username.js";
 
 const router = Router();
 
 // GET /api/users?q=
 router.get("/", async (req, res) => {
   const { q = "" } = req.query;
+  const query = String(q).trim();
+  const usernameQuery = normalizeUsername(query);
   try {
-    const users = await prisma.user.findMany({
-      where: q ? { name: { contains: q, mode: "insensitive" } } : undefined,
-      select: { id: true, name: true, avatarUrl: true },
-      take: 20,
+    const select = { id: true, username: true, name: true, avatarUrl: true };
+    const [exactUser, matches] = await Promise.all([
+      usernameQuery ? prisma.user.findUnique({ where: { username: usernameQuery }, select }) : null,
+      prisma.user.findMany({
+        where: query ? {
+          OR: [
+            { username: { contains: usernameQuery, mode: "insensitive" } },
+            { name: { contains: query, mode: "insensitive" } },
+          ],
+        } : undefined,
+        select,
+        take: 20,
+      }),
+    ]);
+    const users = exactUser
+      ? [exactUser, ...matches.filter((user) => user.id !== exactUser.id)]
+      : matches;
+    users.sort((a, b) => {
+      const aExact = a.username === usernameQuery ? 1 : 0;
+      const bExact = b.username === usernameQuery ? 1 : 0;
+      const aPrefix = a.username?.startsWith(usernameQuery) ? 1 : 0;
+      const bPrefix = b.username?.startsWith(usernameQuery) ? 1 : 0;
+      return bExact - aExact || bPrefix - aPrefix || (a.username ?? a.name ?? "").localeCompare(b.username ?? b.name ?? "");
     });
-    res.json(users);
+    res.json(users.slice(0, 20));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message || "Failed to search users" });
@@ -94,6 +116,10 @@ router.get("/me/recipes", authenticate, async (req, res) => {
 // PATCH /api/users/me
 router.patch("/me", authenticate, uploadRateLimit, handleAvatarUpload, async (req, res) => {
   const { name, bio } = req.body;
+  const usernameResult = req.body.username === undefined ? null : validateUsername(req.body.username);
+  if (usernameResult?.error) {
+    return res.status(400).json({ error: usernameResult.error, code: "INVALID_USERNAME" });
+  }
 
   try {
     let avatarResult = null;
@@ -105,14 +131,16 @@ router.patch("/me", authenticate, uploadRateLimit, handleAvatarUpload, async (re
       data: {
         ...(name !== undefined && { name }),
         ...(bio !== undefined && { bio }),
+        ...(usernameResult && { username: usernameResult.username }),
       },
-      select: { id: true, name: true, email: true, bio: true, avatarUrl: true },
+      select: { id: true, username: true, name: true, email: true, bio: true, avatarUrl: true },
     });
     res.status(avatarResult?.status === "approved" || !avatarResult ? 200 : 202).json({
       user: { ...user, avatarUrl: user.avatarUrl || DEFAULT_AVATAR_URL },
       avatarStatus: avatarResult?.status ?? null,
     });
   } catch (err) {
+    if (err.code === "P2002") return res.status(409).json({ error: "Username already taken", code: "USERNAME_TAKEN" });
     console.error(err);
     res.status(err.statusCode || 500).json({ error: err.message || "Failed to update profile", code: err.code });
   }
@@ -147,7 +175,7 @@ router.get("/:id", async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, name: true, bio: true, avatarUrl: true, createdAt: true },
+      select: { id: true, username: true, name: true, bio: true, avatarUrl: true, createdAt: true },
     });
     if (!user) return res.status(404).json({ error: "User not found" });
 
@@ -231,7 +259,7 @@ router.get("/:id/followers", async (req, res) => {
   try {
     const follows = await prisma.follow.findMany({
       where: { followingId: userId },
-      include: { follower: { select: { id: true, name: true, avatarUrl: true } } },
+      include: { follower: { select: { id: true, username: true, name: true, avatarUrl: true } } },
     });
     res.json(follows.map((f) => f.follower));
   } catch (err) {
@@ -246,7 +274,7 @@ router.get("/:id/following", async (req, res) => {
   try {
     const follows = await prisma.follow.findMany({
       where: { followerId: userId },
-      include: { following: { select: { id: true, name: true, avatarUrl: true } } },
+      include: { following: { select: { id: true, username: true, name: true, avatarUrl: true } } },
     });
     res.json(follows.map((f) => f.following));
   } catch (err) {

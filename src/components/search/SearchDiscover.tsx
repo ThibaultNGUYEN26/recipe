@@ -21,7 +21,7 @@ const CATEGORIES = [
 const DIFFICULTY_OPTS = ['All', 'Facile', 'Moyen', 'Difficile'];
 const TIME_OPTS = [15, 30, 60, 'Any'] as const;
 
-interface UserResult { id: number; name: string | null; avatarUrl: string | null }
+interface UserResult { id: number; username: string | null; name: string | null; avatarUrl: string | null }
 
 function imgSrc(url: string | null | undefined) {
   if (!url) return null;
@@ -54,16 +54,22 @@ export default function SearchDiscover() {
       .finally(() => setLoading(false));
   }, [language]);
 
-  // Debounced user search
+  // Fast, debounced creator search by @username or display name.
   useEffect(() => {
     if (!query.trim()) { setUsers([]); return; }
+    const controller = new AbortController();
     const t = setTimeout(() => {
-      fetch(`${API}/api/users?q=${encodeURIComponent(query)}`, { credentials: 'include' })
+      fetch(`${API}/api/users?q=${encodeURIComponent(query)}`, { credentials: 'include', signal: controller.signal })
         .then((r) => r.json())
         .then((d) => setUsers(Array.isArray(d) ? d : []))
-        .catch(console.error);
-    }, 300);
-    return () => clearTimeout(t);
+        .catch((error) => {
+          if (!(error instanceof DOMException && error.name === 'AbortError')) console.error(error);
+        });
+    }, 150);
+    return () => {
+      clearTimeout(t);
+      controller.abort();
+    };
   }, [query]);
 
   const q = query.toLowerCase().trim();
@@ -208,7 +214,8 @@ export default function SearchDiscover() {
                 <div className="w-14 h-14 rounded-full bg-amber-800 text-white flex items-center justify-center text-xl font-bold mb-2 ring-2 ring-amber-600/30 overflow-hidden">
                   {u.avatarUrl ? <img src={imgSrc(u.avatarUrl)!} alt="" className="w-full h-full object-cover" /> : u.name?.[0]?.toUpperCase() ?? '?'}
                 </div>
-                <h4 className="text-xs font-bold text-stone-900 truncate w-full">{u.name}</h4>
+                <h4 className="text-xs font-bold text-stone-900 truncate w-full">{u.name ?? (u.username ? `@${u.username}` : 'Creator')}</h4>
+                {u.username && <p className="text-[10px] text-stone-500 truncate w-full">@{u.username}</p>}
                 <button onClick={() => navigate(`/profile/${u.id}`)}
                   className="w-full mt-2.5 py-1.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 bg-stone-900 text-white hover:bg-amber-800 transition-colors">
                   <UserPlus className="w-3 h-3" /> Follow
@@ -398,7 +405,8 @@ function TrendingCreators({ lang }: { lang: string }) {
               ? <img src={u.avatarUrl.startsWith('/') ? `${import.meta.env.VITE_API_URL}${u.avatarUrl}` : u.avatarUrl} alt="" className="w-full h-full object-cover" />
               : u.name?.[0]?.toUpperCase() ?? '?'}
           </div>
-          <h4 className="text-xs font-bold text-stone-900 truncate w-full">{u.name}</h4>
+          <h4 className="text-xs font-bold text-stone-900 truncate w-full">{u.name ?? (u.username ? `@${u.username}` : 'Creator')}</h4>
+          {u.username && <p className="text-[10px] text-stone-500 truncate w-full">@{u.username}</p>}
           <p className="text-[10px] font-medium text-amber-800 mt-0.5">{u.recipeCount} recipes</p>
           <button onClick={() => navigate(`/profile/${u.id}`)}
             className="w-full mt-2.5 py-1.5 px-3 rounded-xl text-xs font-semibold bg-stone-900 text-white hover:bg-amber-800 transition-colors flex items-center justify-center gap-1">

@@ -12,6 +12,7 @@ export default function EditProfile() {
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState(user?.name ?? '');
+  const [username, setUsername] = useState(user?.username ?? '');
   const [bio, setBio] = useState('');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -38,6 +39,7 @@ export default function EditProfile() {
     setSaving(true);
     const fd = new FormData();
     fd.append('name', name);
+    fd.append('username', username);
     fd.append('bio', bio);
     if (avatarFile) fd.append('avatar', avatarFile);
     try {
@@ -45,6 +47,7 @@ export default function EditProfile() {
       if (res.ok) {
         const d = await res.json();
         updateUser({
+          username: d.user.username,
           name: d.user.name,
           avatarUrl: d.user.avatarUrl,
           avatarPending: d.avatarStatus === 'pending' || d.avatarStatus === 'review_required',
@@ -90,6 +93,16 @@ export default function EditProfile() {
       </div>
 
       <div className="space-y-4">
+        <div>
+          <label className="text-xs font-semibold uppercase tracking-wide mb-1 block" style={{ color: 'var(--color-muted)' }}>Username</label>
+          <div className="relative">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold" style={{ color: 'var(--color-muted)' }}>@</span>
+            <input value={username} onChange={(e) => setUsername(e.target.value.replace(/^@+/, '').toLowerCase())}
+              required minLength={3} maxLength={30} pattern="[a-z0-9._]+" autoCapitalize="none" autoCorrect="off" spellCheck={false}
+              className="w-full pl-8 pr-4 py-3 rounded-2xl text-sm outline-none"
+              style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
+          </div>
+        </div>
         <div>
           <label className="text-xs font-semibold uppercase tracking-wide mb-1 block" style={{ color: 'var(--color-muted)' }}>Display name</label>
           <input value={name} onChange={(e) => setName(e.target.value)}

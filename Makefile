@@ -45,14 +45,17 @@ db-reset:
 # Dev servers
 # --------------------------------------------------
 
-dev-backend:
+db:
+	docker start recipe-postgres
+
+backend:
 	cd backend && npm run dev
 
-dev-frontend:
+frontend:
 	npm run dev
 
 # --------------------------------------------------
 
 .PHONY: all install build deploy \
         db-install db-start db-stop db-create db-setup db-reset \
-        dev-backend dev-frontend
+        db backend frontend

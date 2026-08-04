@@ -100,6 +100,7 @@ export default function Header() {
                     {/* User info */}
                     <div className="px-4 py-2.5 border-b border-stone-100">
                       <p className="text-xs font-bold text-stone-900 truncate">{user.name ?? 'Chef'}</p>
+                      {user.username && <p className="text-[10px] text-stone-500 truncate">@{user.username}</p>}
                       <p className="text-[11px] text-stone-500 truncate">{user.email}</p>
                     </div>
 
