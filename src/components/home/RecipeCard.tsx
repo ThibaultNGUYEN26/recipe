@@ -35,8 +35,7 @@ export default function RecipeCard({ recipe }: Props) {
   }
 
   return (
-    <article className="rounded-3xl overflow-hidden border border-stone-200/80 shadow-sm hover:shadow-md transition-all duration-200 group"
-      style={{ backgroundColor: 'var(--color-surface)' }}>
+    <article className="recipe-card rounded-3xl overflow-hidden border shadow-sm hover:shadow-md transition-all duration-200 group">
 
       {/* Creator header */}
       <div className="flex items-center justify-between p-3.5 sm:p-4">
@@ -48,7 +47,7 @@ export default function RecipeCard({ recipe }: Props) {
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1 min-w-0">
-              <h4 className="text-xs font-bold text-stone-900 truncate">{recipe.authorName ?? 'Savor Chef'}</h4>
+              <h4 className="recipe-card__primary text-xs font-bold truncate">{recipe.authorName ?? 'Savor Chef'}</h4>
               {recipe.authorIsVerified && <VerifiedBadge className="w-3.5 h-3.5" />}
             </div>
           </div>
@@ -64,13 +63,13 @@ export default function RecipeCard({ recipe }: Props) {
 
       {/* Square image */}
       <Link to={`/recipe/${recipe.slug}`}
-        className="relative aspect-square block overflow-hidden bg-stone-100 cursor-pointer">
+        className="recipe-card__image-placeholder relative aspect-square block overflow-hidden cursor-pointer">
         {recipe.image ? (
           <img src={imgSrc(recipe.image)!} alt={recipe.title ?? ''}
             loading="lazy"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-4xl bg-stone-100">🍽️</div>
+          <div className="recipe-card__image-placeholder w-full h-full flex items-center justify-center text-4xl">🍽️</div>
         )}
 
         {/* Floating badges */}
@@ -97,54 +96,54 @@ export default function RecipeCard({ recipe }: Props) {
       {/* Content + actions */}
       <div className="p-4 sm:p-5">
         {recipe.recommendationReason && (
-          <p className="flex items-center gap-1 text-[10px] font-bold text-amber-800 mb-1.5">
+          <p className="recipe-card__accent flex items-center gap-1 text-[10px] font-bold mb-1.5">
             <Sparkles className="w-3 h-3" /> {recipe.recommendationReason}
           </p>
         )}
         <Link to={`/recipe/${recipe.slug}`}>
-          <h3 className="font-serif text-lg sm:text-xl font-bold text-stone-900 group-hover:text-amber-800 transition-colors leading-snug">
+          <h3 className="recipe-card__primary recipe-card__title font-serif text-lg sm:text-xl font-bold transition-colors leading-snug">
             {recipe.title}
           </h3>
           {recipe.description && (
-            <p className="text-xs text-stone-600 line-clamp-2 mt-1.5 leading-relaxed font-normal">
+            <p className="recipe-card__muted text-xs line-clamp-2 mt-1.5 leading-relaxed font-normal">
               {recipe.description}
             </p>
           )}
         </Link>
 
         {/* Time & difficulty */}
-        <div className="flex items-center gap-4 text-xs font-semibold text-stone-500 mt-3 pt-3 border-t border-stone-100">
+        <div className="recipe-card__muted recipe-card__divider flex items-center gap-4 text-xs font-semibold mt-3 pt-3 border-t">
           {info?.totalTime && (
             <div className="flex items-center gap-1">
-              <Clock className="w-3.5 h-3.5 text-amber-700" />
+              <Clock className="recipe-card__accent w-3.5 h-3.5" />
               <span>{info.totalTime}</span>
             </div>
           )}
           {info?.difficulty && (
             <div className="flex items-center gap-1">
-              <ChefHat className="w-3.5 h-3.5 text-amber-700" />
+              <ChefHat className="recipe-card__accent w-3.5 h-3.5" />
               <span>{info.difficulty}</span>
             </div>
           )}
         </div>
 
         {/* Actions row */}
-        <div className="flex items-center justify-between pt-4 mt-3 border-t border-stone-100">
+        <div className="recipe-card__divider flex items-center justify-between pt-4 mt-3 border-t">
           <div className="flex items-center gap-4">
-            <button className="flex items-center gap-1.5 text-xs font-bold text-stone-600 hover:text-stone-900 transition-colors">
+            <button className="recipe-card__action flex items-center gap-1.5 text-xs font-bold transition-colors">
               <Heart className="w-5 h-5 stroke-[1.8]" />
               <span>{recipe.ratingCount ?? 0}</span>
             </button>
             <Link to={`/recipe/${recipe.slug}`}
-              className="flex items-center gap-1.5 text-xs font-bold text-stone-600 hover:text-stone-900 transition-colors">
+              className="recipe-card__action flex items-center gap-1.5 text-xs font-bold transition-colors">
               <MessageCircle className="w-5 h-5 stroke-[1.8]" />
             </Link>
-            <button onClick={handleShare} className="text-stone-500 hover:text-stone-900 transition-colors">
+            <button onClick={handleShare} className="recipe-card__action transition-colors">
               <Share2 className="w-4 h-4" />
             </button>
           </div>
           <button onClick={handleSave}
-            className="p-2 rounded-full text-stone-500 hover:text-stone-900 hover:bg-stone-100 transition-all">
+            className="recipe-card__action recipe-card__save p-2 rounded-full transition-all">
             <Bookmark className="w-5 h-5 stroke-[1.8]" />
           </button>
         </div>

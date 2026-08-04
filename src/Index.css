@@ -6,6 +6,22 @@
   --color-surface: #ffffff;
   --color-border: rgba(214, 211, 209, 0.8);
   --color-muted: #78716c;
+  --color-accent: #92400e;
+  --color-accent-hover: #78350f;
+  --color-subtle: #f5f5f4;
+  --color-hover: #e7e5e4;
+  --color-accent-soft: #fef3c7;
+  --color-accent-soft-border: #fde68a;
+  --header-bg: rgba(250, 248, 245, 0.92);
+  --header-text: #1c1917;
+  --header-muted: #78716c;
+  --header-hover: rgba(231, 229, 228, 0.7);
+  --header-menu-bg: #ffffff;
+  --header-chip-bg: #f5f5f4;
+  --header-border: rgba(214, 211, 209, 0.8);
+  --header-tag-bg: #fef3c7;
+  --header-tag-text: #78350f;
+  --header-tag-border: rgba(252, 211, 77, 0.6);
 }
 
 [data-theme="dark"] {
@@ -14,6 +30,702 @@
   --color-surface: #292524;
   --color-border: rgba(68, 64, 60, 0.8);
   --color-muted: #a8a29e;
+  --color-accent: #fbbf24;
+  --color-accent-hover: #fcd34d;
+  --color-subtle: #292524;
+  --color-hover: #44403c;
+  --color-accent-soft: rgba(146, 64, 14, 0.28);
+  --color-accent-soft-border: rgba(217, 119, 6, 0.45);
+  --header-bg: rgba(20, 18, 17, 0.92);
+  --header-text: #fafaf9;
+  --header-muted: #a8a29e;
+  --header-hover: rgba(68, 64, 60, 0.65);
+  --header-menu-bg: #211e1c;
+  --header-chip-bg: #35302d;
+  --header-border: rgba(87, 83, 78, 0.72);
+  --header-tag-bg: rgba(146, 64, 14, 0.28);
+  --header-tag-text: #fcd34d;
+  --header-tag-border: rgba(217, 119, 6, 0.45);
+}
+
+.savor-header {
+  color: var(--header-text);
+  background-color: var(--header-bg);
+  border-bottom: 1px solid var(--header-border);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.savor-header__brand,
+.savor-header__primary {
+  color: var(--header-text);
+}
+
+.savor-header__tag {
+  color: var(--header-tag-text);
+  background-color: var(--header-tag-bg);
+  border-color: var(--header-tag-border);
+}
+
+.savor-header__icon-button,
+.savor-header__menu-item {
+  color: var(--header-muted);
+}
+
+.savor-header__icon-button:hover,
+.savor-header__menu-item:hover {
+  color: var(--header-text);
+  background-color: var(--header-hover);
+}
+
+.savor-header__menu,
+.savor-header__divider {
+  border-color: var(--header-border);
+}
+
+.savor-header__menu {
+  color: var(--header-text);
+  background-color: var(--header-menu-bg);
+  box-shadow: 0 18px 45px rgba(12, 10, 9, 0.2);
+}
+
+.savor-header__muted {
+  color: var(--header-muted);
+}
+
+.savor-header__sign-in {
+  color: #fff;
+  background-color: #1c1917;
+}
+
+.savor-header__sign-in:hover {
+  background-color: #78350f;
+}
+
+[data-theme="dark"] .savor-header__sign-in {
+  color: #1c1917;
+  background-color: #fbbf24;
+}
+
+[data-theme="dark"] .savor-header__sign-in:hover {
+  background-color: #f59e0b;
+}
+
+.home-accent-text,
+.recipe-card__accent {
+  color: var(--color-accent);
+}
+
+.recipe-card {
+  color: var(--color-text);
+  background-color: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+.recipe-card__primary {
+  color: var(--color-text);
+}
+
+.recipe-card__muted,
+.recipe-card__action {
+  color: var(--color-muted);
+}
+
+.recipe-card__divider {
+  border-color: var(--color-border);
+}
+
+.recipe-card__image-placeholder {
+  background-color: var(--color-subtle);
+}
+
+.recipe-card:hover .recipe-card__title,
+.recipe-card__action:hover {
+  color: var(--color-accent-hover);
+}
+
+.recipe-card__save:hover {
+  color: var(--color-text);
+  background-color: var(--color-hover);
+}
+
+.discover-input {
+  color: var(--color-text);
+  background-color: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+.discover-input::placeholder {
+  color: var(--color-muted);
+}
+
+.discover-muted,
+.discover-icon-button {
+  color: var(--color-muted);
+}
+
+.discover-icon-button:hover {
+  color: var(--color-text);
+  background-color: var(--color-hover);
+}
+
+.discover-chip {
+  color: var(--color-accent);
+  background-color: var(--color-accent-soft);
+  border-color: var(--color-accent-soft-border);
+}
+
+.discover-accent {
+  color: var(--color-accent);
+}
+
+.discover-creator-card,
+.discover-modal {
+  color: var(--color-text);
+  background-color: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+.discover-divider {
+  border-color: var(--color-border);
+}
+
+.discover-follow-button {
+  color: #fff;
+  background-color: #1c1917;
+}
+
+.discover-follow-button:hover {
+  background-color: #92400e;
+}
+
+[data-theme="dark"] .discover-follow-button {
+  color: #1c1917;
+  background-color: #fbbf24;
+}
+
+[data-theme="dark"] .discover-follow-button:hover {
+  background-color: #f59e0b;
+}
+
+.discover-reset-button {
+  color: var(--color-text);
+  background-color: var(--color-subtle);
+}
+
+.discover-reset-button:hover {
+  background-color: var(--color-hover);
+}
+
+.discover-rating-empty {
+  color: var(--color-border);
+}
+
+.discover-filter-trigger {
+  color: var(--color-text);
+  background-color: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+.discover-filter-trigger:hover {
+  background-color: var(--color-hover);
+}
+
+.discover-filter-trigger--active,
+.discover-option--active,
+.discover-primary-button {
+  color: #fff;
+  background-color: #92400e;
+  border-color: #92400e;
+}
+
+.discover-filter-trigger--active:hover,
+.discover-primary-button:hover {
+  background-color: #78350f;
+}
+
+.discover-option {
+  color: var(--color-text);
+  background-color: var(--color-subtle);
+}
+
+.discover-option:hover {
+  background-color: var(--color-hover);
+}
+
+.discover-option--active,
+.discover-option--active:hover {
+  color: #fff;
+  background-color: #92400e;
+}
+
+.discover-filter-count {
+  color: #78350f;
+  background-color: #fff;
+}
+
+[data-theme="dark"] .discover-filter-trigger--active,
+[data-theme="dark"] .discover-option--active,
+[data-theme="dark"] .discover-option--active:hover,
+[data-theme="dark"] .discover-primary-button {
+  color: #1c1917;
+  background-color: #fbbf24;
+  border-color: #fbbf24;
+}
+
+[data-theme="dark"] .discover-filter-trigger--active:hover,
+[data-theme="dark"] .discover-primary-button:hover {
+  background-color: #f59e0b;
+}
+
+[data-theme="dark"] .discover-filter-count {
+  color: #fef3c7;
+  background-color: #78350f;
+}
+
+.discover-danger {
+  color: #be123c;
+}
+
+[data-theme="dark"] .discover-danger {
+  color: #fb7185;
+}
+
+.add-recipe-page {
+  color: var(--color-text);
+}
+
+.add-recipe-page input,
+.add-recipe-page textarea,
+.add-recipe-page select {
+  color: var(--color-text);
+  background-color: var(--color-subtle);
+  border-color: var(--color-border);
+}
+
+.add-recipe-page input::placeholder,
+.add-recipe-page textarea::placeholder {
+  color: var(--color-muted);
+}
+
+.add-recipe-page select option {
+  color: var(--color-text);
+  background-color: var(--color-surface);
+}
+
+.add-recipe-tab-group,
+.add-recipe-row,
+.add-recipe-step,
+.add-recipe-upload,
+.add-recipe-crop-stage {
+  background-color: var(--color-subtle);
+  border-color: var(--color-border);
+}
+
+.add-recipe-tab {
+  color: var(--color-muted);
+}
+
+.add-recipe-tab--active,
+.add-recipe-primary {
+  color: #fff;
+  background-color: #92400e;
+}
+
+.add-recipe-tab--active:hover,
+.add-recipe-primary:hover {
+  background-color: #78350f;
+}
+
+.add-recipe-secondary {
+  color: var(--color-text);
+  background-color: var(--color-subtle);
+}
+
+.add-recipe-secondary:hover {
+  background-color: var(--color-hover);
+}
+
+.add-recipe-accent {
+  color: var(--color-accent);
+}
+
+.add-recipe-accent-soft {
+  color: var(--color-accent);
+  background-color: var(--color-accent-soft);
+  border-color: var(--color-accent-soft-border);
+}
+
+.add-recipe-modal {
+  color: var(--color-text);
+  background-color: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+[data-theme="dark"] .add-recipe-page [class*="border-stone-"] {
+  border-color: var(--color-border);
+}
+
+[data-theme="dark"] .add-recipe-page :is(.bg-white, .bg-stone-50, .bg-stone-100, .bg-stone-200) {
+  background-color: var(--color-subtle);
+}
+
+[data-theme="dark"] .add-recipe-page :is(.text-stone-900, .text-stone-800, .text-stone-700) {
+  color: var(--color-text);
+}
+
+[data-theme="dark"] .add-recipe-page :is(.text-stone-600, .text-stone-500, .text-stone-400) {
+  color: var(--color-muted);
+}
+
+[data-theme="dark"] .add-recipe-page :is(.text-amber-900, .text-amber-800, .text-amber-700) {
+  color: var(--color-accent);
+}
+
+[data-theme="dark"] .add-recipe-page :is(.bg-amber-50, .bg-amber-100) {
+  background-color: var(--color-accent-soft);
+}
+
+[data-theme="dark"] .add-recipe-page .text-rose-700 {
+  color: #fb7185;
+}
+
+[data-theme="dark"] .add-recipe-tab--active,
+[data-theme="dark"] .add-recipe-primary {
+  color: #1c1917;
+  background-color: #fbbf24;
+}
+
+[data-theme="dark"] .add-recipe-tab--active:hover,
+[data-theme="dark"] .add-recipe-primary:hover {
+  background-color: #f59e0b;
+}
+
+.saved-page {
+  color: var(--color-text);
+}
+
+.saved-accent,
+.saved-card__accent {
+  color: var(--color-accent);
+}
+
+.saved-primary,
+.saved-tab--active {
+  color: #fff;
+  background-color: #92400e;
+  border-color: #92400e;
+}
+
+.saved-primary:hover {
+  background-color: #78350f;
+}
+
+.saved-tab {
+  color: var(--color-text);
+  background-color: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+.saved-tab:hover {
+  background-color: var(--color-hover);
+}
+
+.saved-tab.saved-tab--active {
+  color: #fff;
+  background-color: #92400e;
+  border-color: #92400e;
+}
+
+.saved-tab.saved-tab--active:hover {
+  background-color: #78350f;
+}
+
+.saved-card {
+  color: var(--color-text);
+  background-color: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+.saved-card__muted {
+  color: var(--color-muted);
+}
+
+.saved-card__divider {
+  border-color: var(--color-border);
+}
+
+.saved-card:hover .saved-card__title {
+  color: var(--color-accent-hover);
+}
+
+.saved-input::placeholder {
+  color: var(--color-muted);
+}
+
+.saved-danger {
+  color: #e11d48;
+}
+
+.saved-danger:hover {
+  color: #be123c;
+}
+
+[data-theme="dark"] .saved-primary,
+[data-theme="dark"] .saved-tab--active {
+  color: #1c1917;
+  background-color: #fbbf24;
+  border-color: #fbbf24;
+}
+
+[data-theme="dark"] .saved-primary:hover,
+[data-theme="dark"] .saved-tab--active:hover {
+  color: #1c1917;
+  background-color: #f59e0b;
+}
+
+[data-theme="dark"] .saved-danger {
+  color: #fb7185;
+}
+
+[data-theme="dark"] .saved-danger:hover {
+  color: #fda4af;
+}
+
+.profile-page {
+  color: var(--color-text);
+}
+
+.profile-card,
+.profile-modal {
+  color: var(--color-text);
+  background-color: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+.profile-muted,
+.profile-icon-button {
+  color: var(--color-muted);
+}
+
+.profile-accent {
+  color: var(--color-accent);
+}
+
+.profile-divider {
+  border-color: var(--color-border);
+}
+
+.profile-primary,
+.profile-tab--active {
+  color: #fff;
+  background-color: #92400e;
+  border-color: #92400e;
+}
+
+.profile-primary:hover,
+.profile-tab--active:hover {
+  background-color: #78350f;
+}
+
+.profile-secondary,
+.profile-tab {
+  color: var(--color-text);
+  background-color: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+.profile-secondary:hover,
+.profile-tab:hover,
+.profile-icon-button:hover {
+  color: var(--color-text);
+  background-color: var(--color-hover);
+}
+
+.profile-tab.profile-tab--active {
+  color: #fff;
+  background-color: #92400e;
+  border-color: #92400e;
+}
+
+.profile-tab.profile-tab--active:hover {
+  background-color: #78350f;
+}
+
+.profile-accent-soft {
+  color: var(--color-accent);
+  background-color: var(--color-accent-soft);
+  border-color: var(--color-accent-soft-border);
+}
+
+.profile-verification {
+  color: #1d4ed8;
+  background-color: #eff6ff;
+  border-color: #bfdbfe;
+}
+
+.profile-page input,
+.profile-page textarea {
+  color: var(--color-text);
+  background-color: var(--color-subtle);
+  border-color: var(--color-border);
+}
+
+.profile-page input::placeholder,
+.profile-page textarea::placeholder {
+  color: var(--color-muted);
+}
+
+.profile-danger {
+  color: #e11d48;
+}
+
+.profile-danger:hover {
+  color: #be123c;
+}
+
+[data-theme="dark"] .profile-primary,
+[data-theme="dark"] .profile-tab.profile-tab--active {
+  color: #1c1917;
+  background-color: #fbbf24;
+  border-color: #fbbf24;
+}
+
+[data-theme="dark"] .profile-primary:hover,
+[data-theme="dark"] .profile-tab.profile-tab--active:hover {
+  background-color: #f59e0b;
+}
+
+[data-theme="dark"] .profile-verification {
+  color: #93c5fd;
+  background-color: rgba(30, 64, 175, 0.24);
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+[data-theme="dark"] .profile-danger {
+  color: #fb7185;
+}
+
+:root {
+  --analytics-views: #b45309;
+  --analytics-saves: #0f766e;
+  --analytics-ratings: #ca8a04;
+  --analytics-followers: #7c3aed;
+  --analytics-comments: #be185d;
+  --analytics-active-text: #fff;
+}
+
+[data-theme="dark"] {
+  --analytics-views: #f59e0b;
+  --analytics-saves: #2dd4bf;
+  --analytics-ratings: #facc15;
+  --analytics-followers: #a78bfa;
+  --analytics-comments: #f472b6;
+  --analytics-active-text: #1c1917;
+}
+
+.analytics-page {
+  color: var(--color-text);
+}
+
+.analytics-accent {
+  color: var(--color-accent);
+}
+
+.analytics-range-button {
+  color: var(--color-muted);
+}
+
+.analytics-range-button:hover {
+  color: var(--color-text);
+  background-color: var(--color-hover);
+}
+
+.analytics-range-button--active {
+  color: #fff;
+  background-color: #92400e;
+}
+
+.analytics-range-button--active:hover {
+  color: #fff;
+  background-color: #78350f;
+}
+
+.analytics-positive {
+  color: #047857;
+}
+
+.analytics-negative {
+  color: #e11d48;
+}
+
+.analytics-error {
+  color: #be123c;
+  background-color: #fff1f2;
+  border-color: #fecdd3;
+}
+
+.analytics-thumbnail {
+  background-color: var(--color-accent-soft);
+}
+
+.analytics-page .bg-amber-100 {
+  background-color: var(--color-accent-soft);
+}
+
+.analytics-table-row:hover {
+  background-color: var(--color-subtle);
+}
+
+.analytics-insight-card {
+  color: var(--color-text);
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 1px 2px rgba(28, 25, 23, 0.06);
+}
+
+.analytics-insight-eyebrow {
+  color: var(--color-accent);
+}
+
+.analytics-insight-stat {
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.875rem;
+  background-color: var(--color-bg);
+}
+
+.analytics-insight-muted {
+  color: var(--color-muted);
+}
+
+.analytics-insight-copy {
+  color: var(--color-muted);
+  border-color: var(--color-border);
+}
+
+[data-theme="dark"] .analytics-range-button--active,
+[data-theme="dark"] .analytics-range-button--active:hover {
+  color: #1c1917;
+  background-color: #fbbf24;
+}
+
+[data-theme="dark"] .analytics-range-button--active:hover {
+  background-color: #f59e0b;
+}
+
+[data-theme="dark"] .analytics-positive {
+  color: #34d399;
+}
+
+[data-theme="dark"] .analytics-negative {
+  color: #fb7185;
+}
+
+[data-theme="dark"] .analytics-error {
+  color: #fda4af;
+  background-color: rgba(159, 18, 57, 0.18);
+  border-color: rgba(244, 63, 94, 0.35);
 }
 
 *, *::before, *::after {

@@ -6,6 +6,7 @@ import { prisma } from "../lib/prisma.js";
 import { authenticate } from "../middleware/authenticate.js";
 import { DEFAULT_AVATAR_URL } from "../lib/media/config.js";
 import { usernameSuggestionCandidates, validateUsername } from "../lib/username.js";
+import { buildLoginLookup } from "../lib/login.js";
 
 const router = Router();
 
@@ -49,7 +50,7 @@ router.post("/register", async (req, res) => {
 
     const token = jwt.sign({ id: user.id, email: user.email, username: user.username, name: user.name }, process.env.JWT_SECRET, { expiresIn: "7d" });
     res.cookie("token", token, COOKIE_OPTIONS);
-    res.status(201).json({ user: { id: user.id, email: user.email, username: user.username, name: user.name, isAdmin: user.isAdmin, isVerified: user.isVerified, avatarUrl: user.avatarUrl || DEFAULT_AVATAR_URL, avatarPending: false } });
+    res.status(201).json({ user: { id: user.id, email: user.email, username: user.username, name: user.name, isAdmin: user.isAdmin, isVerified: user.isVerified, avatarUrl: user.avatarUrl || DEFAULT_AVATAR_URL, avatarPending: false, preferredLanguage: user.preferredLanguage } });
   } catch (err) {
     if (err.code === "P2002") {
       const target = Array.isArray(err.meta?.target) ? err.meta.target.join(" ") : String(err.meta?.target ?? "");
@@ -89,18 +90,22 @@ router.get("/username-availability", async (req, res) => {
 });
 
 router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) return res.status(400).json({ error: "Email and password are required" });
+  const { password } = req.body;
+  const identifier = req.body.identifier ?? req.body.email;
+  const loginLookup = buildLoginLookup(identifier);
+  if (!loginLookup || !password) {
+    return res.status(400).json({ error: "Username or email and password are required" });
+  }
 
   try {
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findFirst({ where: loginLookup });
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
-      return res.status(401).json({ error: "Invalid email or password" });
+      return res.status(401).json({ error: "Invalid username, email, or password" });
     }
 
     const token = jwt.sign({ id: user.id, email: user.email, username: user.username, name: user.name }, process.env.JWT_SECRET, { expiresIn: "7d" });
     res.cookie("token", token, COOKIE_OPTIONS);
-    res.json({ user: { id: user.id, email: user.email, username: user.username, name: user.name, isAdmin: user.isAdmin, isVerified: user.isVerified, avatarUrl: user.avatarUrl || DEFAULT_AVATAR_URL, avatarPending: Boolean(user.pendingAvatarId) } });
+    res.json({ user: { id: user.id, email: user.email, username: user.username, name: user.name, isAdmin: user.isAdmin, isVerified: user.isVerified, avatarUrl: user.avatarUrl || DEFAULT_AVATAR_URL, avatarPending: Boolean(user.pendingAvatarId), preferredLanguage: user.preferredLanguage } });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message || "Login failed" });
@@ -115,7 +120,7 @@ router.post("/logout", (_req, res) => {
 router.get("/me", authenticate, async (req, res) => {
   const user = await prisma.user.findUnique({
     where: { id: req.user.id },
-    select: { id: true, email: true, username: true, name: true, isAdmin: true, isVerified: true, avatarUrl: true, pendingAvatarId: true },
+    select: { id: true, email: true, username: true, name: true, isAdmin: true, isVerified: true, avatarUrl: true, pendingAvatarId: true, preferredLanguage: true },
   });
   if (!user) return res.status(401).json({ error: "User no longer exists" });
   const { pendingAvatarId, ...publicUser } = user;

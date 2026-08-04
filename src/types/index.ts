@@ -37,10 +37,18 @@ export interface RecipeListItem {
   ratingCount?: number;
   savedCategory?: SavedCategory | null;
   recommendationReason?: string;
+  contentLanguage?: string;
+  originalLanguage?: string;
+  availableLanguages?: string[];
+  isTranslated?: boolean;
 }
 
 export interface RecipeDetail extends RecipeListItem {
   videoUrl?: string | null;
+  sourcePlatform?: 'tiktok' | null;
+  sourceUrl?: string | null;
+  sourceAuthor?: string | null;
+  sourceThumbnailUrl?: string | null;
   ingredients: IngredientSection[];
   instructions: InstructionStep[];
   tips?: string[];
@@ -90,6 +98,7 @@ export interface AuthUser {
   isVerified: boolean;
   name: string | null;
   avatarUrl?: string | null;
+  preferredLanguage?: 'fr' | 'en' | 'es' | null;
 }
 
 export interface ToastData {

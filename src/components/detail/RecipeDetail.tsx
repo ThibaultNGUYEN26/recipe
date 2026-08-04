@@ -4,7 +4,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUI } from '../../contexts/UIContext';
 import type { RecipeDetail as RecipeDetailType, Comment, IngredientSection, InstructionStep } from '../../types';
-import { ArrowLeft, Star, Bookmark, BookmarkCheck, Share2, Clock, Users, ChefHat, Timer, Check, Heart, Send, Flag, Trash2 } from 'lucide-react';
+import { ArrowLeft, Star, Bookmark, BookmarkCheck, Share2, Clock, Users, ChefHat, Timer, Check, Heart, Send, Flag, Trash2, Languages, ExternalLink } from 'lucide-react';
 import VerifiedBadge from '../profile/VerifiedBadge';
 
 const API = import.meta.env.VITE_API_URL;
@@ -12,6 +12,10 @@ const API = import.meta.env.VITE_API_URL;
 function imgSrc(url: string | null) {
   if (!url) return null;
   return url.startsWith('/') ? `${API}${url}` : url;
+}
+
+function languageName(language: string | undefined) {
+  return language === 'fr' ? 'French' : language === 'en' ? 'English' : language === 'es' ? 'Spanish' : language?.toUpperCase() || 'original';
 }
 
 function StarRow({ value, onChange, readonly }: { value: number; onChange?: (v: number) => void; readonly?: boolean }) {
@@ -148,12 +152,17 @@ export default function RecipeDetail() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentText, setCommentText] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [contentLanguage, setContentLanguage] = useState<string | null>(null);
+
+  useEffect(() => {
+    setContentLanguage(null);
+  }, [slug, language]);
 
   useEffect(() => {
     if (!slug) return;
     setLoading(true);
     Promise.all([
-      fetch(`${API}/api/recipes/${slug}?lang=${language}`, { credentials: 'include' }).then((r) => r.json()),
+      fetch(`${API}/api/recipes/${slug}?lang=${contentLanguage ?? language}`, { credentials: 'include' }).then((r) => r.json()),
       fetch(`${API}/api/recipes/${slug}/comments`, { credentials: 'include' }).then((r) => r.json()),
     ])
       .then(([rd, cm]) => {
@@ -178,7 +187,7 @@ export default function RecipeDetail() {
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [slug, language]);
+  }, [slug, language, contentLanguage]);
 
   useEffect(() => {
     function handleRecipeSaved(event: Event) {
@@ -334,6 +343,21 @@ export default function RecipeDetail() {
           </div>
           <h1 className="font-serif text-2xl font-semibold leading-snug mb-2" style={{ color: 'var(--color-text)' }}>{recipe.title}</h1>
           {recipe.description && <p className="text-sm leading-relaxed" style={{ color: 'var(--color-muted)' }}>{recipe.description}</p>}
+          {recipe.availableLanguages && recipe.availableLanguages.length > 1 && (
+            <div className="flex items-center gap-2 mt-2 text-xs" style={{ color: 'var(--color-muted)' }}>
+              <Languages className="w-3.5 h-3.5" />
+              {recipe.isTranslated && <span>Translated from {languageName(recipe.originalLanguage)}</span>}
+              {recipe.isTranslated ? (
+                <button onClick={() => setContentLanguage(recipe.originalLanguage ?? null)} className="font-bold underline" style={{ color: 'var(--color-accent)' }}>
+                  See original
+                </button>
+              ) : recipe.availableLanguages.includes(language) && language !== recipe.originalLanguage ? (
+                <button onClick={() => setContentLanguage(language)} className="font-bold underline" style={{ color: 'var(--color-accent)' }}>
+                  See translation
+                </button>
+              ) : null}
+            </div>
+          )}
 
           {/* Author */}
           {recipe.authorName && (
@@ -415,6 +439,19 @@ export default function RecipeDetail() {
               Your browser does not support embedded videos.
             </video>
           </div>
+        )}
+
+        {recipe.sourcePlatform === 'tiktok' && recipe.sourceUrl && (
+          <a href={recipe.sourceUrl} target="_blank" rel="noreferrer"
+            className="flex items-center gap-3 rounded-2xl border p-4 transition-colors hover:bg-[var(--color-hover)]"
+            style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
+            {recipe.sourceThumbnailUrl && <img src={recipe.sourceThumbnailUrl} alt="" className="h-14 w-10 shrink-0 rounded-lg object-cover" />}
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-bold">Watch the original TikTok</span>
+              <span className="block truncate text-xs" style={{ color: 'var(--color-muted)' }}>{recipe.sourceAuthor ? `By ${recipe.sourceAuthor}` : 'Source video'}</span>
+            </span>
+            <ExternalLink size={17} style={{ color: 'var(--color-muted)' }} />
+          </a>
         )}
 
         {/* Instructions */}

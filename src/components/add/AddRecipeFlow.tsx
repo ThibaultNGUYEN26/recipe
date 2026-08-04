@@ -5,7 +5,7 @@ import { useUI } from '../../contexts/UIContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import {
   Plus, Trash2, MoveUp, MoveDown, Sparkles, Eye,
-  ArrowRight, ArrowLeft, X, Crop as CropIcon, Video, Upload
+  ArrowRight, ArrowLeft, X, Crop as CropIcon, Video, Upload, Link2, ExternalLink
 } from 'lucide-react';
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
@@ -28,7 +28,7 @@ const DIFFICULTY_LIST = ['Facile', 'Moyen', 'Difficile'];
 
 interface IngRow { id: string; name: string; amount: string; unit: string }
 interface IngSection { id: string; section: string; rows: IngRow[] }
-interface StepRow { id: string; stepNumber: number; title: string; instruction: string; timerMinutes: string; tip: string }
+interface StepRow { id: string; stepNumber: number; instruction: string; timerMinutes: string }
 
 interface TranslationFields {
   title: string;
@@ -38,14 +38,49 @@ interface TranslationFields {
   tips: string;
 }
 
+interface TikTokImportSource {
+  platform: 'tiktok';
+  url: string;
+  author: string | null;
+  authorUrl: string | null;
+  thumbnailUrl: string | null;
+  caption: string;
+}
+
+interface TikTokImportResponse {
+  source: TikTokImportSource;
+  draft: {
+    title: string;
+    description: string;
+    ingredients: { amount: string; unit: string; name: string }[];
+    instructions: { step: number; text: string }[];
+    tips: string[];
+    tags: string[];
+    warnings: string[];
+  };
+  error?: string;
+}
+
+type RecipeLanguage = 'fr' | 'en' | 'es';
+const RECIPE_LANGUAGES: RecipeLanguage[] = ['fr', 'en', 'es'];
+
 function emptyTranslation(): TranslationFields {
   return {
     title: '',
     description: '',
     ingredients: [{ id: '1', section: '', rows: [{ id: '1', name: '', amount: '', unit: '' }] }],
-    steps: [{ id: '1', stepNumber: 1, title: '', instruction: '', timerMinutes: '', tip: '' }],
+    steps: [{ id: '1', stepNumber: 1, instruction: '', timerMinutes: '' }],
     tips: '',
   };
+}
+
+function parseReferenceTags(value: string) {
+  return [...new Set(
+    value
+      .split(/[\s,#]+/)
+      .map((tag) => tag.trim().toLowerCase())
+      .filter(Boolean),
+  )];
 }
 
 export default function AddRecipeFlow() {
@@ -56,8 +91,14 @@ export default function AddRecipeFlow() {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [stepPage, setStepPage] = useState<1 | 2 | 3>(1);
-  const [editLang, setEditLang] = useState<'fr' | 'en'>('fr');
-  const [translations, setTranslations] = useState<Record<'fr' | 'en', TranslationFields>>({ fr: emptyTranslation(), en: emptyTranslation() });
+  const initialRecipeLanguage: RecipeLanguage = RECIPE_LANGUAGES.includes(language) ? language : 'en';
+  const editLang = initialRecipeLanguage;
+  const originalLanguage = initialRecipeLanguage;
+  const [translations, setTranslations] = useState<Record<RecipeLanguage, TranslationFields>>({
+    fr: emptyTranslation(),
+    en: emptyTranslation(),
+    es: emptyTranslation(),
+  });
 
   // Shared fields
   const [slug, setSlug] = useState('');
@@ -68,6 +109,7 @@ export default function AddRecipeFlow() {
   const [cookTime, setCookTime] = useState('');
   const [servings, setServings] = useState(4);
   const [dietaryTags, setDietaryTags] = useState<string[]>([]);
+  const [referenceTagsInput, setReferenceTagsInput] = useState('');
   const [videoFile, setVideoFile] = useState<File | null>(null);
 
   // Image
@@ -83,6 +125,10 @@ export default function AddRecipeFlow() {
   const cropImgRef = useRef<HTMLImageElement>(null);
 
   const [submitting, setSubmitting] = useState(false);
+  const [tiktokUrl, setTikTokUrl] = useState('');
+  const [importingTikTok, setImportingTikTok] = useState(false);
+  const [importedSource, setImportedSource] = useState<TikTokImportSource | null>(null);
+  const [importWarnings, setImportWarnings] = useState<string[]>([]);
 
   useEffect(() => {
     fetch(`${API}/api/categories`, { credentials: 'include' })
@@ -93,9 +139,9 @@ export default function AddRecipeFlow() {
 
   if (!user) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 px-6">
+      <div className="add-recipe-page flex flex-col items-center justify-center min-h-[60vh] gap-4 px-6">
         <p className="text-center text-sm" style={{ color: 'var(--color-muted)' }}>Sign in to add recipes</p>
-        <Link to="/login" className="px-6 py-3 rounded-2xl bg-stone-900 text-white text-sm font-medium">Sign in</Link>
+        <Link to="/login" className="add-recipe-primary px-6 py-3 rounded-2xl text-sm font-medium transition-colors">Sign in</Link>
       </div>
     );
   }
@@ -108,6 +154,58 @@ export default function AddRecipeFlow() {
 
   function slugify(s: string) {
     return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  }
+
+  async function importFromTikTok() {
+    if (!tiktokUrl.trim()) return;
+    setImportingTikTok(true);
+    try {
+      const response = await fetch(`${API}/api/recipes/import/tiktok`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ url: tiktokUrl.trim() }),
+      });
+      const payload: TikTokImportResponse = await response.json();
+      if (!response.ok) throw new Error(payload.error || 'TikTok import failed');
+
+      const ingredientSections = payload.draft.ingredients.length ? [{
+        id: `tiktok-${Date.now()}`,
+        section: 'main',
+        rows: payload.draft.ingredients.map((item, index) => ({ id: `tiktok-ingredient-${Date.now()}-${index}`, ...item })),
+      }] : null;
+      const steps = payload.draft.instructions.length
+        ? payload.draft.instructions.map((step, index) => ({ id: `tiktok-step-${Date.now()}-${index}`, stepNumber: step.step, instruction: step.text, timerMinutes: '' }))
+        : null;
+
+      setTranslations((previous) => ({
+        ...previous,
+        [editLang]: {
+          ...previous[editLang],
+          title: payload.draft.title || previous[editLang].title,
+          description: payload.draft.description || previous[editLang].description,
+          ingredients: ingredientSections || previous[editLang].ingredients,
+          steps: steps || previous[editLang].steps,
+          tips: payload.draft.tips.length ? payload.draft.tips.join('\n') : previous[editLang].tips,
+        },
+      }));
+      setSlug((current) => current || slugify(payload.draft.title));
+      setImportedSource(payload.source);
+      setReferenceTagsInput((current) => {
+        const tags = [...new Set([...parseReferenceTags(current), ...(payload.draft.tags || [])])];
+        return tags.map((tag) => `#${tag}`).join(' ');
+      });
+      setImportWarnings(payload.draft.warnings);
+      if (payload.source.thumbnailUrl) {
+        setCoverImage(payload.source.thumbnailUrl);
+        setImageFile(null);
+      }
+      showToast('TikTok draft imported', payload.draft.warnings.length ? 'Review the highlighted missing details before publishing.' : 'Ingredients and steps are ready for review.', 'success');
+    } catch (error) {
+      showToast('Could not import TikTok', error instanceof Error ? error.message : 'Try another public TikTok URL.', 'error');
+    } finally {
+      setImportingTikTok(false);
+    }
   }
 
   // Section helpers
@@ -135,7 +233,7 @@ export default function AddRecipeFlow() {
   // Step helpers
   function addStep() {
     const next = tr.steps.length + 1;
-    setTr({ steps: [...tr.steps, { id: Date.now().toString(), stepNumber: next, title: '', instruction: '', timerMinutes: '', tip: '' }] });
+    setTr({ steps: [...tr.steps, { id: Date.now().toString(), stepNumber: next, instruction: '', timerMinutes: '' }] });
   }
   function removeStep(id: string) {
     setTr({ steps: tr.steps.filter((s) => s.id !== id).map((s, i) => ({ ...s, stepNumber: i + 1 })) });
@@ -204,8 +302,8 @@ export default function AddRecipeFlow() {
   }
 
   async function publish() {
-    const frTr = translations.fr;
-    if (!frTr.title.trim()) { showToast('Title required', 'Please fill the FR title', 'error'); return; }
+    const originalTranslation = translations[originalLanguage];
+    if (!originalTranslation.title.trim()) { showToast('Title required', 'Please fill in the recipe title', 'error'); return; }
     if (!slug) { showToast('Slug required', 'A URL slug is needed', 'error'); return; }
     if (!categoryId) { showToast('Category required', undefined, 'error'); return; }
     if (tr.ingredients.length > 1 && tr.ingredients.some((s) => !s.section.trim())) {
@@ -226,7 +324,7 @@ export default function AddRecipeFlow() {
         difficulty,
       };
 
-      const translationRows = (['fr', 'en'] as const)
+      const translationRows = [originalLanguage]
         .filter((l) => translations[l].title.trim())
         .map((l) => {
           const t = translations[l];
@@ -251,8 +349,15 @@ export default function AddRecipeFlow() {
       fd.append('slug', slug);
       fd.append('categoryId', categoryId);
       fd.append('info', JSON.stringify(info));
-      fd.append('tags', JSON.stringify(dietaryTags));
+      fd.append('tags', JSON.stringify([...new Set([...dietaryTags, ...parseReferenceTags(referenceTagsInput)])]));
+      fd.append('originalLanguage', originalLanguage);
       fd.append('translations', JSON.stringify(translationRows));
+      if (importedSource) {
+        fd.append('sourcePlatform', importedSource.platform);
+        fd.append('sourceUrl', importedSource.url);
+        if (importedSource.author) fd.append('sourceAuthor', importedSource.author);
+        if (importedSource.thumbnailUrl) fd.append('sourceThumbnailUrl', importedSource.thumbnailUrl);
+      }
       if (imageFile) {
         fd.append('image', imageFile);
       }
@@ -278,7 +383,7 @@ export default function AddRecipeFlow() {
   const labelCls = "text-xs font-bold text-stone-700 uppercase tracking-wider";
 
   return (
-    <div className="max-w-2xl mx-auto px-4 space-y-6 py-4 pb-24">
+    <div className="add-recipe-page max-w-2xl mx-auto px-4 space-y-6 py-4 pb-24">
 
       {/* Header */}
       <div className="p-5 rounded-3xl border border-stone-200/80 shadow-sm flex items-center justify-between"
@@ -288,17 +393,16 @@ export default function AddRecipeFlow() {
           <p className="text-xs mt-0.5" style={{ color: 'var(--color-muted)' }}>Share your culinary masterpiece with the world</p>
         </div>
         <button onClick={() => setShowPreview(true)}
-          className="flex items-center gap-1.5 text-xs font-bold text-amber-900 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-2 rounded-2xl transition-colors">
-          <Eye className="w-4 h-4 text-amber-800" /> Preview
+          className="add-recipe-accent-soft flex items-center gap-1.5 text-xs font-bold border px-3 py-2 rounded-2xl transition-colors">
+          <Eye className="w-4 h-4" /> Preview
         </button>
       </div>
 
       {/* Stepper */}
-      <div className="grid grid-cols-3 gap-2 p-1.5 rounded-2xl border border-stone-200" style={{ backgroundColor: '#f5f5f4' }}>
+      <div className="add-recipe-tab-group grid grid-cols-3 gap-2 p-1.5 rounded-2xl border">
         {([1, 2, 3] as const).map((n) => (
           <button key={n} onClick={() => setStepPage(n)}
-            className="py-2 text-xs font-bold rounded-xl transition-all"
-            style={stepPage === n ? { backgroundColor: '#92400e', color: '#fff' } : { color: '#57534e' }}>
+            className={`add-recipe-tab py-2 text-xs font-bold rounded-xl transition-all ${stepPage === n ? 'add-recipe-tab--active' : ''}`}>
             {n === 1 ? '1. Basic Info' : n === 2 ? '2. Ingredients & Steps' : '3. Tags & Publish'}
           </button>
         ))}
@@ -309,18 +413,33 @@ export default function AddRecipeFlow() {
         <section className="p-6 rounded-3xl border border-stone-200/80 shadow-sm space-y-5"
           style={{ backgroundColor: 'var(--color-surface)' }}>
 
-          {/* Language toggle */}
-          <div className="flex items-center justify-between">
-            <span className={labelCls}>Language</span>
-            <div className="flex gap-1 p-1 rounded-xl" style={{ backgroundColor: '#f5f5f4' }}>
-              {(['fr', 'en'] as const).map((l) => (
-                <button key={l} onClick={() => setEditLang(l)}
-                  className="px-4 py-1.5 rounded-lg text-xs font-bold transition-all"
-                  style={editLang === l ? { backgroundColor: '#92400e', color: '#fff' } : { color: '#57534e' }}>
-                  {l === 'fr' ? '🇫🇷 Français' : '🇬🇧 English'}
-                </button>
-              ))}
+          <div className="rounded-2xl border p-4 space-y-3" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-subtle)' }}>
+            <div className="flex items-start gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-stone-900 text-white"><Link2 size={17} /></span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold" style={{ color: 'var(--color-text)' }}>Import from TikTok</p>
+                <p className="text-[11px]" style={{ color: 'var(--color-muted)' }}>Paste your public video link. Savor creates an editable draft for your recipe book.</p>
+              </div>
             </div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input type="url" value={tiktokUrl} onChange={(event) => setTikTokUrl(event.target.value)}
+                placeholder="https://www.tiktok.com/@chef/video/..." className={`${inputCls} flex-1`} />
+              <button type="button" onClick={importFromTikTok} disabled={importingTikTok || !tiktokUrl.trim()}
+                className="add-recipe-primary shrink-0 rounded-xl px-4 py-3 text-xs font-bold disabled:opacity-50">
+                {importingTikTok ? 'Importing…' : 'Create draft'}
+              </button>
+            </div>
+            {importedSource && (
+              <div className="flex items-center justify-between gap-3 rounded-xl border px-3 py-2" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
+                <div className="min-w-0"><p className="truncate text-xs font-bold">TikTok connected{importedSource.author ? ` · ${importedSource.author}` : ''}</p><p className="text-[10px]" style={{ color: 'var(--color-muted)' }}>This source will be credited on the published recipe.</p></div>
+                <a href={importedSource.url} target="_blank" rel="noreferrer" aria-label="Open source TikTok"><ExternalLink size={15} /></a>
+              </div>
+            )}
+            {importWarnings.length > 0 && (
+              <ul className="space-y-1 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-[11px] text-amber-900">
+                {importWarnings.map((warning) => <li key={warning}>• {warning}</li>)}
+              </ul>
+            )}
           </div>
 
           {/* Cover image */}
@@ -328,7 +447,7 @@ export default function AddRecipeFlow() {
             <div className="flex items-center justify-between">
               <label className={labelCls}>Cover Photo</label>
               <button type="button" onClick={() => setShowImagePicker(true)}
-                className="text-amber-800 hover:underline text-xs font-semibold">
+                className="add-recipe-accent hover:underline text-xs font-semibold">
                 Choose preset
               </button>
             </div>
@@ -350,14 +469,14 @@ export default function AddRecipeFlow() {
           {/* Title & description */}
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <label className={labelCls}>Recipe Title ({editLang.toUpperCase()}) *</label>
+              <label className={labelCls}>Recipe Title *</label>
               <input type="text" value={tr.title}
-                onChange={(e) => { setTr({ title: e.target.value }); if (editLang === 'fr' && !slug) setSlug(slugify(e.target.value)); }}
+                onChange={(e) => { setTr({ title: e.target.value }); if (!slug) setSlug(slugify(e.target.value)); }}
                 placeholder="e.g. Truffle & Wild Mushroom Tagliatelle"
                 className={inputCls} />
             </div>
             <div className="space-y-1.5">
-              <label className={labelCls}>Short Description ({editLang.toUpperCase()})</label>
+              <label className={labelCls}>Short Description</label>
               <textarea rows={3} value={tr.description} onChange={(e) => setTr({ description: e.target.value })}
                 placeholder="Describe the flavor, texture, and story…"
                 className="w-full bg-stone-50 border border-stone-200 text-stone-900 text-xs rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-amber-800/30 resize-none font-medium" />
@@ -410,7 +529,7 @@ export default function AddRecipeFlow() {
 
           <div className="flex justify-end pt-3">
             <button onClick={() => setStepPage(2)}
-              className="flex items-center gap-2 bg-stone-900 text-white font-bold text-xs px-6 py-3 rounded-2xl hover:bg-amber-800 transition-colors shadow-md">
+              className="add-recipe-primary flex items-center gap-2 font-bold text-xs px-6 py-3 rounded-2xl transition-colors shadow-md">
               Next: Ingredients & Steps <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -420,17 +539,6 @@ export default function AddRecipeFlow() {
       {/* STEP 2: INGREDIENTS & STEPS */}
       {stepPage === 2 && (
         <div className="space-y-6">
-          {/* Language toggle */}
-          <div className="flex gap-1 p-1 rounded-xl self-start w-fit" style={{ backgroundColor: '#f5f5f4' }}>
-            {(['fr', 'en'] as const).map((l) => (
-              <button key={l} onClick={() => setEditLang(l)}
-                className="px-4 py-1.5 rounded-lg text-xs font-bold transition-all"
-                style={editLang === l ? { backgroundColor: '#92400e', color: '#fff' } : { color: '#57534e' }}>
-                {l === 'fr' ? '🇫🇷 Français' : '🇬🇧 English'}
-              </button>
-            ))}
-          </div>
-
           {/* Ingredients */}
           <section className="p-6 rounded-3xl border border-stone-200/80 shadow-sm space-y-4"
             style={{ backgroundColor: 'var(--color-surface)' }}>
@@ -440,7 +548,7 @@ export default function AddRecipeFlow() {
                 <p className="text-xs" style={{ color: 'var(--color-muted)' }}>Group by section (e.g. Brownie, Cookie)</p>
               </div>
               <button type="button" onClick={addSection}
-                className="flex items-center gap-1 text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-xl transition-colors">
+                className="add-recipe-accent-soft flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-xl transition-colors">
                 <Plus className="w-3.5 h-3.5" /> Add Section
               </button>
             </div>
@@ -510,7 +618,7 @@ export default function AddRecipeFlow() {
                 <p className="text-xs" style={{ color: 'var(--color-muted)' }}>Order steps logically, add timer durations</p>
               </div>
               <button type="button" onClick={addStep}
-                className="flex items-center gap-1 text-xs font-bold text-amber-800 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-xl transition-colors">
+                className="add-recipe-accent-soft flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-xl transition-colors">
                 <Plus className="w-3.5 h-3.5" /> Add Step
               </button>
             </div>
@@ -518,7 +626,7 @@ export default function AddRecipeFlow() {
               {tr.steps.map((st, idx) => (
                 <div key={st.id} className="bg-stone-50 p-4 rounded-2xl border border-stone-200 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-amber-900 bg-amber-100 px-2.5 py-1 rounded-full">Step {st.stepNumber}</span>
+                    <span className="add-recipe-accent-soft text-xs font-bold px-2.5 py-1 rounded-full">Step {st.stepNumber}</span>
                     <div className="flex items-center gap-1">
                       <button type="button" onClick={() => moveStep(idx, 'up')} disabled={idx === 0}
                         className="p-1 text-stone-500 hover:text-stone-900 disabled:opacity-30">
@@ -534,20 +642,12 @@ export default function AddRecipeFlow() {
                       </button>
                     </div>
                   </div>
-                  <input type="text" placeholder="Step title (e.g. Sear Mushrooms)" value={st.title}
-                    onChange={(e) => updateStep(st.id, 'title', e.target.value)}
-                    className="w-full bg-white text-xs font-bold border border-stone-200 rounded-xl px-3 py-2 focus:outline-none" />
-                  <textarea rows={2} placeholder="Step instructions…" value={st.instruction}
+                  <textarea rows={3} placeholder="Describe what to do in this step…" value={st.instruction}
                     onChange={(e) => updateStep(st.id, 'instruction', e.target.value)}
                     className="w-full bg-white text-xs border border-stone-200 rounded-xl p-3 focus:outline-none resize-none" />
-                  <div className="flex gap-2">
-                    <input type="number" placeholder="Timer (mins)" value={st.timerMinutes}
-                      onChange={(e) => updateStep(st.id, 'timerMinutes', e.target.value)}
-                      className="w-32 bg-white text-xs border border-stone-200 rounded-xl px-3 py-1.5 focus:outline-none font-mono" />
-                    <input type="text" placeholder="Chef tip (optional)" value={st.tip}
-                      onChange={(e) => updateStep(st.id, 'tip', e.target.value)}
-                      className="flex-1 bg-white text-xs border border-stone-200 rounded-xl px-3 py-1.5 focus:outline-none" />
-                  </div>
+                  <input type="number" placeholder="Timer in minutes (optional)" value={st.timerMinutes}
+                    onChange={(e) => updateStep(st.id, 'timerMinutes', e.target.value)}
+                    className="w-full sm:w-52 bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 focus:outline-none font-mono" />
                 </div>
               ))}
             </div>
@@ -555,11 +655,11 @@ export default function AddRecipeFlow() {
 
           <div className="flex items-center justify-between pt-2">
             <button onClick={() => setStepPage(1)}
-              className="flex items-center gap-1.5 text-stone-700 bg-stone-100 font-bold text-xs px-5 py-3 rounded-2xl hover:bg-stone-200">
+              className="add-recipe-secondary flex items-center gap-1.5 font-bold text-xs px-5 py-3 rounded-2xl transition-colors">
               <ArrowLeft className="w-4 h-4" /> Back
             </button>
             <button onClick={() => setStepPage(3)}
-              className="flex items-center gap-2 bg-stone-900 text-white font-bold text-xs px-6 py-3 rounded-2xl hover:bg-amber-800 transition-colors shadow-md">
+              className="add-recipe-primary flex items-center gap-2 font-bold text-xs px-6 py-3 rounded-2xl transition-colors shadow-md">
               Next: Tags & Publish <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -577,14 +677,35 @@ export default function AddRecipeFlow() {
             <div className="flex flex-wrap gap-2">
               {DIETARY_LIST.map((tag) => (
                 <button type="button" key={tag} onClick={() => toggleDietary(tag)}
-                  className="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all capitalize"
-                  style={dietaryTags.includes(tag)
-                    ? { backgroundColor: '#92400e', color: '#fff' }
-                    : { backgroundColor: '#f5f5f4', color: '#44403c' }}>
+                  className={`add-recipe-tab px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all capitalize ${dietaryTags.includes(tag) ? 'add-recipe-tab--active' : 'add-recipe-tab-group'}`}>
                   {tag}
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Search and reference tags */}
+          <div className="space-y-2">
+            <label className={labelCls}>Search Tags</label>
+            <p className="text-xs" style={{ color: 'var(--color-muted)' }}>
+              Help people find this recipe. Separate tags with spaces or commas.
+            </p>
+            <input
+              type="text"
+              value={referenceTagsInput}
+              onChange={(event) => setReferenceTagsInput(event.target.value)}
+              placeholder="#creamypasta #weeknight #comfortfood"
+              className="w-full bg-stone-50 border border-stone-200 text-stone-900 text-xs rounded-xl px-3 py-3 focus:outline-none font-medium"
+            />
+            {parseReferenceTags(referenceTagsInput).length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {parseReferenceTags(referenceTagsInput).map((tag) => (
+                  <span key={tag} className="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-900">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Cooking video */}
@@ -627,7 +748,10 @@ export default function AddRecipeFlow() {
 
           {/* Tips */}
           <div className="space-y-2">
-            <label className={labelCls}>Chef Advice & Substitutions ({editLang.toUpperCase()}) — one per line</label>
+            <label className={labelCls}>Tips — one per line</label>
+            <p className="text-xs" style={{ color: 'var(--color-muted)' }}>
+              Add substitutions, technique notes, or serving advice.
+            </p>
             <textarea rows={3} value={tr.tips} onChange={(e) => setTr({ tips: e.target.value })}
               placeholder={'e.g. Reserve pasta water before draining\nSubstitute with lemon juice'}
               className="w-full bg-stone-50 border border-stone-200 text-stone-900 text-xs rounded-xl p-3 focus:outline-none resize-none font-medium" />
@@ -635,11 +759,11 @@ export default function AddRecipeFlow() {
 
           <div className="flex items-center justify-between pt-4 border-t border-stone-100">
             <button type="button" onClick={() => setStepPage(2)}
-              className="flex items-center gap-1.5 text-stone-700 bg-stone-100 font-bold text-xs px-5 py-3 rounded-2xl hover:bg-stone-200">
+              className="add-recipe-secondary flex items-center gap-1.5 font-bold text-xs px-5 py-3 rounded-2xl transition-colors">
               <ArrowLeft className="w-4 h-4" /> Back
             </button>
             <button type="button" onClick={publish} disabled={submitting}
-              className="flex items-center gap-2 bg-amber-800 text-white font-bold text-xs px-8 py-3.5 rounded-2xl hover:bg-amber-900 transition-colors shadow-lg disabled:opacity-50">
+              className="add-recipe-primary flex items-center gap-2 font-bold text-xs px-8 py-3.5 rounded-2xl transition-colors shadow-lg disabled:opacity-50">
               <Sparkles className="w-4 h-4" />
               {submitting ? 'Publishing…' : 'Publish Recipe Now'}
             </button>
@@ -651,7 +775,7 @@ export default function AddRecipeFlow() {
       {cropSrc && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/70 backdrop-blur-sm"
           onClick={() => setCropSrc(null)}>
-          <div className="w-full max-w-lg bg-white rounded-3xl p-6 shadow-2xl border border-stone-100 space-y-4"
+          <div className="add-recipe-modal w-full max-w-lg rounded-3xl p-6 shadow-2xl border space-y-4"
             onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-stone-100 pb-3">
               <div className="flex items-center gap-2">
@@ -683,11 +807,11 @@ export default function AddRecipeFlow() {
             </div>
             <div className="flex gap-3 pt-1">
               <button onClick={() => setCropSrc(null)}
-                className="flex-1 py-3 text-xs font-semibold text-stone-600 bg-stone-100 hover:bg-stone-200 rounded-xl transition-colors">
+                className="add-recipe-secondary flex-1 py-3 text-xs font-semibold rounded-xl transition-colors">
                 Cancel
               </button>
               <button onClick={applyCrop} disabled={!completedCrop}
-                className="flex-1 py-3 text-xs font-semibold text-white bg-amber-800 hover:bg-amber-900 rounded-xl transition-colors disabled:opacity-40 flex items-center justify-center gap-1.5">
+                className="add-recipe-primary flex-1 py-3 text-xs font-semibold rounded-xl transition-colors disabled:opacity-40 flex items-center justify-center gap-1.5">
                 <CropIcon className="w-3.5 h-3.5" /> Apply Crop
               </button>
             </div>
@@ -699,7 +823,7 @@ export default function AddRecipeFlow() {
       {showImagePicker && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm"
           onClick={() => setShowImagePicker(false)}>
-          <div className="w-full max-w-lg bg-white rounded-3xl p-6 shadow-2xl border border-stone-100 max-h-[85vh] overflow-y-auto"
+          <div className="add-recipe-modal w-full max-w-lg rounded-3xl p-6 shadow-2xl border max-h-[85vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between pb-3 border-b border-stone-100 mb-4">
               <h3 className="font-serif text-lg font-bold text-stone-900">Select Food Photography</h3>
@@ -726,7 +850,7 @@ export default function AddRecipeFlow() {
       {showPreview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm"
           onClick={() => setShowPreview(false)}>
-          <div className="w-full max-w-2xl bg-[#FAF8F5] rounded-3xl p-6 shadow-2xl border border-stone-100 max-h-[90vh] overflow-y-auto space-y-4"
+          <div className="add-recipe-modal w-full max-w-2xl rounded-3xl p-6 shadow-2xl border max-h-[90vh] overflow-y-auto space-y-4"
             onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-stone-200 pb-3">
               <span className="text-xs font-bold uppercase tracking-wider text-amber-800">Recipe Preview</span>
@@ -737,12 +861,21 @@ export default function AddRecipeFlow() {
             <div className="aspect-[16/9] rounded-2xl overflow-hidden bg-stone-200">
               <img src={coverImage} alt="Preview" className="w-full h-full object-cover" />
             </div>
-            <h2 className="font-serif text-2xl font-bold text-stone-900">{translations.fr.title || 'Untitled Recipe'}</h2>
-            <p className="text-xs text-stone-600">{translations.fr.description || 'No description.'}</p>
-            {translations.fr.ingredients.some((s) => s.rows.some((r) => r.name)) && (
+            <h2 className="font-serif text-2xl font-bold text-stone-900">{translations[originalLanguage].title || 'Untitled Recipe'}</h2>
+            <p className="text-xs text-stone-600">{translations[originalLanguage].description || 'No description.'}</p>
+            {[...new Set([...dietaryTags, ...parseReferenceTags(referenceTagsInput)])].length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {[...new Set([...dietaryTags, ...parseReferenceTags(referenceTagsInput)])].map((tag) => (
+                  <span key={tag} className="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-900">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
+            {translations[originalLanguage].ingredients.some((s) => s.rows.some((r) => r.name)) && (
               <div className="bg-white p-4 rounded-2xl border border-stone-200">
                 <p className="text-xs font-bold text-stone-900 mb-2">Ingredients</p>
-                {translations.fr.ingredients.map((sec) => (
+                {translations[originalLanguage].ingredients.map((sec) => (
                   <div key={sec.id} className="mb-2">
                     {sec.section && <p className="text-[11px] font-bold text-amber-800 uppercase tracking-wide mb-1">{sec.section}</p>}
                     <ul className="list-disc list-inside text-xs text-stone-700 space-y-0.5">
@@ -752,6 +885,32 @@ export default function AddRecipeFlow() {
                     </ul>
                   </div>
                 ))}
+              </div>
+            )}
+            {translations[originalLanguage].steps.some((step) => step.instruction.trim()) && (
+              <div className="bg-white p-4 rounded-2xl border border-stone-200">
+                <p className="text-xs font-bold text-stone-900 mb-3">Preparation Steps</p>
+                <ol className="space-y-3">
+                  {translations[originalLanguage].steps.filter((step) => step.instruction.trim()).map((step, index) => (
+                    <li key={step.id} className="flex gap-3">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-800 text-[10px] font-bold text-white">{index + 1}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs leading-relaxed text-stone-700">{step.instruction}</p>
+                        {step.timerMinutes && <p className="mt-1 text-[10px] font-bold text-amber-800">Timer: {step.timerMinutes} min</p>}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
+            {translations[originalLanguage].tips.split('\n').some((tip) => tip.trim()) && (
+              <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200">
+                <p className="text-xs font-bold text-stone-900 mb-2">Tips</p>
+                <ul className="list-disc list-inside text-xs text-stone-700 space-y-1">
+                  {translations[originalLanguage].tips.split('\n').filter((tip) => tip.trim()).map((tip, index) => (
+                    <li key={`${tip}-${index}`}>{tip.trim()}</li>
+                  ))}
+                </ul>
               </div>
             )}
           </div>

@@ -19,9 +19,9 @@ type AnalyticsData = {
 };
 
 const metricStyles: Record<MetricName, { label: string; color: string }> = {
-  views: { label: 'Views', color: '#b45309' },
-  saves: { label: 'Saves', color: '#0f766e' },
-  followers: { label: 'Followers', color: '#7c3aed' },
+  views: { label: 'Views', color: 'var(--analytics-views)' },
+  saves: { label: 'Saves', color: 'var(--analytics-saves)' },
+  followers: { label: 'Followers', color: 'var(--analytics-followers)' },
 };
 
 function formatNumber(value: number) {
@@ -36,7 +36,7 @@ function imageSrc(url: string | null) {
 function TrendBadge({ change }: { change: number }) {
   const up = change >= 0;
   return (
-    <span className={`inline-flex items-center gap-0.5 text-[10px] font-bold ${up ? 'text-emerald-700' : 'text-rose-600'}`}>
+    <span className={`inline-flex items-center gap-0.5 text-[10px] font-bold ${up ? 'analytics-positive' : 'analytics-negative'}`}>
       {up ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
       {Math.abs(change)}%
     </span>
@@ -129,29 +129,29 @@ export default function CreatorAnalytics() {
   if (!user) return null;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6 pb-28 space-y-6">
+    <div className="analytics-page max-w-6xl mx-auto px-4 py-6 pb-28 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <Link to={user.username ? `/u/${encodeURIComponent(user.username)}` : `/profile/${user.id}`} className="inline-flex items-center gap-1 text-xs font-bold mb-3" style={{ color: 'var(--color-muted)' }}><ArrowLeft className="w-4 h-4" /> Back to profile</Link>
-          <p className="text-[10px] uppercase tracking-[0.2em] font-black text-amber-800">Creator studio</p>
+          <p className="analytics-accent text-[10px] uppercase tracking-[0.2em] font-black">Creator studio</p>
           <h1 className="font-serif text-3xl font-black" style={{ color: 'var(--color-text)' }}>Your analytics</h1>
           <p className="text-sm mt-1" style={{ color: 'var(--color-muted)' }}>See what resonates and where your community is growing.</p>
         </div>
         <div className="flex p-1 rounded-xl border self-start sm:self-auto" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
-          {[7, 30, 90].map((value) => <button key={value} onClick={() => setDays(value)} className="px-3 py-2 rounded-lg text-xs font-bold transition-colors" style={days === value ? { backgroundColor: '#92400e', color: 'white' } : { color: 'var(--color-muted)' }}>{value} days</button>)}
+          {[7, 30, 90].map((value) => <button key={value} onClick={() => setDays(value)} className={`analytics-range-button px-3 py-2 rounded-lg text-xs font-bold transition-colors ${days === value ? 'analytics-range-button--active' : ''}`}>{value} days</button>)}
         </div>
       </div>
 
-      {error && <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{error} <button onClick={() => setRefreshKey((key) => key + 1)} className="font-bold underline ml-1">Try again</button></div>}
+      {error && <div className="analytics-error rounded-2xl border p-4 text-sm">{error} <button onClick={() => setRefreshKey((key) => key + 1)} className="font-bold underline ml-1">Try again</button></div>}
 
       {data && <>
         <section className="grid grid-cols-2 lg:grid-cols-5 gap-3">
           {[
-            { label: 'Views', trend: data.summary.views, icon: Eye, tone: '#b45309' },
-            { label: 'Saves', trend: data.summary.saves, icon: Bookmark, tone: '#0f766e' },
-            { label: 'New ratings', trend: data.summary.ratings, icon: Star, tone: '#ca8a04' },
-            { label: 'New followers', trend: data.summary.followers, icon: Users, tone: '#7c3aed' },
-            { label: 'Comments', trend: data.summary.comments, icon: MessageCircle, tone: '#be185d' },
+            { label: 'Views', trend: data.summary.views, icon: Eye, tone: 'var(--analytics-views)' },
+            { label: 'Saves', trend: data.summary.saves, icon: Bookmark, tone: 'var(--analytics-saves)' },
+            { label: 'New ratings', trend: data.summary.ratings, icon: Star, tone: 'var(--analytics-ratings)' },
+            { label: 'New followers', trend: data.summary.followers, icon: Users, tone: 'var(--analytics-followers)' },
+            { label: 'Comments', trend: data.summary.comments, icon: MessageCircle, tone: 'var(--analytics-comments)' },
           ].map(({ label, trend, icon: Icon, tone }) => <article key={label} className="rounded-2xl border p-4 shadow-sm" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
             <div className="flex items-center justify-between"><Icon className="w-4 h-4" style={{ color: tone }} /><TrendBadge change={trend.change} /></div>
             <p className="font-serif text-2xl font-black mt-3" style={{ color: 'var(--color-text)' }}>{formatNumber(trend.value)}</p>
@@ -163,20 +163,20 @@ export default function CreatorAnalytics() {
           <article className="rounded-3xl border p-5 sm:p-6 shadow-sm" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
               <div><h2 className="font-serif text-xl font-bold">Performance</h2><p className="text-xs" style={{ color: 'var(--color-muted)' }}>Daily activity for the selected period</p></div>
-              <div className="flex gap-1">{(Object.keys(metricStyles) as MetricName[]).map((name) => <button key={name} onClick={() => setMetric(name)} className="px-3 py-1.5 rounded-full text-[10px] font-bold border" style={metric === name ? { backgroundColor: metricStyles[name].color, color: 'white', borderColor: metricStyles[name].color } : { color: 'var(--color-muted)', borderColor: 'var(--color-border)' }}>{metricStyles[name].label}</button>)}</div>
+              <div className="flex gap-1">{(Object.keys(metricStyles) as MetricName[]).map((name) => <button key={name} onClick={() => setMetric(name)} className="px-3 py-1.5 rounded-full text-[10px] font-bold border" style={metric === name ? { backgroundColor: metricStyles[name].color, color: 'var(--analytics-active-text)', borderColor: metricStyles[name].color } : { color: 'var(--color-muted)', borderColor: 'var(--color-border)' }}>{metricStyles[name].label}</button>)}</div>
             </div>
             <LineChart data={data.series} metric={metric} />
           </article>
 
-          <aside className="rounded-3xl p-6 text-white shadow-sm bg-stone-900 flex flex-col justify-between min-h-64">
-            <div><p className="text-[10px] uppercase tracking-[0.2em] font-bold text-amber-300">At a glance</p><h2 className="font-serif text-xl font-bold mt-2">Audience quality</h2></div>
+          <aside className="analytics-insight-card rounded-3xl p-6 flex flex-col justify-between min-h-64">
+            <div><p className="analytics-insight-eyebrow text-[10px] uppercase tracking-[0.2em] font-bold">At a glance</p><h2 className="font-serif text-xl font-bold mt-2">Audience quality</h2></div>
             <div className="grid grid-cols-2 gap-3 my-5">
-              <div><p className="text-2xl font-black">{formatNumber(data.summary.uniqueViewers)}</p><p className="text-[10px] text-stone-400">Unique viewers</p></div>
-              <div><p className="text-2xl font-black">{data.summary.saveRate.toFixed(1)}%</p><p className="text-[10px] text-stone-400">Save rate</p></div>
-              <div><p className="text-2xl font-black">{data.summary.avgRating?.toFixed(1) ?? '—'}</p><p className="text-[10px] text-stone-400">All-time rating</p></div>
-              <div><p className="text-2xl font-black">{data.summary.views.value ? ((data.summary.followers.value / data.summary.views.value) * 100).toFixed(1) : '0.0'}%</p><p className="text-[10px] text-stone-400">Follow conversion</p></div>
+              <div className="analytics-insight-stat"><p className="text-2xl font-black">{formatNumber(data.summary.uniqueViewers)}</p><p className="analytics-insight-muted text-[10px]">Unique viewers</p></div>
+              <div className="analytics-insight-stat"><p className="text-2xl font-black">{data.summary.saveRate.toFixed(1)}%</p><p className="analytics-insight-muted text-[10px]">Save rate</p></div>
+              <div className="analytics-insight-stat"><p className="text-2xl font-black">{data.summary.avgRating?.toFixed(1) ?? '—'}</p><p className="analytics-insight-muted text-[10px]">All-time rating</p></div>
+              <div className="analytics-insight-stat"><p className="text-2xl font-black">{data.summary.views.value ? ((data.summary.followers.value / data.summary.views.value) * 100).toFixed(1) : '0.0'}%</p><p className="analytics-insight-muted text-[10px]">Follow conversion</p></div>
             </div>
-            {insight && <p className="text-xs leading-relaxed border-t border-white/10 pt-4 text-stone-300">{insight}</p>}
+            {insight && <p className="analytics-insight-copy text-xs leading-relaxed border-t pt-4">{insight}</p>}
           </aside>
         </section>
 

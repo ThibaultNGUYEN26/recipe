@@ -7,6 +7,7 @@ import { handleAvatarUpload } from "../lib/media/upload.js";
 import { DEFAULT_AVATAR_URL } from "../lib/media/config.js";
 import { uploadRateLimit } from "../middleware/uploadRateLimit.js";
 import { normalizeUsername, validateUsername } from "../lib/username.js";
+import { selectRecipeTranslation } from "../lib/translations.js";
 
 const router = Router();
 const SAVED_CATEGORY_MAX_LENGTH = 40;
@@ -74,7 +75,7 @@ router.get("/me/saved", authenticate, async (req, res) => {
           include: {
             category: true,
             images: { where: { isMain: true } },
-            translations: { where: { language: lang } },
+            translations: true,
           },
         },
       },
@@ -82,14 +83,19 @@ router.get("/me/saved", authenticate, async (req, res) => {
     });
 
     res.json(saved.map(({ recipe: r, savedCategory }) => {
-      const t = r.translations[0];
+      const selected = selectRecipeTranslation(r, lang);
+      const t = selected.translation;
       return {
         slug: r.slug,
         title: t?.title,
         description: t?.description,
-        image: r.images[0]?.url || null,
+        image: r.images[0]?.url || r.sourceThumbnailUrl || null,
         category: { slug: r.category.slug, label: r.category.label },
         savedCategory,
+        contentLanguage: selected.contentLanguage,
+        originalLanguage: selected.originalLanguage,
+        availableLanguages: selected.availableLanguages,
+        isTranslated: selected.isTranslated,
       };
     }));
   } catch (err) {
@@ -107,21 +113,26 @@ router.get("/me/recipes", authenticate, async (req, res) => {
       include: {
         category: true,
         images: { where: { isMain: true } },
-        translations: { where: { language: lang } },
+        translations: true,
       },
       orderBy: { createdAt: "desc" },
     });
 
     res.json(recipes.map((r) => {
-      const t = r.translations[0];
+      const selected = selectRecipeTranslation(r, lang);
+      const t = selected.translation;
       return {
         slug: r.slug,
         title: t?.title,
         description: t?.description,
-        image: r.images[0]?.url || null,
+        image: r.images[0]?.url || r.sourceThumbnailUrl || null,
         category: { slug: r.category.slug, label: r.category.label },
         isPublic: r.isPublic,
         createdAt: r.createdAt,
+        contentLanguage: selected.contentLanguage,
+        originalLanguage: selected.originalLanguage,
+        availableLanguages: selected.availableLanguages,
+        isTranslated: selected.isTranslated,
       };
     }));
   } catch (err) {
@@ -163,6 +174,26 @@ router.patch("/me", authenticate, uploadRateLimit, handleAvatarUpload, async (re
   }
 });
 
+// PATCH /api/users/me/preferences
+router.patch("/me/preferences", authenticate, async (req, res) => {
+  const preferredLanguage = String(req.body.preferredLanguage || "").toLowerCase();
+  if (!['fr', 'en', 'es'].includes(preferredLanguage)) {
+    return res.status(400).json({ error: "Unsupported preferred language" });
+  }
+
+  try {
+    const user = await prisma.user.update({
+      where: { id: req.user.id },
+      data: { preferredLanguage },
+      select: { preferredLanguage: true },
+    });
+    res.json(user);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to save language preference" });
+  }
+});
+
 // GET /api/users/me/analytics?days=30&lang=en
 router.get("/me/analytics", authenticate, async (req, res) => {
   const requestedDays = Number(req.query.days);
@@ -178,7 +209,8 @@ router.get("/me/analytics", authenticate, async (req, res) => {
       select: {
         id: true,
         slug: true,
-        translations: { where: { language: lang }, select: { title: true }, take: 1 },
+        originalLanguage: true,
+        translations: { select: { language: true, title: true } },
         images: { where: { isMain: true }, select: { url: true }, take: 1 },
       },
     });
@@ -228,8 +260,8 @@ router.get("/me/analytics", authenticate, async (req, res) => {
       const lifetimeRatings = allRatings.filter((item) => item.recipeId === recipe.id);
       return {
         slug: recipe.slug,
-        title: recipe.translations[0]?.title || recipe.slug,
-        image: recipe.images[0]?.url || null,
+        title: selectRecipeTranslation(recipe, lang).translation?.title || recipe.slug,
+        image: recipe.images[0]?.url || recipe.sourceThumbnailUrl || null,
         views: currentViews.filter((item) => item.recipeId === recipe.id).length,
         saves: currentSaves.filter((item) => item.recipeId === recipe.id).length,
         ratings: recipeRatings.length,
@@ -246,7 +278,7 @@ router.get("/me/analytics", authenticate, async (req, res) => {
     }
     const followSources = [...followSourceCounts.entries()].map(([id, count]) => {
       const recipe = id === "direct" ? null : recipeById.get(id);
-      return { slug: recipe?.slug || null, title: recipe?.translations[0]?.title || "Profile & other", count };
+      return { slug: recipe?.slug || null, title: recipe ? (selectRecipeTranslation(recipe, lang).translation?.title || recipe.slug) : "Profile & other", count };
     }).sort((a, b) => b.count - a.count);
 
     res.json({
@@ -398,19 +430,24 @@ router.get("/:id/recipes", async (req, res) => {
       include: {
         category: true,
         images: { where: { isMain: true } },
-        translations: { where: { language: lang } },
+        translations: true,
       },
       orderBy: { createdAt: "desc" },
     });
 
     res.json(recipes.map((r) => {
-      const t = r.translations[0];
+      const selected = selectRecipeTranslation(r, lang);
+      const t = selected.translation;
       return {
         slug: r.slug,
         title: t?.title,
         description: t?.description,
-        image: r.images[0]?.url || null,
+        image: r.images[0]?.url || r.sourceThumbnailUrl || null,
         category: { slug: r.category.slug, label: r.category.label },
+        contentLanguage: selected.contentLanguage,
+        originalLanguage: selected.originalLanguage,
+        availableLanguages: selected.availableLanguages,
+        isTranslated: selected.isTranslated,
       };
     }));
   } catch (err) {

@@ -27,7 +27,7 @@ export default function UsernameProfile() {
     <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3 px-4 text-center">
       <h1 className="font-serif text-xl font-bold" style={{ color: 'var(--color-text)' }}>Profile not found</h1>
       <p className="text-sm" style={{ color: 'var(--color-muted)' }}>This creator may have changed their username.</p>
-      <Link to="/search" className="text-sm font-semibold text-amber-800 underline">Discover creators</Link>
+      <Link to="/search" className="profile-accent text-sm font-semibold underline">Discover creators</Link>
     </div>
   );
 

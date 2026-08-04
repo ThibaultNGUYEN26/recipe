@@ -17,6 +17,7 @@ import { uploadsDir } from "./lib/upload.js";
 import { startMediaCleanup } from "./lib/media/cleanup.js";
 import { cleanupUnreferencedLegacyUploads } from "./lib/media/legacyCleanup.js";
 import { assertMediaInfrastructureReady } from "./lib/media/preflight.js";
+import { selectRecipeTranslation } from "./lib/translations.js";
 
 export const app = express();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -67,13 +68,14 @@ app.use("/api/my-recipes", async (req, res) => {
         include: {
           category: true,
           images: { where: { isMain: true } },
-          translations: { where: { language: lang } },
+          translations: true,
         },
         orderBy: { createdAt: "desc" },
       });
       res.json(recipes.map((r) => {
-        const t = r.translations[0];
-        return { slug: r.slug, title: t?.title, description: t?.description, image: r.images[0]?.url || null, category: { slug: r.category.slug, label: r.category.label }, isPublic: r.isPublic, createdAt: r.createdAt };
+        const selected = selectRecipeTranslation(r, lang);
+        const t = selected.translation;
+        return { slug: r.slug, title: t?.title, description: t?.description, image: r.images[0]?.url || null, category: { slug: r.category.slug, label: r.category.label }, isPublic: r.isPublic, createdAt: r.createdAt, contentLanguage: selected.contentLanguage, originalLanguage: selected.originalLanguage, availableLanguages: selected.availableLanguages, isTranslated: selected.isTranslated };
       }));
     } catch (err) {
       console.error(err);

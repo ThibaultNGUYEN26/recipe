@@ -17,6 +17,8 @@ const SavedRecipes = lazy(() => import('./components/saved/SavedRecipes'));
 const UserProfile = lazy(() => import('./components/profile/UserProfile'));
 const UsernameProfile = lazy(() => import('./components/profile/UsernameProfile'));
 const EditProfile = lazy(() => import('./components/profile/EditProfile'));
+const SettingsPage = lazy(() => import('./components/settings/Settings'));
+const LanguageSettings = lazy(() => import('./components/settings/LanguageSettings'));
 const Login = lazy(() => import('./components/auth/Login'));
 const Register = lazy(() => import('./components/auth/Register'));
 const PrivacyPolicy = lazy(() => import('./components/misc/PrivacyPolicy'));
@@ -47,6 +49,8 @@ export default function App() {
             <Route path="/profile/:userId" element={<UserProfile />} />
             <Route path="/u/:username" element={<UsernameProfile />} />
             <Route path="/settings/profile" element={<EditProfile />} />
+            <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/settings/language" element={<LanguageSettings />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />

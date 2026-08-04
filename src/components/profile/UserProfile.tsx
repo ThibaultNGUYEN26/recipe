@@ -221,11 +221,10 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
   const tabContent = activeTab === 'recipes' ? recipes : savedRecipes;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-4 space-y-6 pb-24">
+    <div className="profile-page max-w-4xl mx-auto px-4 py-4 space-y-6 pb-24">
 
       {/* Profile header card */}
-      <section className="p-6 sm:p-8 rounded-3xl border border-stone-200/80 shadow-sm space-y-5"
-        style={{ backgroundColor: 'var(--color-surface)' }}>
+      <section className="profile-card p-6 sm:p-8 rounded-3xl border shadow-sm space-y-5">
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 text-center sm:text-left">
 
           {/* Avatar */}
@@ -257,21 +256,18 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
                 </button>
                 {isOwnProfile ? (
                   <>
-                    <Link to="/creator/analytics" className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-2xl border border-amber-200 bg-amber-50 text-amber-900">
+                    <Link to="/creator/analytics" className="profile-accent-soft flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-2xl border">
                       <BarChart3 className="w-3.5 h-3.5" /> Analytics
                     </Link>
-                    {!profile.isVerified && profile.followerCount > 1500 && <Link to="/settings/verification" className="text-xs font-bold px-3 py-2 rounded-2xl bg-blue-50 text-blue-700 border border-blue-200">Get verified</Link>}
+                    {!profile.isVerified && profile.followerCount > 1500 && <Link to="/settings/verification" className="profile-verification text-xs font-bold px-3 py-2 rounded-2xl border">Get verified</Link>}
                     <button onClick={() => setIsEditOpen(true)}
-                      className="flex items-center gap-1.5 bg-stone-900 text-white text-xs font-bold px-4 py-2 rounded-2xl hover:bg-amber-800 transition-colors shadow-sm">
+                      className="profile-primary flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-2xl transition-colors shadow-sm">
                       <Edit3 className="w-3.5 h-3.5" /> Edit Profile
                     </button>
                   </>
                 ) : (
                   <button onClick={toggleFollow} disabled={followLoading}
-                    className="flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-2xl transition-colors shadow-sm"
-                    style={isFollowing
-                      ? { backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }
-                      : { backgroundColor: '#92400e', color: '#fff' }}>
+                    className={`${isFollowing ? 'profile-secondary border' : 'profile-primary'} flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-2xl transition-colors shadow-sm`}>
                     {isFollowing ? <UserMinus className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}
                     {isFollowing ? 'Following' : 'Follow'}
                   </button>
@@ -280,12 +276,12 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
             </div>
 
             {profile.bio && (
-              <p className="text-xs leading-relaxed max-w-xl" style={{ color: '#44403c' }}>{profile.bio}</p>
+              <p className="profile-muted text-xs leading-relaxed max-w-xl">{profile.bio}</p>
             )}
 
             {profile.createdAt && (
               <div className="flex items-center justify-center sm:justify-start gap-1 text-xs font-medium" style={{ color: 'var(--color-muted)' }}>
-                <MapPin className="w-3.5 h-3.5 text-amber-800" />
+                <MapPin className="profile-accent w-3.5 h-3.5" />
                 Joined {new Date(profile.createdAt).toLocaleDateString('en', { month: 'long', year: 'numeric' })}
               </div>
             )}
@@ -293,7 +289,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-2 pt-4 border-t border-stone-100 text-center">
+        <div className="profile-divider grid grid-cols-3 gap-2 pt-4 border-t text-center">
           {[
             { label: 'Recipes', value: profile.recipeCount },
             { label: 'Followers', value: profile.followerCount },
@@ -310,19 +306,13 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
       {/* Tabs */}
       <div className="flex items-center gap-2 pb-2" style={{ borderBottom: '1px solid var(--color-border)' }}>
         <button onClick={() => setActiveTab('recipes')}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all"
-          style={activeTab === 'recipes'
-            ? { backgroundColor: '#92400e', color: '#fff' }
-            : { backgroundColor: 'var(--color-surface)', color: '#44403c', border: '1px solid var(--color-border)' }}>
+          className={`profile-tab flex items-center gap-2 px-4 py-2.5 rounded-2xl border text-xs font-bold transition-all ${activeTab === 'recipes' ? 'profile-tab--active' : ''}`}>
           <Utensils className="w-4 h-4" />
           My Recipes ({recipes.length})
         </button>
         {isOwnProfile && (
           <button onClick={() => setActiveTab('saved')}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all"
-            style={activeTab === 'saved'
-              ? { backgroundColor: '#92400e', color: '#fff' }
-              : { backgroundColor: 'var(--color-surface)', color: '#44403c', border: '1px solid var(--color-border)' }}>
+            className={`profile-tab flex items-center gap-2 px-4 py-2.5 rounded-2xl border text-xs font-bold transition-all ${activeTab === 'saved' ? 'profile-tab--active' : ''}`}>
             <Bookmark className="w-4 h-4" />
             Saved ({savedRecipes.length})
           </button>
@@ -340,7 +330,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
             {activeTab === 'recipes' && isOwnProfile ? 'Share your first recipe with the community!' : ''}
           </p>
           {activeTab === 'recipes' && isOwnProfile && (
-            <Link to="/add-recipe" className="mt-4 inline-block text-xs font-semibold text-amber-800 underline">Add a recipe</Link>
+            <Link to="/add-recipe" className="profile-accent mt-4 inline-block text-xs font-semibold underline">Add a recipe</Link>
           )}
         </div>
       ) : (
@@ -353,19 +343,19 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
       {cropSrc && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-stone-900/70 backdrop-blur-sm"
           onClick={() => setCropSrc(null)}>
-          <div className="w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl border border-stone-100 space-y-4"
+          <div className="profile-modal w-full max-w-sm rounded-3xl p-6 shadow-2xl border space-y-4"
             onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+            <div className="profile-divider flex items-center justify-between border-b pb-3">
               <div className="flex items-center gap-2">
-                <CropIcon className="w-5 h-5 text-amber-800" />
-                <h3 className="font-serif text-lg font-bold text-stone-900">Crop Profile Photo</h3>
+                <CropIcon className="profile-accent w-5 h-5" />
+                <h3 className="font-serif text-lg font-bold">Crop Profile Photo</h3>
               </div>
-              <button onClick={() => setCropSrc(null)} className="p-1 text-stone-400 hover:text-stone-800">
+              <button onClick={() => setCropSrc(null)} className="profile-icon-button p-1 rounded-full transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <p className="text-xs text-stone-500">Drag the circle to choose your profile area.</p>
-            <div className="flex justify-center max-h-[50vh] overflow-auto rounded-2xl bg-stone-100">
+            <p className="profile-muted text-xs">Drag the circle to choose your profile area.</p>
+            <div className="flex justify-center max-h-[50vh] overflow-auto rounded-2xl" style={{ backgroundColor: 'var(--color-subtle)' }}>
               <ReactCrop
                 crop={crop}
                 onChange={(c) => setCrop(c)}
@@ -385,11 +375,11 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
             </div>
             <div className="flex gap-3 pt-1">
               <button onClick={() => setCropSrc(null)}
-                className="flex-1 py-3 text-xs font-semibold text-stone-600 bg-stone-100 hover:bg-stone-200 rounded-xl transition-colors">
+                className="profile-secondary flex-1 py-3 text-xs font-semibold rounded-xl transition-colors">
                 Cancel
               </button>
               <button onClick={applyCrop} disabled={!completedCrop}
-                className="flex-1 py-3 text-xs font-semibold text-white bg-amber-800 hover:bg-amber-900 rounded-xl transition-colors disabled:opacity-40 flex items-center justify-center gap-1.5">
+                className="profile-primary flex-1 py-3 text-xs font-semibold rounded-xl transition-colors disabled:opacity-40 flex items-center justify-center gap-1.5">
                 <CropIcon className="w-3.5 h-3.5" /> Apply
               </button>
             </div>
@@ -401,11 +391,11 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
       {isEditOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm"
           onClick={() => setIsEditOpen(false)}>
-          <div className="w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl border border-stone-100 space-y-4"
+          <div className="profile-modal w-full max-w-md rounded-3xl p-6 shadow-2xl border space-y-4"
             onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between pb-3 border-b border-stone-100">
-              <h3 className="font-serif text-lg font-bold text-stone-900">Edit Profile</h3>
-              <button onClick={() => setIsEditOpen(false)} className="p-1 text-stone-400 hover:text-stone-800">
+            <div className="profile-divider flex items-center justify-between pb-3 border-b">
+              <h3 className="font-serif text-lg font-bold">Edit Profile</h3>
+              <button onClick={() => setIsEditOpen(false)} className="profile-icon-button p-1 rounded-full transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -425,13 +415,13 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
                   </div>
                 </div>
                 <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={pickAvatar} />
-                <button type="button" onClick={() => fileRef.current?.click()} className="text-xs text-amber-800 underline">Change photo</button>
+                <button type="button" onClick={() => fileRef.current?.click()} className="profile-accent text-xs underline">Change photo</button>
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-stone-500 uppercase tracking-wider">Username</label>
+                <label className="profile-muted text-xs font-bold uppercase tracking-wider">Username</label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-stone-500">@</span>
+                  <span className="profile-muted absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold">@</span>
                   <input type="text" required minLength={3} maxLength={30} value={editUsername}
                     onChange={(e) => setEditUsername(e.target.value.replace(/^@+/, '').toLowerCase())}
                     pattern="[a-z0-9._]+" autoCapitalize="none" autoCorrect="off" spellCheck={false}
@@ -440,13 +430,13 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-stone-500 uppercase tracking-wider">Display Name</label>
+                <label className="profile-muted text-xs font-bold uppercase tracking-wider">Display Name</label>
                 <input type="text" required value={editName} onChange={(e) => setEditName(e.target.value)}
                   className="w-full bg-stone-50 border border-stone-200 text-xs font-bold rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-amber-800/30" />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-stone-500 uppercase tracking-wider">Biography</label>
+                <label className="profile-muted text-xs font-bold uppercase tracking-wider">Biography</label>
                 <textarea rows={3} value={editBio} onChange={(e) => setEditBio(e.target.value)}
                   placeholder="Tell the community about yourself…"
                   className="w-full bg-stone-50 border border-stone-200 text-xs rounded-xl p-3 focus:outline-none resize-none focus:ring-2 focus:ring-amber-800/30" />
@@ -454,11 +444,11 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
 
               <div className="flex items-center gap-3 pt-2">
                 <button type="button" onClick={() => setIsEditOpen(false)}
-                  className="flex-1 py-2.5 text-xs font-bold text-stone-600 bg-stone-100 hover:bg-stone-200 rounded-xl transition-colors">
+                  className="profile-secondary flex-1 py-2.5 text-xs font-bold rounded-xl transition-colors">
                   Cancel
                 </button>
                 <button type="submit" disabled={saving}
-                  className="flex-1 py-2.5 text-xs font-bold text-white bg-amber-800 hover:bg-amber-900 rounded-xl shadow-sm disabled:opacity-50 transition-colors">
+                  className="profile-primary flex-1 py-2.5 text-xs font-bold rounded-xl shadow-sm disabled:opacity-50 transition-colors">
                   {saving ? 'Saving…' : 'Save Changes'}
                 </button>
               </div>
@@ -466,7 +456,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
 
             {isOwnProfile && (
               <button onClick={async () => { await logout(); navigate('/'); }}
-                className="w-full pt-2 text-xs font-semibold text-rose-500 hover:text-rose-700 transition-colors">
+                className="profile-danger w-full pt-2 text-xs font-semibold transition-colors">
                 Sign out
               </button>
             )}

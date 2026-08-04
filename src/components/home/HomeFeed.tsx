@@ -9,11 +9,11 @@ import { useAuth } from '../../contexts/AuthContext';
 const API = import.meta.env.VITE_API_URL;
 
 const FEED_FILTERS = [
-  { key: 'all', label: 'For You', Icon: Sparkles },
-  { key: 'following', label: 'Following Cooks', Icon: UtensilsCrossed },
-  { key: 'trending', label: 'Trending', Icon: Flame },
-  { key: 'quick', label: 'Under 30 Mins', Icon: Clock },
-  { key: 'vegetarian', label: 'Vegetarian', Icon: Leaf },
+  { key: 'all', labelKey: 'home.forYou', Icon: Sparkles },
+  { key: 'following', labelKey: 'home.following', Icon: UtensilsCrossed },
+  { key: 'trending', labelKey: 'home.trending', Icon: Flame },
+  { key: 'quick', labelKey: 'home.quick', Icon: Clock },
+  { key: 'vegetarian', labelKey: 'home.vegetarian', Icon: Leaf },
 ] as const;
 
 function imgSrc(url: string | null | undefined) {
@@ -22,6 +22,7 @@ function imgSrc(url: string | null | undefined) {
 }
 
 function HeroCard({ recipe }: { recipe: RecipeListItem }) {
+  const { t } = useLanguage();
   const info = recipe.info as Record<string, string> | null | undefined;
   return (
     <Link to={`/recipe/${recipe.slug}`}
@@ -40,10 +41,10 @@ function HeroCard({ recipe }: { recipe: RecipeListItem }) {
         <div className="flex items-center gap-2 mb-2">
           <span className="bg-amber-600 text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full flex items-center gap-1">
             <Sparkles className="w-3 h-3" />
-            Featured Recipe
+            {t('home.featured')}
           </span>
           {recipe.authorName && (
-            <span className="text-stone-300 text-xs font-semibold">By {recipe.authorName}</span>
+            <span className="text-stone-300 text-xs font-semibold">{t('home.by', { name: recipe.authorName })}</span>
           )}
         </div>
         <h2 className="font-serif text-2xl sm:text-3xl font-extrabold text-white leading-tight group-hover:text-amber-300 transition-colors">
@@ -57,10 +58,10 @@ function HeroCard({ recipe }: { recipe: RecipeListItem }) {
         <div className="flex items-center gap-4 text-xs font-medium text-stone-300 mt-4">
           {info?.totalTime && <span>⏱ {info.totalTime}</span>}
           {recipe.avgRating != null && (
-            <><span>•</span><span>⭐ {recipe.avgRating.toFixed(1)} rating</span></>
+            <><span>•</span><span>⭐ {t('home.rating', { rating: recipe.avgRating.toFixed(1) })}</span></>
           )}
           {recipe.ratingCount != null && recipe.ratingCount > 0 && (
-            <><span>•</span><span>❤️ {recipe.ratingCount} cooks loved this</span></>
+            <><span>•</span><span>❤️ {t('home.loved', { count: recipe.ratingCount })}</span></>
           )}
         </div>
       </div>
@@ -69,7 +70,7 @@ function HeroCard({ recipe }: { recipe: RecipeListItem }) {
 }
 
 export default function HomeFeed() {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const { user } = useAuth();
   const [recipes, setRecipes] = useState<RecipeListItem[]>([]);
   const [trending, setTrending] = useState<RecipeListItem[]>([]);
@@ -124,27 +125,27 @@ export default function HomeFeed() {
         <div className="flex items-center justify-between gap-3">
           <div>
             <h1 className="font-serif text-xl font-bold" style={{ color: 'var(--color-text)' }}>
-              {isPersonalized ? 'Picked for you' : 'Discover something delicious'}
+              {isPersonalized ? t('home.picked') : t('home.discover')}
             </h1>
             <p className="text-xs mt-0.5" style={{ color: 'var(--color-muted)' }}>
-              {isPersonalized ? 'Based on what you view, save, rate, and follow.' : 'Popular, highly rated, and fresh from the community.'}
+              {isPersonalized ? t('home.personalizedDescription') : t('home.communityDescription')}
             </p>
           </div>
-          {!user && <Link to="/login" className="text-xs font-bold text-amber-800 whitespace-nowrap">Sign in to personalize</Link>}
+          {!user && <Link to="/login" className="home-accent-text text-xs font-bold whitespace-nowrap">{t('home.signInPersonalize')}</Link>}
         </div>
       )}
 
       {/* Feed filter bar */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none border-b pt-2"
-        style={{ borderColor: 'rgba(214,211,209,0.6)' }}>
-        {FEED_FILTERS.map(({ key, label, Icon }) => (
+        style={{ borderColor: 'var(--color-border)' }}>
+        {FEED_FILTERS.map(({ key, labelKey, Icon }) => (
           <button key={key} onClick={() => setActiveFilter(key)}
             className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all shrink-0"
             style={activeFilter === key
               ? { backgroundColor: '#92400e', color: '#fff' }
-              : { backgroundColor: 'var(--color-surface)', color: '#78716c' }}>
+              : { backgroundColor: 'var(--color-surface)', color: 'var(--color-muted)' }}>
             <Icon className="w-3.5 h-3.5" />
-            {label}
+            {t(labelKey)}
           </button>
         ))}
       </div>
@@ -160,11 +161,11 @@ export default function HomeFeed() {
         <div className="rounded-3xl p-12 text-center border"
           style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
           <UtensilsCrossed className="w-12 h-12 mx-auto mb-3" style={{ color: 'var(--color-border)' }} />
-          <h3 className="font-serif text-lg font-bold" style={{ color: 'var(--color-text)' }}>No recipes found</h3>
-          <p className="text-xs mt-1" style={{ color: 'var(--color-muted)' }}>Try switching feed filters</p>
+          <h3 className="font-serif text-lg font-bold" style={{ color: 'var(--color-text)' }}>{t('home.noRecipes')}</h3>
+          <p className="text-xs mt-1" style={{ color: 'var(--color-muted)' }}>{t('home.switchFilters')}</p>
           <button onClick={() => setActiveFilter('all')}
             className="mt-4 bg-amber-800 text-white text-xs font-semibold px-5 py-2.5 rounded-full hover:bg-amber-900 transition-colors">
-            Show All Recipes
+            {t('home.showAll')}
           </button>
         </div>
       ) : (

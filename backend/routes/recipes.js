@@ -7,6 +7,8 @@ import { authenticate } from "../middleware/authenticate.js";
 import { recipeUpload } from "../lib/upload.js";
 import { createNotification } from "../lib/notify.js";
 import { diversifyRecommendations, scoreRecommendation } from "../lib/recommendations.js";
+import { normalizeLanguage, selectRecipeTranslation } from "../lib/translations.js";
+import { fetchTikTokImport, validateTikTokUrl } from "../lib/tiktokImport.js";
 
 const router = Router();
 const uploadRecipeMedia = recipeUpload.fields([
@@ -33,7 +35,7 @@ router.get("/", async (req, res) => {
       include: {
         category: true,
         images: { where: { isMain: true } },
-        translations: { where: { language: lang } },
+        translations: true,
         author: { select: { id: true, username: true, name: true, avatarUrl: true, isVerified: true } },
         ratings: { select: { score: true } },
       },
@@ -41,13 +43,14 @@ router.get("/", async (req, res) => {
     });
 
     const formatted = recipes.map((r) => {
-      const t = r.translations[0];
+      const selected = selectRecipeTranslation(r, lang);
+      const t = selected.translation;
       const avgRating = r.ratings.length ? r.ratings.reduce((s, x) => s + x.score, 0) / r.ratings.length : null;
       return {
         slug: r.slug,
         title: t?.title,
         description: t?.description,
-        image: r.images[0]?.url || null,
+        image: r.images[0]?.url || r.sourceThumbnailUrl || null,
         category: { slug: r.category.slug, label: r.category.label },
         info: r.info,
         tags: r.tags,
@@ -58,6 +61,10 @@ router.get("/", async (req, res) => {
         authorAvatar: r.author?.avatarUrl ?? null,
         avgRating,
         ratingCount: r.ratings.length,
+        contentLanguage: selected.contentLanguage,
+        originalLanguage: selected.originalLanguage,
+        availableLanguages: selected.availableLanguages,
+        isTranslated: selected.isTranslated,
       };
     });
 
@@ -85,7 +92,7 @@ router.get("/recommended", async (req, res) => {
         include: {
           category: true,
           images: { where: { isMain: true }, take: 1 },
-          translations: { where: { language: lang }, take: 1 },
+          translations: true,
           author: { select: { id: true, username: true, name: true, avatarUrl: true, isVerified: true } },
           ratings: { select: { score: true } },
           savedBy: { select: { userId: true } },
@@ -135,7 +142,8 @@ router.get("/recommended", async (req, res) => {
         authorId: recipe.authorId,
       };
       const ranking = scoreRecommendation(normalized, preferences, now);
-      const translation = recipe.translations[0];
+      const selected = selectRecipeTranslation(recipe, lang);
+      const translation = selected.translation;
       return {
         ...normalized,
         avgRating: scores.length ? avgRating : null,
@@ -145,7 +153,7 @@ router.get("/recommended", async (req, res) => {
         slug: recipe.slug,
         title: translation.title,
         description: translation.description,
-        image: recipe.images[0]?.url || null,
+        image: recipe.images[0]?.url || recipe.sourceThumbnailUrl || null,
         category: { slug: recipe.category.slug, label: recipe.category.label },
         info: recipe.info,
         authorId: recipe.author?.id ?? null,
@@ -153,6 +161,10 @@ router.get("/recommended", async (req, res) => {
         authorIsVerified: recipe.author?.isVerified ?? false,
         authorName: recipe.author?.name ?? null,
         authorAvatar: recipe.author?.avatarUrl ?? null,
+        contentLanguage: selected.contentLanguage,
+        originalLanguage: selected.originalLanguage,
+        availableLanguages: selected.availableLanguages,
+        isTranslated: selected.isTranslated,
       };
     });
 
@@ -171,6 +183,17 @@ router.get("/recommended", async (req, res) => {
   }
 });
 
+// POST /api/recipes/import/tiktok
+router.post("/import/tiktok", authenticate, async (req, res) => {
+  try {
+    const imported = await fetchTikTokImport(req.body.url);
+    res.json(imported);
+  } catch (err) {
+    console.error(err);
+    res.status(err.status || 500).json({ error: err.message || "Failed to import TikTok recipe" });
+  }
+});
+
 // GET /api/recipes/:slug
 router.get("/:slug", async (req, res) => {
   const { slug } = req.params;
@@ -182,14 +205,15 @@ router.get("/:slug", async (req, res) => {
       include: {
         category: true,
         images: true,
-        translations: { where: { language: lang } },
+        translations: true,
         author: { select: { id: true, username: true, name: true, avatarUrl: true, isVerified: true } },
       },
     });
 
     if (!recipe || recipe.translations.length === 0) return res.status(404).json({ error: "Recipe not found" });
 
-    const t = recipe.translations[0];
+    const selected = selectRecipeTranslation(recipe, lang);
+    const t = selected.translation;
     const agg = await prisma.rating.aggregate({
       where: { recipeId: recipe.id },
       _avg: { score: true },
@@ -226,11 +250,15 @@ router.get("/:slug", async (req, res) => {
       slug: recipe.slug,
       title: t.title,
       description: t.description,
-      image: recipe.images.find((i) => i.isMain)?.url || null,
+      image: recipe.images.find((i) => i.isMain)?.url || recipe.sourceThumbnailUrl || null,
       category: { slug: recipe.category.slug, label: recipe.category.label },
       info: recipe.info,
       tags: recipe.tags,
       videoUrl: recipe.videoUrl,
+      sourcePlatform: recipe.sourcePlatform,
+      sourceUrl: recipe.sourceUrl,
+      sourceAuthor: recipe.sourceAuthor,
+      sourceThumbnailUrl: recipe.sourceThumbnailUrl,
       ingredients: t.ingredients,
       instructions: t.instructions,
       nutrition: t.nutrition,
@@ -247,6 +275,10 @@ router.get("/:slug", async (req, res) => {
       isSaved,
       savedCategoryId,
       isLiked,
+      contentLanguage: selected.contentLanguage,
+      originalLanguage: selected.originalLanguage,
+      availableLanguages: selected.availableLanguages,
+      isTranslated: selected.isTranslated,
     });
   } catch (err) {
     console.error(err);
@@ -258,10 +290,10 @@ router.get("/:slug", async (req, res) => {
 router.post("/", authenticate, handleRecipeMedia, async (req, res) => {
   const {
     slug, categoryId, isPublic = "true",
-    info, tags,
+    info, tags, sourcePlatform, sourceUrl, sourceAuthor, sourceThumbnailUrl,
     translations: rawTranslations,
     // single-language fallback
-    lang = "fr", title, description, ingredients, instructions, tips, nutrition,
+    lang = "fr", originalLanguage: rawOriginalLanguage, title, description, ingredients, instructions, tips, nutrition,
   } = req.body;
 
   const imageFile = req.files?.image?.[0];
@@ -281,6 +313,12 @@ router.post("/", authenticate, handleRecipeMedia, async (req, res) => {
 
   const imageUrl = imageFile ? `/uploads/${imageFile.filename}` : null;
   const videoUrl = videoFile ? `/uploads/${videoFile.filename}` : null;
+  const validatedSourceUrl = sourcePlatform === "tiktok" ? validateTikTokUrl(sourceUrl) : null;
+
+  if (sourcePlatform && !validatedSourceUrl) {
+    removeUploadedFiles();
+    return res.status(400).json({ error: "Invalid recipe source" });
+  }
 
   try {
     // Support both multi-translation JSON payload and legacy single-lang fields
@@ -296,16 +334,27 @@ router.post("/", authenticate, handleRecipeMedia, async (req, res) => {
       return res.status(400).json({ error: "At least one translation required" });
     }
 
+    const originalLanguage = normalizeLanguage(rawOriginalLanguage, normalizeLanguage(translationRows[0]?.language));
+    if (!translationRows.some((row) => normalizeLanguage(row.language) === originalLanguage)) {
+      removeUploadedFiles();
+      return res.status(400).json({ error: "The original-language recipe is required" });
+    }
+
     const recipe = await prisma.$transaction(async (tx) => {
       const r = await tx.recipe.create({
         data: {
           slug,
+          originalLanguage,
           categoryId: parseInt(categoryId),
           isPublic: isPublic === "true",
           authorId: req.user.id,
           info: info ? JSON.parse(info) : null,
           tags: tags ? JSON.parse(tags) : null,
           videoUrl,
+          sourcePlatform: validatedSourceUrl ? "tiktok" : null,
+          sourceUrl: validatedSourceUrl,
+          sourceAuthor: validatedSourceUrl ? String(sourceAuthor || "").trim().slice(0, 120) || null : null,
+          sourceThumbnailUrl: validatedSourceUrl && /^https:\/\//i.test(String(sourceThumbnailUrl || "")) ? String(sourceThumbnailUrl).slice(0, 2048) : null,
         },
       });
 

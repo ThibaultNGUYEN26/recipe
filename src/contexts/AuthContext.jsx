@@ -48,12 +48,12 @@ export function AuthProvider({ children }) {
     };
   }, [authenticatedUserId, avatarPending, refreshUser]);
 
-  async function login(email, password) {
+  async function login(identifier, password) {
     const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ identifier, password }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Login failed");
