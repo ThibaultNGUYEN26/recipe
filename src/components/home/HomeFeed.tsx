@@ -4,11 +4,12 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import RecipeCard from './RecipeCard';
 import type { RecipeListItem } from '../../types';
 import { Sparkles, Flame, Clock, Leaf, UtensilsCrossed, Star } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 
 const API = import.meta.env.VITE_API_URL;
 
 const FEED_FILTERS = [
-  { key: 'all', label: 'All Recipes', Icon: Sparkles },
+  { key: 'all', label: 'For You', Icon: Sparkles },
   { key: 'following', label: 'Following Cooks', Icon: UtensilsCrossed },
   { key: 'trending', label: 'Trending', Icon: Flame },
   { key: 'quick', label: 'Under 30 Mins', Icon: Clock },
@@ -69,20 +70,35 @@ function HeroCard({ recipe }: { recipe: RecipeListItem }) {
 
 export default function HomeFeed() {
   const { language } = useLanguage();
+  const { user } = useAuth();
   const [recipes, setRecipes] = useState<RecipeListItem[]>([]);
+  const [trending, setTrending] = useState<RecipeListItem[]>([]);
+  const [following, setFollowing] = useState<RecipeListItem[]>([]);
+  const [isPersonalized, setIsPersonalized] = useState(false);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<'all' | 'following' | 'trending' | 'quick' | 'vegetarian'>('all');
 
   useEffect(() => {
     setLoading(true);
-    fetch(`${API}/api/recipes?lang=${language}`, { credentials: 'include' })
-      .then((r) => r.json())
-      .then((data: RecipeListItem[]) => setRecipes(Array.isArray(data) ? data : []))
-      .catch(console.error)
+    fetch(`${API}/api/recipes/recommended?lang=${language}`, { credentials: 'include' })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('Recommendations unavailable');
+        return response.json();
+      })
+      .then((data) => {
+        setRecipes(Array.isArray(data.personalized) ? data.personalized : []);
+        setTrending(Array.isArray(data.trending) ? data.trending : []);
+        setFollowing(Array.isArray(data.following) ? data.following : []);
+        setIsPersonalized(Boolean(data.personalizedForUser));
+      })
+      .catch(() => fetch(`${API}/api/recipes?lang=${language}`, { credentials: 'include' })
+        .then((response) => response.json())
+        .then((data) => setRecipes(Array.isArray(data) ? data : [])))
       .finally(() => setLoading(false));
-  }, [language]);
+  }, [language, user?.id]);
 
-  const filteredRecipes = recipes.filter((r) => {
+  const sourceRecipes = activeFilter === 'trending' ? trending : activeFilter === 'following' ? following : recipes;
+  const filteredRecipes = sourceRecipes.filter((r) => {
     if (activeFilter === 'quick') {
       const t = (r.info as Record<string, string> | null | undefined)?.totalTime;
       if (!t) return false;
@@ -102,6 +118,20 @@ export default function HomeFeed() {
       {/* Featured hero */}
       {featuredRecipe && activeFilter === 'all' && !loading && (
         <HeroCard recipe={featuredRecipe} />
+      )}
+
+      {activeFilter === 'all' && !loading && (
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h1 className="font-serif text-xl font-bold" style={{ color: 'var(--color-text)' }}>
+              {isPersonalized ? 'Picked for you' : 'Discover something delicious'}
+            </h1>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--color-muted)' }}>
+              {isPersonalized ? 'Based on what you view, save, rate, and follow.' : 'Popular, highly rated, and fresh from the community.'}
+            </p>
+          </div>
+          {!user && <Link to="/login" className="text-xs font-bold text-amber-800 whitespace-nowrap">Sign in to personalize</Link>}
+        </div>
       )}
 
       {/* Feed filter bar */}

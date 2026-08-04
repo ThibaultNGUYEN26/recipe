@@ -12,6 +12,7 @@ export default function Register() {
   const [username, setUsername] = useState('');
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle');
   const [usernameMessage, setUsernameMessage] = useState('');
+  const [usernameSuggestions, setUsernameSuggestions] = useState<string[]>([]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -21,11 +22,13 @@ export default function Register() {
     if (!username) {
       setUsernameStatus('idle');
       setUsernameMessage('');
+      setUsernameSuggestions([]);
       return;
     }
     if (username.length < 3 || username.length > 30 || !/^[a-z0-9._]+$/.test(username)) {
       setUsernameStatus('invalid');
       setUsernameMessage('Use 3-30 letters, numbers, periods, or underscores.');
+      setUsernameSuggestions([]);
       return;
     }
 
@@ -39,14 +42,17 @@ export default function Register() {
         if (data.available) {
           setUsernameStatus('available');
           setUsernameMessage(`@${data.username} is available`);
+          setUsernameSuggestions([]);
         } else {
           setUsernameStatus('taken');
           setUsernameMessage(data.error || `@${username} is already taken`);
+          setUsernameSuggestions(Array.isArray(data.suggestions) ? data.suggestions : []);
         }
       } catch (err) {
         if (!(err instanceof DOMException && err.name === 'AbortError')) {
           setUsernameStatus('idle');
           setUsernameMessage('');
+          setUsernameSuggestions([]);
         }
       }
     }, 250);
@@ -108,6 +114,17 @@ export default function Register() {
               <p className={`text-xs mt-1 px-1 ${usernameStatus === 'available' ? 'text-emerald-600' : usernameStatus === 'checking' ? 'text-stone-500' : 'text-red-500'}`}>
                 {usernameMessage}
               </p>
+            )}
+            {usernameStatus === 'taken' && usernameSuggestions.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5 mt-2 px-1">
+                <span className="text-[11px]" style={{ color: 'var(--color-muted)' }}>Try:</span>
+                {usernameSuggestions.map((suggestion) => (
+                  <button key={suggestion} type="button" onClick={() => setUsername(suggestion)}
+                    className="px-2 py-1 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-900 hover:bg-amber-200 transition-colors">
+                    @{suggestion}
+                  </button>
+                ))}
+              </div>
             )}
           </div>
           <div>

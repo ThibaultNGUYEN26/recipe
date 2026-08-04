@@ -21,3 +21,19 @@ export function validateUsername(value) {
   return { username, error: null };
 }
 
+export function usernameSuggestionCandidates(value) {
+  const username = normalizeUsername(value);
+  const withSuffix = (suffix) => `${username.slice(0, USERNAME_MAX_LENGTH - suffix.length)}${suffix}`;
+  const withPrefix = (prefix) => `${prefix}${username.slice(0, USERNAME_MAX_LENGTH - prefix.length)}`;
+  const candidates = [
+    withSuffix(".recipes"),
+    withSuffix("_recipes"),
+    withPrefix("the."),
+    withSuffix("_1"),
+    withSuffix("01"),
+  ];
+
+  return [...new Set(candidates)].filter((candidate) => (
+    candidate !== username && validateUsername(candidate).error === null
+  ));
+}

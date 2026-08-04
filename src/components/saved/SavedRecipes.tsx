@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useUI } from '../../contexts/UIContext';
-import type { RecipeListItem } from '../../types';
-import { Bookmark, Lock, Plus, Folder, Star, Clock, ChefHat, Trash2 } from 'lucide-react';
+import type { RecipeListItem, SavedCategory } from '../../types';
+import { Bookmark, Plus, Folder, Star, Clock, ChefHat, Trash2 } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -17,11 +17,13 @@ export default function SavedRecipes() {
   const { user } = useAuth();
   const { language } = useLanguage();
   const { showToast } = useUI();
-  const navigate = useNavigate();
-
   const [activeTab, setActiveTab] = useState<'mine' | 'saved'>('mine');
   const [myRecipes, setMyRecipes] = useState<RecipeListItem[]>([]);
   const [savedRecipes, setSavedRecipes] = useState<RecipeListItem[]>([]);
+  const [savedCategories, setSavedCategories] = useState<SavedCategory[]>([]);
+  const [activeSavedCategory, setActiveSavedCategory] = useState<'all' | 'favorites' | number>('all');
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [creatingCategory, setCreatingCategory] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,10 +32,12 @@ export default function SavedRecipes() {
     Promise.all([
       fetch(`${API}/api/users/me/recipes?lang=${language}`, { credentials: 'include' }).then((r) => r.json()),
       fetch(`${API}/api/users/me/saved?lang=${language}`, { credentials: 'include' }).then((r) => r.json()),
+      fetch(`${API}/api/users/me/saved-categories`, { credentials: 'include' }).then((r) => r.json()),
     ])
-      .then(([mine, saved]) => {
+      .then(([mine, saved, categories]) => {
         setMyRecipes(Array.isArray(mine) ? mine : []);
         setSavedRecipes(Array.isArray(saved) ? saved : []);
+        setSavedCategories(Array.isArray(categories) ? categories : []);
       })
       .catch(console.error)
       .finally(() => setLoading(false));
@@ -49,6 +53,45 @@ export default function SavedRecipes() {
     if (res.ok) { setSavedRecipes((p) => p.filter((r) => r.slug !== slug)); showToast('Removed from saved'); }
   }
 
+  async function createSavedCategory() {
+    const name = newCategoryName.trim();
+    if (!name) return;
+    setCreatingCategory(true);
+    try {
+      const res = await fetch(`${API}/api/users/me/saved-categories`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ name }),
+      });
+      const data = await res.json();
+      if (!res.ok) { showToast(data.error ?? 'Failed to create category', undefined, 'error'); return; }
+      setSavedCategories((previous) => [...previous, data].sort((a, b) => a.name.localeCompare(b.name)));
+      setActiveSavedCategory(data.id);
+      setNewCategoryName('');
+      showToast('Category created');
+    } catch {
+      showToast('Failed to create category', undefined, 'error');
+    } finally {
+      setCreatingCategory(false);
+    }
+  }
+
+  async function moveSavedRecipe(slug: string, savedCategoryId: number | null) {
+    const res = await fetch(`${API}/api/recipes/${slug}/save`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ savedCategoryId }),
+    });
+    if (!res.ok) { showToast('Failed to move recipe', undefined, 'error'); return; }
+    const category = savedCategories.find((item) => item.id === savedCategoryId) ?? null;
+    setSavedRecipes((previous) => previous.map((recipe) => recipe.slug === slug
+      ? { ...recipe, savedCategory: category }
+      : recipe));
+    showToast(category ? `Moved to ${category.name}` : 'Moved to Favorites');
+  }
+
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 px-6">
@@ -59,7 +102,12 @@ export default function SavedRecipes() {
     );
   }
 
-  const current = activeTab === 'mine' ? myRecipes : savedRecipes;
+  const visibleSavedRecipes = savedRecipes.filter((recipe) => {
+    if (activeSavedCategory === 'all') return true;
+    if (activeSavedCategory === 'favorites') return !recipe.savedCategory;
+    return recipe.savedCategory?.id === activeSavedCategory;
+  });
+  const current = activeTab === 'mine' ? myRecipes : visibleSavedRecipes;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-4 space-y-6 pb-24">
@@ -99,6 +147,48 @@ export default function SavedRecipes() {
           Saved ({savedRecipes.length})
         </button>
       </div>
+
+      {activeTab === 'saved' && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+            <button onClick={() => setActiveSavedCategory('all')}
+              className="shrink-0 px-3 py-2 rounded-xl text-xs font-semibold border"
+              style={activeSavedCategory === 'all'
+                ? { backgroundColor: '#292524', color: '#fff', borderColor: '#292524' }
+                : { backgroundColor: 'var(--color-surface)', color: 'var(--color-text)', borderColor: 'var(--color-border)' }}>
+              All ({savedRecipes.length})
+            </button>
+            <button onClick={() => setActiveSavedCategory('favorites')}
+              className="shrink-0 px-3 py-2 rounded-xl text-xs font-semibold border"
+              style={activeSavedCategory === 'favorites'
+                ? { backgroundColor: '#292524', color: '#fff', borderColor: '#292524' }
+                : { backgroundColor: 'var(--color-surface)', color: 'var(--color-text)', borderColor: 'var(--color-border)' }}>
+              Favorites ({savedRecipes.filter((recipe) => !recipe.savedCategory).length})
+            </button>
+            {savedCategories.map((category) => (
+              <button key={category.id} onClick={() => setActiveSavedCategory(category.id)}
+                className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border"
+                style={activeSavedCategory === category.id
+                  ? { backgroundColor: '#92400e', color: '#fff', borderColor: '#92400e' }
+                  : { backgroundColor: 'var(--color-surface)', color: 'var(--color-text)', borderColor: 'var(--color-border)' }}>
+                <Folder className="w-3.5 h-3.5" />
+                {category.name} ({savedRecipes.filter((recipe) => recipe.savedCategory?.id === category.id).length})
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-2 max-w-sm">
+            <input value={newCategoryName} onChange={(event) => setNewCategoryName(event.target.value)}
+              onKeyDown={(event) => event.key === 'Enter' && createSavedCategory()}
+              maxLength={40} placeholder="Create a saved category"
+              className="min-w-0 flex-1 px-3 py-2 rounded-xl text-xs outline-none"
+              style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
+            <button onClick={createSavedCategory} disabled={creatingCategory || !newCategoryName.trim()}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-stone-900 text-white text-xs font-semibold disabled:opacity-50">
+              <Plus className="w-3.5 h-3.5" /> {creatingCategory ? 'Creating…' : 'Create'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Grid */}
       {loading ? (
@@ -179,6 +269,21 @@ export default function SavedRecipes() {
                       {activeTab === 'mine' ? 'Delete' : 'Remove'}
                     </button>
                   </div>
+                  {activeTab === 'saved' && (
+                    <label className="flex items-center gap-2 mt-3 text-[11px]" style={{ color: 'var(--color-muted)' }}>
+                      <Folder className="w-3.5 h-3.5 shrink-0 text-amber-700" />
+                      <select
+                        value={recipe.savedCategory?.id ?? ''}
+                        onChange={(event) => moveSavedRecipe(recipe.slug, event.target.value ? Number(event.target.value) : null)}
+                        className="min-w-0 flex-1 rounded-xl px-2 py-1.5 text-xs outline-none"
+                        style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
+                        aria-label={`Category for ${recipe.title}`}
+                      >
+                        <option value="">Favorites</option>
+                        {savedCategories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
+                      </select>
+                    </label>
+                  )}
                 </div>
               </div>
             );

@@ -9,6 +9,21 @@ import { uploadRateLimit } from "../middleware/uploadRateLimit.js";
 import { normalizeUsername, validateUsername } from "../lib/username.js";
 
 const router = Router();
+const SAVED_CATEGORY_MAX_LENGTH = 40;
+const ANALYTICS_RANGES = new Set([7, 30, 90]);
+
+export function startOfUtcDay(value = new Date()) {
+  return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate()));
+}
+
+export function percentChange(current, previous) {
+  if (previous === 0) return current === 0 ? 0 : 100;
+  return Math.round(((current - previous) / previous) * 100);
+}
+
+function savedCategoryName(value) {
+  return typeof value === "string" ? value.trim().replace(/\s+/g, " ") : "";
+}
 
 // GET /api/users?q=
 router.get("/", async (req, res) => {
@@ -16,7 +31,7 @@ router.get("/", async (req, res) => {
   const query = String(q).trim();
   const usernameQuery = normalizeUsername(query);
   try {
-    const select = { id: true, username: true, name: true, avatarUrl: true };
+    const select = { id: true, username: true, name: true, avatarUrl: true, isVerified: true };
     const [exactUser, matches] = await Promise.all([
       usernameQuery ? prisma.user.findUnique({ where: { username: usernameQuery }, select }) : null,
       prisma.user.findMany({
@@ -54,6 +69,7 @@ router.get("/me/saved", authenticate, async (req, res) => {
     const saved = await prisma.savedRecipe.findMany({
       where: { userId: req.user.id },
       include: {
+        savedCategory: { select: { id: true, name: true } },
         recipe: {
           include: {
             category: true,
@@ -65,7 +81,7 @@ router.get("/me/saved", authenticate, async (req, res) => {
       orderBy: { savedAt: "desc" },
     });
 
-    res.json(saved.map(({ recipe: r }) => {
+    res.json(saved.map(({ recipe: r, savedCategory }) => {
       const t = r.translations[0];
       return {
         slug: r.slug,
@@ -73,6 +89,7 @@ router.get("/me/saved", authenticate, async (req, res) => {
         description: t?.description,
         image: r.images[0]?.url || null,
         category: { slug: r.category.slug, label: r.category.label },
+        savedCategory,
       };
     }));
   } catch (err) {
@@ -146,6 +163,159 @@ router.patch("/me", authenticate, uploadRateLimit, handleAvatarUpload, async (re
   }
 });
 
+// GET /api/users/me/analytics?days=30&lang=en
+router.get("/me/analytics", authenticate, async (req, res) => {
+  const requestedDays = Number(req.query.days);
+  const days = ANALYTICS_RANGES.has(requestedDays) ? requestedDays : 30;
+  const lang = String(req.query.lang || "en");
+  const to = new Date();
+  const from = startOfUtcDay(new Date(to.getTime() - (days - 1) * 86400000));
+  const previousFrom = new Date(from.getTime() - days * 86400000);
+
+  try {
+    const recipes = await prisma.recipe.findMany({
+      where: { authorId: req.user.id },
+      select: {
+        id: true,
+        slug: true,
+        translations: { where: { language: lang }, select: { title: true }, take: 1 },
+        images: { where: { isMain: true }, select: { url: true }, take: 1 },
+      },
+    });
+    const recipeIds = recipes.map((recipe) => recipe.id);
+    const recipeWhere = { recipeId: { in: recipeIds } };
+
+    const [views, saves, ratings, followers, comments, allRatings] = await Promise.all([
+      prisma.recipeView.findMany({ where: { ...recipeWhere, viewedAt: { gte: previousFrom, lte: to } }, select: { id: true, recipeId: true, viewerId: true, visitorId: true, viewedAt: true } }),
+      prisma.savedRecipe.findMany({ where: { ...recipeWhere, savedAt: { gte: previousFrom, lte: to } }, select: { recipeId: true, savedAt: true } }),
+      prisma.rating.findMany({ where: { ...recipeWhere, createdAt: { gte: previousFrom, lte: to } }, select: { recipeId: true, score: true, createdAt: true } }),
+      prisma.follow.findMany({ where: { followingId: req.user.id, createdAt: { gte: previousFrom, lte: to } }, select: { sourceRecipeId: true, createdAt: true } }),
+      prisma.comment.findMany({ where: { ...recipeWhere, createdAt: { gte: previousFrom, lte: to } }, select: { recipeId: true, createdAt: true } }),
+      prisma.rating.findMany({ where: recipeWhere, select: { recipeId: true, score: true } }),
+    ]);
+
+    const inCurrent = (date) => date >= from;
+    const currentViews = views.filter((item) => inCurrent(item.viewedAt));
+    const currentSaves = saves.filter((item) => inCurrent(item.savedAt));
+    const currentRatings = ratings.filter((item) => inCurrent(item.createdAt));
+    const currentFollowers = followers.filter((item) => inCurrent(item.createdAt));
+    const currentComments = comments.filter((item) => inCurrent(item.createdAt));
+    const previous = {
+      views: views.length - currentViews.length,
+      saves: saves.length - currentSaves.length,
+      ratings: ratings.length - currentRatings.length,
+      followers: followers.length - currentFollowers.length,
+      comments: comments.length - currentComments.length,
+    };
+
+    const dateKey = (date) => date.toISOString().slice(0, 10);
+    const series = Array.from({ length: days }, (_, index) => {
+      const date = new Date(from.getTime() + index * 86400000);
+      return { date: dateKey(date), views: 0, saves: 0, ratings: 0, followers: 0, comments: 0 };
+    });
+    const dayMap = new Map(series.map((day) => [day.date, day]));
+    for (const item of currentViews) dayMap.get(dateKey(item.viewedAt)).views += 1;
+    for (const item of currentSaves) dayMap.get(dateKey(item.savedAt)).saves += 1;
+    for (const item of currentRatings) dayMap.get(dateKey(item.createdAt)).ratings += 1;
+    for (const item of currentFollowers) dayMap.get(dateKey(item.createdAt)).followers += 1;
+    for (const item of currentComments) dayMap.get(dateKey(item.createdAt)).comments += 1;
+
+    const uniqueViewers = new Set(currentViews.map((view) => view.viewerId ? `user:${view.viewerId}` : `visitor:${view.visitorId || view.id}`)).size;
+    const avgRating = allRatings.length ? allRatings.reduce((sum, rating) => sum + rating.score, 0) / allRatings.length : null;
+    const recipeById = new Map(recipes.map((recipe) => [recipe.id, recipe]));
+    const topRecipes = recipes.map((recipe) => {
+      const recipeRatings = currentRatings.filter((item) => item.recipeId === recipe.id);
+      const lifetimeRatings = allRatings.filter((item) => item.recipeId === recipe.id);
+      return {
+        slug: recipe.slug,
+        title: recipe.translations[0]?.title || recipe.slug,
+        image: recipe.images[0]?.url || null,
+        views: currentViews.filter((item) => item.recipeId === recipe.id).length,
+        saves: currentSaves.filter((item) => item.recipeId === recipe.id).length,
+        ratings: recipeRatings.length,
+        avgRating: lifetimeRatings.length ? lifetimeRatings.reduce((sum, item) => sum + item.score, 0) / lifetimeRatings.length : null,
+        comments: currentComments.filter((item) => item.recipeId === recipe.id).length,
+        followers: currentFollowers.filter((item) => item.sourceRecipeId === recipe.id).length,
+      };
+    }).sort((a, b) => b.views - a.views || b.saves - a.saves).slice(0, 8);
+
+    const followSourceCounts = new Map();
+    for (const follow of currentFollowers) {
+      const key = follow.sourceRecipeId || "direct";
+      followSourceCounts.set(key, (followSourceCounts.get(key) || 0) + 1);
+    }
+    const followSources = [...followSourceCounts.entries()].map(([id, count]) => {
+      const recipe = id === "direct" ? null : recipeById.get(id);
+      return { slug: recipe?.slug || null, title: recipe?.translations[0]?.title || "Profile & other", count };
+    }).sort((a, b) => b.count - a.count);
+
+    res.json({
+      range: { days, from: from.toISOString(), to: to.toISOString() },
+      summary: {
+        views: { value: currentViews.length, change: percentChange(currentViews.length, previous.views) },
+        saves: { value: currentSaves.length, change: percentChange(currentSaves.length, previous.saves) },
+        ratings: { value: currentRatings.length, change: percentChange(currentRatings.length, previous.ratings) },
+        followers: { value: currentFollowers.length, change: percentChange(currentFollowers.length, previous.followers) },
+        comments: { value: currentComments.length, change: percentChange(currentComments.length, previous.comments) },
+        uniqueViewers,
+        avgRating,
+        saveRate: currentViews.length ? (currentSaves.length / currentViews.length) * 100 : 0,
+      },
+      series,
+      topRecipes,
+      followSources,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message || "Failed to fetch creator analytics" });
+  }
+});
+
+// GET /api/users/me/saved-categories
+router.get("/me/saved-categories", authenticate, async (req, res) => {
+  try {
+    const categories = await prisma.savedCategory.findMany({
+      where: { userId: req.user.id },
+      select: { id: true, name: true, _count: { select: { recipes: true } } },
+      orderBy: { name: "asc" },
+    });
+    res.json(categories.map(({ _count, ...category }) => ({ ...category, recipeCount: _count.recipes })));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message || "Failed to fetch saved categories" });
+  }
+});
+
+// POST /api/users/me/saved-categories
+router.post("/me/saved-categories", authenticate, async (req, res) => {
+  const name = savedCategoryName(req.body.name);
+  if (!name || name.length > SAVED_CATEGORY_MAX_LENGTH) {
+    return res.status(400).json({ error: `Category name must be 1-${SAVED_CATEGORY_MAX_LENGTH} characters` });
+  }
+  try {
+    const category = await prisma.savedCategory.create({ data: { userId: req.user.id, name } });
+    res.status(201).json({ ...category, recipeCount: 0 });
+  } catch (err) {
+    if (err.code === "P2002") return res.status(409).json({ error: "A category with this name already exists" });
+    console.error(err);
+    res.status(500).json({ error: err.message || "Failed to create saved category" });
+  }
+});
+
+// DELETE /api/users/me/saved-categories/:categoryId
+router.delete("/me/saved-categories/:categoryId", authenticate, async (req, res) => {
+  const categoryId = Number(req.params.categoryId);
+  if (!Number.isInteger(categoryId)) return res.status(400).json({ error: "Invalid category id" });
+  try {
+    const result = await prisma.savedCategory.deleteMany({ where: { id: categoryId, userId: req.user.id } });
+    if (!result.count) return res.status(404).json({ error: "Category not found" });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message || "Failed to delete saved category" });
+  }
+});
+
 router.get("/me/avatar-status", authenticate, async (req, res) => {
   const user = await prisma.user.findUnique({
     where: { id: req.user.id },
@@ -167,6 +337,30 @@ router.delete("/me/avatar", authenticate, async (req, res) => {
   }
 });
 
+// GET /api/users/by-username/:username
+router.get("/by-username/:username", async (req, res) => {
+  const username = normalizeUsername(req.params.username);
+  if (!username) return res.status(400).json({ error: "Invalid username" });
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { username },
+      select: { id: true, username: true, name: true, bio: true, avatarUrl: true, isVerified: true, createdAt: true },
+    });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const [followerCount, followingCount, recipeCount] = await Promise.all([
+      prisma.follow.count({ where: { followingId: user.id } }),
+      prisma.follow.count({ where: { followerId: user.id } }),
+      prisma.recipe.count({ where: { authorId: user.id, isPublic: true } }),
+    ]);
+    res.json({ ...user, followerCount, followingCount, recipeCount });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message || "Failed to fetch user" });
+  }
+});
+
 // GET /api/users/:id
 router.get("/:id", async (req, res) => {
   const userId = parseInt(req.params.id);
@@ -175,7 +369,7 @@ router.get("/:id", async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, username: true, name: true, bio: true, avatarUrl: true, createdAt: true },
+      select: { id: true, username: true, name: true, bio: true, avatarUrl: true, isVerified: true, createdAt: true },
     });
     if (!user) return res.status(404).json({ error: "User not found" });
 
@@ -231,7 +425,15 @@ router.post("/:id/follow", authenticate, async (req, res) => {
   if (followingId === req.user.id) return res.status(400).json({ error: "Cannot follow yourself" });
 
   try {
-    await prisma.follow.create({ data: { followerId: req.user.id, followingId } });
+    let sourceRecipeId = null;
+    if (typeof req.body.sourceRecipeSlug === "string") {
+      const source = await prisma.recipe.findFirst({
+        where: { slug: req.body.sourceRecipeSlug, authorId: followingId, isPublic: true },
+        select: { id: true },
+      });
+      sourceRecipeId = source?.id ?? null;
+    }
+    await prisma.follow.create({ data: { followerId: req.user.id, followingId, sourceRecipeId } });
     createNotification({ userId: followingId, actorId: req.user.id, type: "follow" });
     res.status(201).json({ ok: true });
   } catch (err) {
@@ -259,7 +461,7 @@ router.get("/:id/followers", async (req, res) => {
   try {
     const follows = await prisma.follow.findMany({
       where: { followingId: userId },
-      include: { follower: { select: { id: true, username: true, name: true, avatarUrl: true } } },
+      include: { follower: { select: { id: true, username: true, name: true, avatarUrl: true, isVerified: true } } },
     });
     res.json(follows.map((f) => f.follower));
   } catch (err) {
@@ -274,7 +476,7 @@ router.get("/:id/following", async (req, res) => {
   try {
     const follows = await prisma.follow.findMany({
       where: { followerId: userId },
-      include: { following: { select: { id: true, username: true, name: true, avatarUrl: true } } },
+      include: { following: { select: { id: true, username: true, name: true, avatarUrl: true, isVerified: true } } },
     });
     res.json(follows.map((f) => f.following));
   } catch (err) {

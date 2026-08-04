@@ -1,0 +1,111 @@
+import { randomBytes } from "node:crypto";
+import { Router } from "express";
+import { prisma } from "../lib/prisma.js";
+import { authenticate } from "../middleware/authenticate.js";
+
+const router = Router();
+const RESUBMIT_DELAY_MS = 24 * 60 * 60 * 1000; // Prevent repeated manual-review submissions.
+export const MIN_VERIFICATION_FOLLOWERS = 1500;
+
+export function isVerificationEligible(followerCount) {
+  return followerCount > MIN_VERIFICATION_FOLLOWERS;
+}
+
+export function parseSocialLinks(value) {
+  if (!Array.isArray(value)) return null;
+  const links = [...new Set(value.map((link) => typeof link === "string" ? link.trim() : "").filter(Boolean))];
+  if (links.length === 0 || links.length > 5) return null;
+  try {
+    return links.every((link) => ["http:", "https:"].includes(new URL(link).protocol)) ? links : null;
+  } catch {
+    return null;
+  }
+}
+
+async function requireAdmin(req, res, next) {
+  const user = await prisma.user.findUnique({ where: { id: req.user.id }, select: { isAdmin: true } });
+  if (!user?.isAdmin) return res.status(403).json({ error: "Administrator access required" });
+  next();
+}
+
+router.get("/me", authenticate, async (req, res) => {
+  const [request, followerCount] = await Promise.all([
+    prisma.creatorVerification.findUnique({
+      where: { userId: req.user.id },
+      select: { id: true, status: true, socialLinks: true, message: true, verificationCode: true, rejectionReason: true, reviewedAt: true, createdAt: true, updatedAt: true },
+    }),
+    prisma.follow.count({ where: { followingId: req.user.id } }),
+  ]);
+  res.json({ request, followerCount, eligible: isVerificationEligible(followerCount) });
+});
+
+router.post("/", authenticate, async (req, res) => {
+  const socialLinks = parseSocialLinks(req.body.socialLinks);
+  const message = typeof req.body.message === "string" ? req.body.message.trim() : "";
+  if (!socialLinks) return res.status(400).json({ error: "Provide 1-5 valid public profile links" });
+  if (message.length > 500) return res.status(400).json({ error: "Message must be 500 characters or less" });
+
+  try {
+    const followerCount = await prisma.follow.count({ where: { followingId: req.user.id } });
+    if (!isVerificationEligible(followerCount)) {
+      return res.status(403).json({ error: `Creator verification requires more than ${MIN_VERIFICATION_FOLLOWERS.toLocaleString("en-US")} followers` });
+    }
+    const existing = await prisma.creatorVerification.findUnique({ where: { userId: req.user.id } });
+    if (existing?.status === "PENDING") return res.status(409).json({ error: "Your verification request is already pending" });
+    if (existing?.status === "VERIFIED") return res.status(409).json({ error: "Your profile is already verified" });
+    if (existing && Date.now() - existing.updatedAt.getTime() < RESUBMIT_DELAY_MS) {
+      return res.status(429).json({ error: "Wait 24 hours before submitting another request" });
+    }
+
+    const verificationCode = `savor-${randomBytes(4).toString("hex")}`;
+    const request = await prisma.creatorVerification.upsert({
+      where: { userId: req.user.id },
+      update: { status: "PENDING", socialLinks, message: message || null, verificationCode, rejectionReason: null, reviewedById: null, reviewedAt: null },
+      create: { userId: req.user.id, socialLinks, message: message || null, verificationCode },
+      select: { id: true, status: true, socialLinks: true, message: true, verificationCode: true, createdAt: true },
+    });
+    res.status(201).json({ request });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to submit verification request" });
+  }
+});
+
+router.get("/admin", authenticate, requireAdmin, async (req, res) => {
+  const status = ["PENDING", "VERIFIED", "REJECTED"].includes(req.query.status) ? req.query.status : "PENDING";
+  const requests = await prisma.creatorVerification.findMany({
+    where: { status },
+    include: { user: { select: { id: true, username: true, name: true, avatarUrl: true, isVerified: true } } },
+    orderBy: { createdAt: "asc" },
+    take: 100,
+  });
+  res.json(requests);
+});
+
+router.patch("/admin/:id", authenticate, requireAdmin, async (req, res) => {
+  const id = Number(req.params.id);
+  const decision = req.body.decision;
+  const rejectionReason = typeof req.body.rejectionReason === "string" ? req.body.rejectionReason.trim() : "";
+  if (!Number.isInteger(id)) return res.status(400).json({ error: "Invalid request id" });
+  if (!["VERIFIED", "REJECTED"].includes(decision)) return res.status(400).json({ error: "Decision must be VERIFIED or REJECTED" });
+  if (decision === "REJECTED" && !rejectionReason) return res.status(400).json({ error: "A rejection reason is required" });
+
+  try {
+    const existing = await prisma.creatorVerification.findUnique({ where: { id }, select: { userId: true } });
+    if (!existing) return res.status(404).json({ error: "Verification request not found" });
+    const request = await prisma.$transaction(async (tx) => {
+      const updated = await tx.creatorVerification.update({
+        where: { id },
+        data: { status: decision, rejectionReason: decision === "REJECTED" ? rejectionReason : null, reviewedById: req.user.id, reviewedAt: new Date() },
+      });
+      await tx.user.update({ where: { id: existing.userId }, data: { isVerified: decision === "VERIFIED" } });
+      return updated;
+    });
+    res.json({ request });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to review verification request" });
+  }
+});
+
+export default router;

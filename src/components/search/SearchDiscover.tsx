@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import type { RecipeListItem } from '../../types';
+import VerifiedBadge from '../profile/VerifiedBadge';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -21,7 +22,7 @@ const CATEGORIES = [
 const DIFFICULTY_OPTS = ['All', 'Facile', 'Moyen', 'Difficile'];
 const TIME_OPTS = [15, 30, 60, 'Any'] as const;
 
-interface UserResult { id: number; username: string | null; name: string | null; avatarUrl: string | null }
+interface UserResult { id: number; username: string | null; name: string | null; avatarUrl: string | null; isVerified: boolean }
 
 function imgSrc(url: string | null | undefined) {
   if (!url) return null;
@@ -35,6 +36,7 @@ export default function SearchDiscover() {
 
   const [query, setQuery] = useState('');
   const [allRecipes, setAllRecipes] = useState<RecipeListItem[]>([]);
+  const [discoveryRecipes, setDiscoveryRecipes] = useState<RecipeListItem[]>([]);
   const [users, setUsers] = useState<UserResult[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -47,9 +49,15 @@ export default function SearchDiscover() {
 
   useEffect(() => {
     inputRef.current?.focus();
-    fetch(`${API}/api/recipes?lang=${language}`, { credentials: 'include' })
-      .then((r) => r.json())
-      .then((d) => setAllRecipes(Array.isArray(d) ? d : []))
+    Promise.all([
+      fetch(`${API}/api/recipes?lang=${language}`, { credentials: 'include' }).then((response) => response.json()),
+      fetch(`${API}/api/recipes/recommended?lang=${language}`, { credentials: 'include' }).then((response) => response.ok ? response.json() : null),
+    ])
+      .then(([all, recommendations]) => {
+        const recipes = Array.isArray(all) ? all : [];
+        setAllRecipes(recipes);
+        setDiscoveryRecipes(Array.isArray(recommendations?.trending) ? recommendations.trending : recipes);
+      })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [language]);
@@ -214,9 +222,12 @@ export default function SearchDiscover() {
                 <div className="w-14 h-14 rounded-full bg-amber-800 text-white flex items-center justify-center text-xl font-bold mb-2 ring-2 ring-amber-600/30 overflow-hidden">
                   {u.avatarUrl ? <img src={imgSrc(u.avatarUrl)!} alt="" className="w-full h-full object-cover" /> : u.name?.[0]?.toUpperCase() ?? '?'}
                 </div>
-                <h4 className="text-xs font-bold text-stone-900 truncate w-full">{u.name ?? (u.username ? `@${u.username}` : 'Creator')}</h4>
+                <div className="flex items-center justify-center gap-1 w-full">
+                  <h4 className="text-xs font-bold text-stone-900 truncate">{u.name ?? (u.username ? `@${u.username}` : 'Creator')}</h4>
+                  {u.isVerified && <VerifiedBadge className="w-3.5 h-3.5" />}
+                </div>
                 {u.username && <p className="text-[10px] text-stone-500 truncate w-full">@{u.username}</p>}
-                <button onClick={() => navigate(`/profile/${u.id}`)}
+                <button onClick={() => navigate(u.username ? `/u/${encodeURIComponent(u.username)}` : `/profile/${u.id}`)}
                   className="w-full mt-2.5 py-1.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 bg-stone-900 text-white hover:bg-amber-800 transition-colors">
                   <UserPlus className="w-3 h-3" /> Follow
                 </button>
@@ -249,7 +260,7 @@ export default function SearchDiscover() {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
-            {(hasSearch ? searchResults : allRecipes).map((r) => (
+            {(hasSearch ? searchResults : discoveryRecipes).map((r) => (
               <Link key={r.slug} to={`/recipe/${r.slug}`}
                 className="group relative aspect-square rounded-2xl overflow-hidden bg-stone-100 shadow-sm border border-stone-200/60">
                 {r.image ? (
@@ -405,10 +416,13 @@ function TrendingCreators({ lang }: { lang: string }) {
               ? <img src={u.avatarUrl.startsWith('/') ? `${import.meta.env.VITE_API_URL}${u.avatarUrl}` : u.avatarUrl} alt="" className="w-full h-full object-cover" />
               : u.name?.[0]?.toUpperCase() ?? '?'}
           </div>
-          <h4 className="text-xs font-bold text-stone-900 truncate w-full">{u.name ?? (u.username ? `@${u.username}` : 'Creator')}</h4>
+          <div className="flex items-center justify-center gap-1 w-full">
+            <h4 className="text-xs font-bold text-stone-900 truncate">{u.name ?? (u.username ? `@${u.username}` : 'Creator')}</h4>
+            {u.isVerified && <VerifiedBadge className="w-3.5 h-3.5" />}
+          </div>
           {u.username && <p className="text-[10px] text-stone-500 truncate w-full">@{u.username}</p>}
           <p className="text-[10px] font-medium text-amber-800 mt-0.5">{u.recipeCount} recipes</p>
-          <button onClick={() => navigate(`/profile/${u.id}`)}
+          <button onClick={() => navigate(u.username ? `/u/${encodeURIComponent(u.username)}` : `/profile/${u.id}`)}
             className="w-full mt-2.5 py-1.5 px-3 rounded-xl text-xs font-semibold bg-stone-900 text-white hover:bg-amber-800 transition-colors flex items-center justify-center gap-1">
             <UserPlus className="w-3 h-3" /> Follow
           </button>

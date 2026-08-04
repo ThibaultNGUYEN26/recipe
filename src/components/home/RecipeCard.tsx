@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
-import { Heart, MessageCircle, Bookmark, Star, Clock, ChefHat, Share2, UserPlus } from 'lucide-react';
+import { Heart, MessageCircle, Bookmark, Star, Clock, ChefHat, Share2, UserPlus, Sparkles } from 'lucide-react';
 import type { RecipeListItem } from '../../types';
 import { useUI } from '../../contexts/UIContext';
 import { useAuth } from '../../contexts/AuthContext';
+import VerifiedBadge from '../profile/VerifiedBadge';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -25,7 +26,12 @@ export default function RecipeCard({ recipe }: Props) {
   }
   function handleShare(e: React.MouseEvent) {
     e.preventDefault(); e.stopPropagation();
-    openShare(recipe.slug);
+    openShare({
+      type: 'recipe',
+      path: `/recipe/${encodeURIComponent(recipe.slug)}`,
+      title: recipe.title,
+      text: recipe.description,
+    });
   }
 
   return (
@@ -41,11 +47,14 @@ export default function RecipeCard({ recipe }: Props) {
               : (recipe.authorName?.[0]?.toUpperCase() ?? '?')}
           </div>
           <div className="min-w-0">
-            <h4 className="text-xs font-bold text-stone-900 truncate">{recipe.authorName ?? 'Savor Chef'}</h4>
+            <div className="flex items-center gap-1 min-w-0">
+              <h4 className="text-xs font-bold text-stone-900 truncate">{recipe.authorName ?? 'Savor Chef'}</h4>
+              {recipe.authorIsVerified && <VerifiedBadge className="w-3.5 h-3.5" />}
+            </div>
           </div>
         </div>
         {recipe.authorId && (
-          <Link to={`/profile/${recipe.authorId}`} onClick={(e) => e.stopPropagation()}
+          <Link to={`${recipe.authorUsername ? `/u/${encodeURIComponent(recipe.authorUsername)}` : `/profile/${recipe.authorId}`}?fromRecipe=${encodeURIComponent(recipe.slug)}`} onClick={(e) => e.stopPropagation()}
             className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-amber-800 text-white hover:bg-amber-900 transition-all shadow-sm">
             <UserPlus className="w-3.5 h-3.5" />
             <span>Follow</span>
@@ -87,6 +96,11 @@ export default function RecipeCard({ recipe }: Props) {
 
       {/* Content + actions */}
       <div className="p-4 sm:p-5">
+        {recipe.recommendationReason && (
+          <p className="flex items-center gap-1 text-[10px] font-bold text-amber-800 mb-1.5">
+            <Sparkles className="w-3 h-3" /> {recipe.recommendationReason}
+          </p>
+        )}
         <Link to={`/recipe/${recipe.slug}`}>
           <h3 className="font-serif text-lg sm:text-xl font-bold text-stone-900 group-hover:text-amber-800 transition-colors leading-snug">
             {recipe.title}

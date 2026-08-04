@@ -1,16 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUI } from '../../contexts/UIContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import RecipeCard from '../home/RecipeCard';
 import type { UserProfile as UserProfileType, RecipeListItem } from '../../types';
 import {
-  Edit3, MapPin, Utensils, Bookmark,
-  X, UserPlus, UserMinus, Camera, Crop as CropIcon
+  Edit3, MapPin, Utensils, Bookmark, BarChart3,
+  X, UserPlus, UserMinus, Camera, Crop as CropIcon, Share2
 } from 'lucide-react';
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
+import VerifiedBadge from './VerifiedBadge';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -19,12 +20,14 @@ function imgSrc(url: string | null | undefined) {
   return url.startsWith('/') ? `${API}${url}` : url;
 }
 
-export default function UserProfile() {
-  const { userId } = useParams<{ userId: string }>();
+export default function UserProfile({ userIdOverride }: { userIdOverride?: number } = {}) {
+  const { userId: routeUserId } = useParams<{ userId: string }>();
+  const userId = userIdOverride ? String(userIdOverride) : routeUserId;
   const { user: me, logout, updateUser } = useAuth();
   const { language } = useLanguage();
-  const { showToast } = useUI();
+  const { showToast, openShare } = useUI();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [profile, setProfile] = useState<UserProfileType | null>(null);
   const [recipes, setRecipes] = useState<RecipeListItem[]>([]);
@@ -55,6 +58,13 @@ export default function UserProfile() {
       setProfile((current) => current ? { ...current, avatarUrl: me.avatarUrl } : current);
     }
   }, [isOwnProfile, me?.avatarUrl]);
+
+  useEffect(() => {
+    if (!profile) return;
+    const previousTitle = document.title;
+    document.title = `${profile.name ?? (profile.username ? `@${profile.username}` : 'Creator')} — Savor`;
+    return () => { document.title = previousTitle; };
+  }, [profile]);
 
   useEffect(() => {
     if (!userId) return;
@@ -91,7 +101,13 @@ export default function UserProfile() {
     setFollowLoading(true);
     try {
       const method = isFollowing ? 'DELETE' : 'POST';
-      const res = await fetch(`${API}/api/users/${userId}/follow`, { method, credentials: 'include' });
+      const sourceRecipeSlug = searchParams.get('fromRecipe');
+      const res = await fetch(`${API}/api/users/${userId}/follow`, {
+        method,
+        credentials: 'include',
+        headers: method === 'POST' ? { 'Content-Type': 'application/json' } : undefined,
+        body: method === 'POST' ? JSON.stringify({ sourceRecipeSlug }) : undefined,
+      });
       if (res.ok) {
         setIsFollowing(!isFollowing);
         setProfile((p) => p ? { ...p, followerCount: p.followerCount + (isFollowing ? -1 : 1) } : p);
@@ -222,24 +238,45 @@ export default function UserProfile() {
           <div className="flex-1 min-w-0 space-y-2">
             <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-3">
               <div>
-                <h1 className="font-serif text-2xl font-black" style={{ color: 'var(--color-text)' }}>{profile.name ?? 'Anonymous Chef'}</h1>
+                <div className="flex items-center justify-center sm:justify-start gap-1.5">
+                  <h1 className="font-serif text-2xl font-black" style={{ color: 'var(--color-text)' }}>{profile.name ?? 'Anonymous Chef'}</h1>
+                  {profile.isVerified && <VerifiedBadge className="w-5 h-5" />}
+                </div>
                 {profile.username && <p className="text-sm font-medium" style={{ color: 'var(--color-muted)' }}>@{profile.username}</p>}
               </div>
-              {isOwnProfile ? (
-                <button onClick={() => setIsEditOpen(true)}
-                  className="flex items-center gap-1.5 bg-stone-900 text-white text-xs font-bold px-4 py-2 rounded-2xl hover:bg-amber-800 transition-colors shadow-sm">
-                  <Edit3 className="w-3.5 h-3.5" /> Edit Profile
+              <div className="flex items-center gap-2">
+                <button onClick={() => openShare({
+                  type: 'profile',
+                  path: profile.username ? `/u/${encodeURIComponent(profile.username)}` : `/profile/${profile.id}`,
+                  title: profile.name ?? (profile.username ? `@${profile.username}` : 'Savor creator'),
+                  text: profile.bio ?? `See ${profile.name ?? 'this creator'}'s recipes on Savor.`,
+                })}
+                  className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-2xl border transition-colors"
+                  style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}>
+                  <Share2 className="w-3.5 h-3.5" /> Share
                 </button>
-              ) : (
-                <button onClick={toggleFollow} disabled={followLoading}
-                  className="flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-2xl transition-colors shadow-sm"
-                  style={isFollowing
-                    ? { backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }
-                    : { backgroundColor: '#92400e', color: '#fff' }}>
-                  {isFollowing ? <UserMinus className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}
-                  {isFollowing ? 'Following' : 'Follow'}
-                </button>
-              )}
+                {isOwnProfile ? (
+                  <>
+                    <Link to="/creator/analytics" className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-2xl border border-amber-200 bg-amber-50 text-amber-900">
+                      <BarChart3 className="w-3.5 h-3.5" /> Analytics
+                    </Link>
+                    {!profile.isVerified && profile.followerCount > 1500 && <Link to="/settings/verification" className="text-xs font-bold px-3 py-2 rounded-2xl bg-blue-50 text-blue-700 border border-blue-200">Get verified</Link>}
+                    <button onClick={() => setIsEditOpen(true)}
+                      className="flex items-center gap-1.5 bg-stone-900 text-white text-xs font-bold px-4 py-2 rounded-2xl hover:bg-amber-800 transition-colors shadow-sm">
+                      <Edit3 className="w-3.5 h-3.5" /> Edit Profile
+                    </button>
+                  </>
+                ) : (
+                  <button onClick={toggleFollow} disabled={followLoading}
+                    className="flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-2xl transition-colors shadow-sm"
+                    style={isFollowing
+                      ? { backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }
+                      : { backgroundColor: '#92400e', color: '#fff' }}>
+                    {isFollowing ? <UserMinus className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}
+                    {isFollowing ? 'Following' : 'Follow'}
+                  </button>
+                )}
+              </div>
             </div>
 
             {profile.bio && (

@@ -15,10 +15,14 @@ const SearchDiscover = lazy(() => import('./components/search/SearchDiscover'));
 const AddRecipeFlow = lazy(() => import('./components/add/AddRecipeFlow'));
 const SavedRecipes = lazy(() => import('./components/saved/SavedRecipes'));
 const UserProfile = lazy(() => import('./components/profile/UserProfile'));
+const UsernameProfile = lazy(() => import('./components/profile/UsernameProfile'));
 const EditProfile = lazy(() => import('./components/profile/EditProfile'));
 const Login = lazy(() => import('./components/auth/Login'));
 const Register = lazy(() => import('./components/auth/Register'));
 const PrivacyPolicy = lazy(() => import('./components/misc/PrivacyPolicy'));
+const CreatorVerification = lazy(() => import('./components/profile/CreatorVerification'));
+const VerificationReview = lazy(() => import('./components/admin/VerificationReview'));
+const CreatorAnalytics = lazy(() => import('./components/profile/CreatorAnalytics'));
 
 function LoadingFallback() {
   return (
@@ -41,10 +45,14 @@ export default function App() {
             <Route path="/add-recipe" element={<AddRecipeFlow />} />
             <Route path="/my-recipes" element={<SavedRecipes />} />
             <Route path="/profile/:userId" element={<UserProfile />} />
+            <Route path="/u/:username" element={<UsernameProfile />} />
             <Route path="/settings/profile" element={<EditProfile />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/settings/verification" element={<CreatorVerification />} />
+            <Route path="/admin/verifications" element={<VerificationReview />} />
+            <Route path="/creator/analytics" element={<CreatorAnalytics />} />
           </Routes>
         </Suspense>
       </main>

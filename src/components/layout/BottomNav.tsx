@@ -37,9 +37,13 @@ export default function BottomNav() {
         style={{ backgroundColor: 'rgba(250,248,245,0.95)', backdropFilter: 'blur(16px)', borderTop: '1px solid rgba(214,211,209,0.9)', paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
         <div className="flex items-center justify-around max-w-md mx-auto">
           {NAV.map(({ id, to, label, icon: Icon, authRequired }) => {
-            const dest = id === 'profile' && user ? `/profile/${user.id}` : to;
+            const dest = id === 'profile' && user ? (user.username ? `/u/${encodeURIComponent(user.username)}` : `/profile/${user.id}`) : to;
             const href = (authRequired && !user) ? '/login' : dest;
-            const isActive = id === 'home' ? location.pathname === '/' : location.pathname.startsWith(id === 'profile' ? '/profile' : to);
+            const isActive = id === 'home'
+              ? location.pathname === '/'
+              : id === 'profile'
+                ? location.pathname.startsWith('/profile') || location.pathname.startsWith('/u/')
+                : location.pathname.startsWith(to);
             return (
               <Link key={id} to={href}
                 className="flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all relative"
@@ -58,9 +62,13 @@ export default function BottomNav() {
         style={{ backgroundColor: 'rgba(28,25,23,0.95)', backdropFilter: 'blur(20px)', border: '1px solid rgba(68,64,60,0.5)' }}>
         <div className="flex items-center gap-1">
           {NAV.map(({ id, to, label, icon: Icon, authRequired }) => {
-            const dest = id === 'profile' && user ? `/profile/${user.id}` : to;
+            const dest = id === 'profile' && user ? (user.username ? `/u/${encodeURIComponent(user.username)}` : `/profile/${user.id}`) : to;
             const href = (authRequired && !user) ? '/login' : dest;
-            const isActive = id === 'home' ? location.pathname === '/' : location.pathname.startsWith(id === 'profile' ? '/profile' : to);
+            const isActive = id === 'home'
+              ? location.pathname === '/'
+              : id === 'profile'
+                ? location.pathname.startsWith('/profile') || location.pathname.startsWith('/u/')
+                : location.pathname.startsWith(to);
             return (
               <Link key={id} to={href}
                 className="flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold transition-all"

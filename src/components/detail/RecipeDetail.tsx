@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useUI } from '../../contexts/UIContext';
 import type { RecipeDetail as RecipeDetailType, Comment, IngredientSection, InstructionStep } from '../../types';
 import { ArrowLeft, Star, Bookmark, BookmarkCheck, Share2, Clock, Users, ChefHat, Timer, Check, Heart, Send, Flag, Trash2 } from 'lucide-react';
+import VerifiedBadge from '../profile/VerifiedBadge';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -86,8 +87,9 @@ function CommentItem({ comment, recipeSlug, onDelete, onLike }: {
           {comment.author.name?.[0]?.toUpperCase() ?? '?'}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-baseline gap-2">
+          <div className="flex items-center gap-2">
             <span className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{comment.author.name ?? 'Anonymous'}</span>
+            {comment.author.isVerified && <VerifiedBadge className="w-3.5 h-3.5" />}
             <span className="text-xs" style={{ color: 'var(--color-muted)' }}>{new Date(comment.createdAt).toLocaleDateString()}</span>
           </div>
           <p className="text-sm mt-0.5 leading-relaxed" style={{ color: 'var(--color-text)' }}>{comment.text}</p>
@@ -159,10 +161,42 @@ export default function RecipeDetail() {
         setServings((rd.info as Record<string, unknown> | null | undefined)?.servings as number ?? 4);
         setUserScore(rd.myRating ?? 0);
         setComments(Array.isArray(cm) ? cm : []);
+        if (!rd.error) {
+          const storageKey = 'savor-analytics-visitor';
+          let visitorId = localStorage.getItem(storageKey);
+          if (!visitorId) {
+            visitorId = crypto.randomUUID();
+            localStorage.setItem(storageKey, visitorId);
+          }
+          fetch(`${API}/api/recipes/${slug}/view`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ visitorId }),
+          }).catch(() => {});
+        }
       })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [slug, language]);
+
+  useEffect(() => {
+    function handleRecipeSaved(event: Event) {
+      const detail = (event as CustomEvent<{ slug: string; savedCategoryId: number | null }>).detail;
+      if (detail.slug === slug) {
+        setRecipe((current) => current ? { ...current, isSaved: true, savedCategoryId: detail.savedCategoryId } : current);
+      }
+    }
+    window.addEventListener('recipe-saved', handleRecipeSaved);
+    return () => window.removeEventListener('recipe-saved', handleRecipeSaved);
+  }, [slug]);
+
+  useEffect(() => {
+    if (!recipe?.title) return;
+    const previousTitle = document.title;
+    document.title = `${recipe.title} — Savor`;
+    return () => { document.title = previousTitle; };
+  }, [recipe?.title]);
 
   async function rate(score: number) {
     if (!user) { showToast('Sign in to rate', undefined, 'info'); return; }
@@ -185,11 +219,10 @@ export default function RecipeDetail() {
     if (!recipe) return;
     if (recipe.isSaved) {
       await fetch(`${API}/api/recipes/${slug}/save`, { method: 'DELETE', credentials: 'include' });
-      setRecipe((r) => r ? { ...r, isSaved: false } : r);
+      setRecipe((r) => r ? { ...r, isSaved: false, savedCategoryId: null } : r);
       showToast('Removed from saved');
     } else {
       openSaveModal(slug!);
-      setRecipe((r) => r ? { ...r, isSaved: true } : r);
     }
   }
 
@@ -268,7 +301,12 @@ export default function RecipeDetail() {
           Back
         </button>
         <div className="flex items-center gap-2">
-          <button onClick={() => openShare(recipe.slug)} style={{ color: 'var(--color-muted)' }}><Share2 size={18} /></button>
+          <button onClick={() => openShare({
+            type: 'recipe',
+            path: `/recipe/${encodeURIComponent(recipe.slug)}`,
+            title: recipe.title,
+            text: recipe.description,
+          })} aria-label="Share recipe" style={{ color: 'var(--color-muted)' }}><Share2 size={18} /></button>
           <button onClick={toggleSave} style={{ color: recipe.isSaved ? '#92400e' : 'var(--color-muted)' }}>
             {recipe.isSaved ? <BookmarkCheck size={20} className="fill-amber-800" /> : <Bookmark size={20} />}
           </button>
@@ -299,11 +337,12 @@ export default function RecipeDetail() {
 
           {/* Author */}
           {recipe.authorName && (
-            <Link to={`/profile/${recipe.authorId}`} className="flex items-center gap-2 mt-3">
+            <Link to={`${recipe.authorUsername ? `/u/${encodeURIComponent(recipe.authorUsername)}` : `/profile/${recipe.authorId}`}?fromRecipe=${encodeURIComponent(recipe.slug)}`} className="flex items-center gap-2 mt-3">
               <div className="w-7 h-7 rounded-full bg-amber-800 text-white flex items-center justify-center text-xs font-bold overflow-hidden">
                 {recipe.authorAvatar ? <img src={imgSrc(recipe.authorAvatar)!} alt="" className="w-full h-full object-cover" /> : recipe.authorName[0].toUpperCase()}
               </div>
               <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>{recipe.authorName}</span>
+              {recipe.authorIsVerified && <VerifiedBadge className="w-4 h-4" />}
             </Link>
           )}
         </div>

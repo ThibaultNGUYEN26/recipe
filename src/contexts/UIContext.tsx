@@ -12,8 +12,8 @@ interface UIContextValue {
   stopTimer: () => void;
 
   // Modals
-  shareSlug: string | null;
-  openShare: (slug: string) => void;
+  shareTarget: ShareTarget | null;
+  openShare: (target: ShareTarget) => void;
   closeShare: () => void;
 
   reportItem: { id: string; type: 'recipe' | 'comment' | 'user' } | null;
@@ -33,6 +33,13 @@ interface UIContextValue {
   setUnreadNotifCount: React.Dispatch<React.SetStateAction<number>>;
 }
 
+export interface ShareTarget {
+  type: 'recipe' | 'profile';
+  path: string;
+  title: string;
+  text?: string;
+}
+
 const UIContext = createContext<UIContextValue | null>(null);
 
 let toastCounter = 0;
@@ -40,7 +47,7 @@ let toastCounter = 0;
 export function UIProvider({ children }: { children: ReactNode }) {
   const [toast, setToast] = useState<ToastData | null>(null);
   const [activeTimer, setActiveTimer] = useState<TimerData | null>(null);
-  const [shareSlug, setShareSlug] = useState<string | null>(null);
+  const [shareTarget, setShareTarget] = useState<ShareTarget | null>(null);
   const [reportItem, setReportItem] = useState<UIContextValue['reportItem']>(null);
   const [saveModalSlug, setSaveModalSlug] = useState<string | null>(null);
   const [notifDrawerOpen, setNotifDrawerOpen] = useState(false);
@@ -70,7 +77,7 @@ export function UIProvider({ children }: { children: ReactNode }) {
     <UIContext.Provider value={{
       toast, showToast,
       activeTimer, startTimer, stopTimer,
-      shareSlug, openShare: setShareSlug, closeShare: () => setShareSlug(null),
+      shareTarget, openShare: setShareTarget, closeShare: () => setShareTarget(null),
       reportItem, openReport: (id, type) => setReportItem({ id, type }), closeReport: () => setReportItem(null),
       saveModalSlug, openSaveModal: setSaveModalSlug, closeSaveModal: () => setSaveModalSlug(null),
       notifDrawerOpen, openNotifDrawer: () => setNotifDrawerOpen(true), closeNotifDrawer: () => setNotifDrawerOpen(false),

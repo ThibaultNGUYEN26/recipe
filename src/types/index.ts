@@ -29,10 +29,14 @@ export interface RecipeListItem {
   info?: RecipeInfo;
   tags?: string[];
   authorId?: number | null;
+  authorUsername?: string | null;
+  authorIsVerified?: boolean;
   authorName?: string | null;
   authorAvatar?: string | null;
   avgRating?: number | null;
   ratingCount?: number;
+  savedCategory?: SavedCategory | null;
+  recommendationReason?: string;
 }
 
 export interface RecipeDetail extends RecipeListItem {
@@ -42,9 +46,16 @@ export interface RecipeDetail extends RecipeListItem {
   tips?: string[];
   nutrition?: Record<string, string>;
   isSaved: boolean;
+  savedCategoryId?: number | null;
   isLiked: boolean;
   myRating: number | null;
   ratingDistribution?: Record<number, number>;
+}
+
+export interface SavedCategory {
+  id: number;
+  name: string;
+  recipeCount?: number;
 }
 
 export interface Comment {
@@ -54,13 +65,14 @@ export interface Comment {
   parentId: number | null;
   likesCount: number;
   isLiked: boolean;
-  author: { id: number; name: string | null; avatarUrl: string | null };
+  author: { id: number; name: string | null; avatarUrl: string | null; isVerified: boolean };
   replies: Comment[];
 }
 
 export interface UserProfile {
   id: number;
   username: string | null;
+  isVerified: boolean;
   name: string | null;
   bio?: string | null;
   avatarUrl?: string | null;
@@ -74,6 +86,8 @@ export interface AuthUser {
   id: number;
   email: string;
   username: string | null;
+  isAdmin: boolean;
+  isVerified: boolean;
   name: string | null;
   avatarUrl?: string | null;
 }

@@ -1,5 +1,5 @@
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Bell, Search, Plus, Sun, Moon, LogOut, User, ChevronDown } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Bell, Sun, Moon, LogOut, User, ChevronDown, BadgeCheck, ShieldCheck, BarChart3 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUI } from '../../contexts/UIContext';
@@ -14,7 +14,6 @@ export default function Header() {
   const { language, toggleLanguage } = useLanguage();
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -48,23 +47,6 @@ export default function Header() {
 
         {/* Right actions */}
         <div className="flex items-center gap-1.5">
-          {/* Search */}
-          {location.pathname !== '/search' && (
-            <button onClick={() => navigate('/search')}
-              className="p-2 text-stone-600 hover:text-stone-900 hover:bg-stone-100 rounded-full transition-colors">
-              <Search className="w-5 h-5" />
-            </button>
-          )}
-
-          {/* Create Recipe (desktop, logged in only) */}
-          {user && (
-            <Link to="/add-recipe"
-              className="hidden sm:flex items-center gap-1.5 bg-stone-900 text-stone-50 px-3 py-1.5 rounded-full text-xs font-medium hover:bg-amber-900 transition-colors">
-              <Plus className="w-3.5 h-3.5" />
-              Create Recipe
-            </Link>
-          )}
-
           {user ? (
             <>
               {/* Notifications */}
@@ -106,13 +88,32 @@ export default function Header() {
 
                     {/* Profile link */}
                     <Link
-                      to={`/profile/${user.id}`}
+                      to={user.username ? `/u/${encodeURIComponent(user.username)}` : `/profile/${user.id}`}
                       onClick={() => setMenuOpen(false)}
                       className="flex items-center gap-2.5 w-full px-4 py-2.5 text-xs font-medium text-stone-700 hover:bg-stone-50 transition-colors"
                     >
                       <User className="w-4 h-4 text-stone-500" />
                       View profile
                     </Link>
+
+                    <Link to="/creator/analytics" onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-2.5 w-full px-4 py-2.5 text-xs font-medium text-stone-700 hover:bg-stone-50 transition-colors">
+                      <BarChart3 className="w-4 h-4 text-stone-500" /> Creator analytics
+                    </Link>
+
+                    {user.isVerified && (
+                      <Link to="/settings/verification" onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-2.5 w-full px-4 py-2.5 text-xs font-medium text-stone-700 hover:bg-stone-50 transition-colors">
+                        <BadgeCheck className="w-4 h-4 text-blue-500" /> Verification status
+                      </Link>
+                    )}
+
+                    {user.isAdmin && (
+                      <Link to="/admin/verifications" onClick={() => setMenuOpen(false)}
+                        className="flex items-center gap-2.5 w-full px-4 py-2.5 text-xs font-medium text-stone-700 hover:bg-stone-50 transition-colors">
+                        <ShieldCheck className="w-4 h-4 text-stone-500" /> Verification review
+                      </Link>
+                    )}
 
                     <div className="border-t border-stone-100 my-1" />
 

@@ -12,7 +12,7 @@ const formatComment = (c, userId) => ({
   parentId: c.parentId,
   likesCount: c.likes?.length ?? 0,
   isLiked: userId ? c.likes?.some((l) => l.userId === userId) : false,
-  author: { id: c.user.id, name: c.user.name, avatarUrl: c.user.avatarUrl },
+  author: { id: c.user.id, name: c.user.name, avatarUrl: c.user.avatarUrl, isVerified: c.user.isVerified },
   replies: (c.children ?? []).map((child) => formatComment(child, userId)),
 });
 
@@ -25,11 +25,11 @@ router.get("/", optionalAuthenticate, async (req, res) => {
     const comments = await prisma.comment.findMany({
       where: { recipeId: recipe.id, parentId: null },
       include: {
-        user: { select: { id: true, name: true, avatarUrl: true } },
+        user: { select: { id: true, name: true, avatarUrl: true, isVerified: true } },
         likes: { select: { userId: true } },
         children: {
           include: {
-            user: { select: { id: true, name: true, avatarUrl: true } },
+            user: { select: { id: true, name: true, avatarUrl: true, isVerified: true } },
             likes: { select: { userId: true } },
           },
           orderBy: { createdAt: "asc" },
@@ -68,11 +68,11 @@ router.post("/", authenticate, async (req, res) => {
         parentId: parentId ? parseInt(parentId) : null,
       },
       include: {
-        user: { select: { id: true, name: true, avatarUrl: true } },
+        user: { select: { id: true, name: true, avatarUrl: true, isVerified: true } },
         likes: { select: { userId: true } },
         children: {
           include: {
-            user: { select: { id: true, name: true, avatarUrl: true } },
+            user: { select: { id: true, name: true, avatarUrl: true, isVerified: true } },
             likes: { select: { userId: true } },
           },
         },

@@ -1,35 +1,85 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useUI } from '../../contexts/UIContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { useLanguage } from '../../contexts/LanguageContext';
-import { X, BookmarkPlus, Check } from 'lucide-react';
+import type { SavedCategory } from '../../types';
+import { X, BookmarkPlus, Check, Folder, Plus } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL;
 
 export default function CollectionModal() {
   const { saveModalSlug, closeSaveModal, showToast } = useUI();
   const { user } = useAuth();
-  const { language } = useLanguage();
+  const [categories, setCategories] = useState<SavedCategory[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [loadingCategories, setLoadingCategories] = useState(false);
+  const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
 
+  useEffect(() => {
+    if (!saveModalSlug || !user) return;
+    setDone(false);
+    setSelectedCategoryId(null);
+    setNewCategoryName('');
+    setLoadingCategories(true);
+    fetch(`${API}/api/users/me/saved-categories`, { credentials: 'include' })
+      .then(async (res) => {
+        if (!res.ok) throw new Error('Failed to load categories');
+        return res.json();
+      })
+      .then((data) => setCategories(Array.isArray(data) ? data : []))
+      .catch(() => showToast('Failed to load saved categories', undefined, 'error'))
+      .finally(() => setLoadingCategories(false));
+  }, [saveModalSlug, user?.id, showToast]);
+
   if (!saveModalSlug || !user) return null;
+
+  async function createCategory() {
+    const name = newCategoryName.trim();
+    if (!name) return;
+    setCreating(true);
+    try {
+      const res = await fetch(`${API}/api/users/me/saved-categories`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ name }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showToast(data.error ?? 'Failed to create category', undefined, 'error');
+        return;
+      }
+      setCategories((previous) => [...previous, data].sort((a, b) => a.name.localeCompare(b.name)));
+      setSelectedCategoryId(data.id);
+      setNewCategoryName('');
+    } catch {
+      showToast('Failed to create category', undefined, 'error');
+    } finally {
+      setCreating(false);
+    }
+  }
 
   async function save() {
     setSaving(true);
     try {
       const res = await fetch(`${API}/api/recipes/${saveModalSlug}/save`, {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
+        body: JSON.stringify({ savedCategoryId: selectedCategoryId }),
       });
+      const data = await res.json();
       if (res.ok) {
         setDone(true);
-        showToast('Recipe saved!', undefined, 'success');
-        setTimeout(closeSaveModal, 1000);
+        window.dispatchEvent(new CustomEvent('recipe-saved', {
+          detail: { slug: saveModalSlug, savedCategoryId: data.savedCategoryId ?? null },
+        }));
+        showToast(selectedCategoryId ? 'Recipe saved to category!' : 'Recipe saved!', undefined, 'success');
+        window.setTimeout(closeSaveModal, 800);
       } else {
-        const d = await res.json();
-        showToast(d.error ?? 'Already saved', undefined, 'info');
-        closeSaveModal();
+        showToast(data.error ?? 'Failed to save', undefined, 'error');
       }
     } catch {
       showToast('Failed to save', undefined, 'error');
@@ -41,7 +91,7 @@ export default function CollectionModal() {
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40" onClick={closeSaveModal}>
       <div
-        className="w-full max-w-sm rounded-3xl p-6 space-y-4"
+        className="w-full max-w-sm rounded-3xl p-6 space-y-4 max-h-[85vh] overflow-y-auto"
         style={{ backgroundColor: 'var(--color-surface)' }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -56,12 +106,65 @@ export default function CollectionModal() {
           </div>
         ) : (
           <>
-            <p className="text-sm" style={{ color: 'var(--color-muted)' }}>
-              This will save the recipe to your personal collection.
-            </p>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--color-muted)' }}>
+                Choose a category
+              </p>
+              {loadingCategories ? (
+                <div className="h-16 rounded-2xl animate-pulse" style={{ backgroundColor: 'var(--color-border)' }} />
+              ) : (
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCategoryId(null)}
+                    className="w-full flex items-center gap-3 rounded-2xl border px-4 py-3 text-left text-sm"
+                    style={{ borderColor: selectedCategoryId === null ? '#92400e' : 'var(--color-border)', color: 'var(--color-text)' }}
+                  >
+                    <BookmarkPlus size={17} className="text-amber-800" />
+                    Favorites
+                    {selectedCategoryId === null && <Check size={16} className="ml-auto text-amber-800" />}
+                  </button>
+                  {categories.map((category) => (
+                    <button
+                      key={category.id}
+                      type="button"
+                      onClick={() => setSelectedCategoryId(category.id)}
+                      className="w-full flex items-center gap-3 rounded-2xl border px-4 py-3 text-left text-sm"
+                      style={{ borderColor: selectedCategoryId === category.id ? '#92400e' : 'var(--color-border)', color: 'var(--color-text)' }}
+                    >
+                      <Folder size={17} className="text-amber-800" />
+                      <span className="truncate">{category.name}</span>
+                      {selectedCategoryId === category.id && <Check size={16} className="ml-auto text-amber-800" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-2">
+              <input
+                value={newCategoryName}
+                onChange={(event) => setNewCategoryName(event.target.value)}
+                onKeyDown={(event) => event.key === 'Enter' && createCategory()}
+                maxLength={40}
+                placeholder="New category"
+                className="min-w-0 flex-1 px-4 py-2.5 rounded-2xl text-sm outline-none"
+                style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
+              />
+              <button
+                type="button"
+                onClick={createCategory}
+                disabled={creating || !newCategoryName.trim()}
+                className="px-3 rounded-2xl bg-stone-900 text-white disabled:opacity-50"
+                aria-label="Create category"
+              >
+                <Plus size={18} />
+              </button>
+            </div>
+
             <button
               onClick={save}
-              disabled={saving}
+              disabled={saving || loadingCategories}
               className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl font-medium text-sm text-white bg-amber-800 disabled:opacity-60 transition-opacity"
             >
               <BookmarkPlus size={16} />

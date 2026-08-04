@@ -1,10 +1,12 @@
 import { Router } from "express";
 import jwt from "jsonwebtoken";
 import fs from "fs";
+import process from "node:process";
 import { prisma } from "../lib/prisma.js";
 import { authenticate } from "../middleware/authenticate.js";
 import { recipeUpload } from "../lib/upload.js";
 import { createNotification } from "../lib/notify.js";
+import { diversifyRecommendations, scoreRecommendation } from "../lib/recommendations.js";
 
 const router = Router();
 const uploadRecipeMedia = recipeUpload.fields([
@@ -32,7 +34,7 @@ router.get("/", async (req, res) => {
         category: true,
         images: { where: { isMain: true } },
         translations: { where: { language: lang } },
-        author: { select: { id: true, name: true, avatarUrl: true } },
+        author: { select: { id: true, username: true, name: true, avatarUrl: true, isVerified: true } },
         ratings: { select: { score: true } },
       },
       orderBy: { createdAt: "desc" },
@@ -50,6 +52,8 @@ router.get("/", async (req, res) => {
         info: r.info,
         tags: r.tags,
         authorId: r.author?.id ?? null,
+        authorUsername: r.author?.username ?? null,
+        authorIsVerified: r.author?.isVerified ?? false,
         authorName: r.author?.name ?? null,
         authorAvatar: r.author?.avatarUrl ?? null,
         avgRating,
@@ -61,6 +65,109 @@ router.get("/", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message || "Failed to fetch recipes" });
+  }
+});
+
+// GET /api/recipes/recommended — explainable rules-based discovery feeds.
+router.get("/recommended", async (req, res) => {
+  const lang = String(req.query.lang || "fr");
+  const now = new Date();
+  const recentFrom = new Date(now.getTime() - 30 * 86400000);
+  let userId = null;
+  if (req.cookies?.token) {
+    try { userId = jwt.verify(req.cookies.token, process.env.JWT_SECRET).id; } catch { /* anonymous feed */ }
+  }
+
+  try {
+    const [recipes, saved, rated, viewed, follows] = await Promise.all([
+      prisma.recipe.findMany({
+        where: { isPublic: true, ...(userId ? { authorId: { not: userId } } : {}) },
+        include: {
+          category: true,
+          images: { where: { isMain: true }, take: 1 },
+          translations: { where: { language: lang }, take: 1 },
+          author: { select: { id: true, username: true, name: true, avatarUrl: true, isVerified: true } },
+          ratings: { select: { score: true } },
+          savedBy: { select: { userId: true } },
+          views: { where: { viewedAt: { gte: recentFrom } }, select: { id: true } },
+        },
+      }),
+      userId ? prisma.savedRecipe.findMany({ where: { userId }, select: { recipeId: true, recipe: { select: { category: { select: { slug: true } }, tags: true } } } }) : [],
+      userId ? prisma.rating.findMany({ where: { userId, score: { gte: 4 } }, select: { recipeId: true, score: true, recipe: { select: { category: { select: { slug: true } }, tags: true } } } }) : [],
+      userId ? prisma.recipeView.findMany({ where: { viewerId: userId, viewedAt: { gte: recentFrom } }, select: { recipeId: true, recipe: { select: { category: { select: { slug: true } }, tags: true } } } }) : [],
+      userId ? prisma.follow.findMany({ where: { followerId: userId }, select: { followingId: true } }) : [],
+    ]);
+
+    const categories = new Map();
+    const tags = new Map();
+    const addPreference = (recipe, weight) => {
+      const category = recipe.category.slug;
+      categories.set(category, (categories.get(category) || 0) + weight);
+      for (const tag of Array.isArray(recipe.tags) ? recipe.tags : []) {
+        const key = String(tag).toLowerCase();
+        tags.set(key, (tags.get(key) || 0) + weight * 0.5);
+      }
+    };
+    for (const item of saved) addPreference(item.recipe, 3);
+    for (const item of rated) addPreference(item.recipe, 2);
+    for (const item of viewed) addPreference(item.recipe, 0.35);
+    const savedIds = new Set(saved.map((item) => item.recipeId));
+    const preferences = {
+      categories,
+      tags,
+      following: new Set(follows.map((follow) => follow.followingId)),
+      viewed: new Set(viewed.map((item) => item.recipeId)),
+    };
+
+    const formatted = recipes.filter((recipe) => recipe.translations.length).map((recipe) => {
+      const scores = recipe.ratings.map((rating) => rating.score);
+      const avgRating = scores.length ? scores.reduce((sum, score) => sum + score, 0) / scores.length : 0;
+      const normalized = {
+        id: recipe.id,
+        createdAt: recipe.createdAt,
+        avgRating,
+        ratingCount: scores.length,
+        saveCount: recipe.savedBy.length,
+        recentViews: recipe.views.length,
+        categorySlug: recipe.category.slug,
+        categoryLabel: recipe.category.label,
+        tags: (Array.isArray(recipe.tags) ? recipe.tags : []).map((tag) => String(tag).toLowerCase()),
+        authorId: recipe.authorId,
+      };
+      const ranking = scoreRecommendation(normalized, preferences, now);
+      const translation = recipe.translations[0];
+      return {
+        ...normalized,
+        avgRating: scores.length ? avgRating : null,
+        ratingCount: scores.length,
+        score: ranking.score,
+        recommendationReason: ranking.reason,
+        slug: recipe.slug,
+        title: translation.title,
+        description: translation.description,
+        image: recipe.images[0]?.url || null,
+        category: { slug: recipe.category.slug, label: recipe.category.label },
+        info: recipe.info,
+        authorId: recipe.author?.id ?? null,
+        authorUsername: recipe.author?.username ?? null,
+        authorIsVerified: recipe.author?.isVerified ?? false,
+        authorName: recipe.author?.name ?? null,
+        authorAvatar: recipe.author?.avatarUrl ?? null,
+      };
+    });
+
+    const byScore = [...formatted].filter((recipe) => !savedIds.has(recipe.id)).sort((a, b) => b.score - a.score);
+    const trending = [...formatted].sort((a, b) => (b.recentViews * 0.7 + b.saveCount * 2 + b.ratingCount) - (a.recentViews * 0.7 + a.saveCount * 2 + a.ratingCount)).slice(0, 20).map((recipe) => ({ ...recipe, recommendationReason: "Trending with Savor cooks" }));
+    const following = formatted.filter((recipe) => preferences.following.has(recipe.authorId)).sort((a, b) => b.score - a.score).map((recipe) => ({ ...recipe, recommendationReason: "From a creator you follow" }));
+    res.json({
+      personalized: diversifyRecommendations(byScore, 20),
+      trending,
+      following,
+      personalizedForUser: Boolean(userId && (saved.length || rated.length || viewed.length || follows.length)),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message || "Failed to build recommendations" });
   }
 });
 
@@ -76,7 +183,7 @@ router.get("/:slug", async (req, res) => {
         category: true,
         images: true,
         translations: { where: { language: lang } },
-        author: { select: { id: true, name: true, avatarUrl: true } },
+        author: { select: { id: true, username: true, name: true, avatarUrl: true, isVerified: true } },
       },
     });
 
@@ -98,6 +205,7 @@ router.get("/:slug", async (req, res) => {
 
     let myRating = null;
     let isSaved = false;
+    let savedCategoryId = null;
     let isLiked = false;
     const token = req.cookies?.token;
     if (token) {
@@ -109,6 +217,7 @@ router.get("/:slug", async (req, res) => {
         ]);
         myRating = ratingRow?.score ?? null;
         isSaved = !!savedRow;
+        savedCategoryId = savedRow?.savedCategoryId ?? null;
         isLiked = myRating !== null;
       } catch { /* invalid token */ }
     }
@@ -127,6 +236,8 @@ router.get("/:slug", async (req, res) => {
       nutrition: t.nutrition,
       tips: t.tips,
       authorId: recipe.authorId,
+      authorUsername: recipe.author?.username ?? null,
+      authorIsVerified: recipe.author?.isVerified ?? false,
       authorName: recipe.author?.name ?? null,
       authorAvatar: recipe.author?.avatarUrl ?? null,
       avgRating: agg._avg.score,
@@ -134,6 +245,7 @@ router.get("/:slug", async (req, res) => {
       ratingDistribution,
       myRating,
       isSaved,
+      savedCategoryId,
       isLiked,
     });
   } catch (err) {
@@ -271,17 +383,83 @@ router.post("/:slug/rate", authenticate, async (req, res) => {
   }
 });
 
-// POST /api/recipes/:slug/save
+// Save a recipe, or move an existing save into the selected category.
 router.post("/:slug/save", authenticate, async (req, res) => {
   try {
     const recipe = await prisma.recipe.findUnique({ where: { slug: req.params.slug } });
     if (!recipe) return res.status(404).json({ error: "Recipe not found" });
-    await prisma.savedRecipe.create({ data: { userId: req.user.id, recipeId: recipe.id } });
-    res.status(201).json({ ok: true });
+    const savedCategoryId = req.body.savedCategoryId == null ? null : Number(req.body.savedCategoryId);
+    if (savedCategoryId !== null) {
+      if (!Number.isInteger(savedCategoryId)) return res.status(400).json({ error: "Invalid category id" });
+      const category = await prisma.savedCategory.findFirst({ where: { id: savedCategoryId, userId: req.user.id } });
+      if (!category) return res.status(404).json({ error: "Saved category not found" });
+    }
+    const saved = await prisma.savedRecipe.upsert({
+      where: { userId_recipeId: { userId: req.user.id, recipeId: recipe.id } },
+      update: { savedCategoryId },
+      create: { userId: req.user.id, recipeId: recipe.id, savedCategoryId },
+    });
+    res.status(201).json({ ok: true, savedCategoryId: saved.savedCategoryId });
   } catch (err) {
-    if (err.code === "P2002") return res.status(409).json({ error: "Already saved" });
     console.error(err);
     res.status(500).json({ error: err.message || "Failed to save recipe" });
+  }
+});
+
+// POST /api/recipes/:slug/view — deduplicated within a 30-minute visit window.
+router.post("/:slug/view", async (req, res) => {
+  const visitorId = typeof req.body.visitorId === "string" ? req.body.visitorId.slice(0, 80) : null;
+  let viewerId = null;
+  const token = req.cookies?.token;
+  if (token) {
+    try { viewerId = jwt.verify(token, process.env.JWT_SECRET).id; } catch { /* anonymous view */ }
+  }
+
+  try {
+    const recipe = await prisma.recipe.findUnique({ where: { slug: req.params.slug }, select: { id: true, authorId: true, isPublic: true } });
+    if (!recipe || !recipe.isPublic) return res.status(404).json({ error: "Recipe not found" });
+    if (viewerId && viewerId === recipe.authorId) return res.json({ recorded: false });
+    if (!viewerId && !visitorId) return res.status(400).json({ error: "Missing visitor id" });
+
+    const since = new Date(Date.now() - 30 * 60 * 1000);
+    const previousView = await prisma.recipeView.findFirst({
+      where: {
+        recipeId: recipe.id,
+        viewedAt: { gte: since },
+        ...(viewerId ? { viewerId } : { viewerId: null, visitorId }),
+      },
+      select: { id: true },
+    });
+    if (previousView) return res.json({ recorded: false });
+
+    await prisma.recipeView.create({ data: { recipeId: recipe.id, viewerId, visitorId } });
+    res.status(201).json({ recorded: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message || "Failed to record recipe view" });
+  }
+});
+
+// PATCH /api/recipes/:slug/save
+router.patch("/:slug/save", authenticate, async (req, res) => {
+  try {
+    const recipe = await prisma.recipe.findUnique({ where: { slug: req.params.slug }, select: { id: true } });
+    if (!recipe) return res.status(404).json({ error: "Recipe not found" });
+    const savedCategoryId = req.body.savedCategoryId == null ? null : Number(req.body.savedCategoryId);
+    if (savedCategoryId !== null) {
+      if (!Number.isInteger(savedCategoryId)) return res.status(400).json({ error: "Invalid category id" });
+      const category = await prisma.savedCategory.findFirst({ where: { id: savedCategoryId, userId: req.user.id } });
+      if (!category) return res.status(404).json({ error: "Saved category not found" });
+    }
+    const result = await prisma.savedRecipe.updateMany({
+      where: { userId: req.user.id, recipeId: recipe.id },
+      data: { savedCategoryId },
+    });
+    if (!result.count) return res.status(404).json({ error: "Saved recipe not found" });
+    res.json({ ok: true, savedCategoryId });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message || "Failed to move saved recipe" });
   }
 });
 

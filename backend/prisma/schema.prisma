@@ -15,29 +15,59 @@ model Category {
 }
 
 model User {
-  id                Int            @id @default(autoincrement())
-  email             String         @unique
-  username          String?        @unique
-  passwordHash      String
-  name              String?
-  isAdmin           Boolean        @default(false)
-  bio               String?
-  avatarUrl         String?        @default("/api/media/default-avatar.svg")
-  avatarMediaId     String?        @unique
-  avatarMedia       MediaAsset?    @relation("ApprovedAvatar", fields: [avatarMediaId], references: [id], onDelete: SetNull)
-  pendingAvatarId   String?        @unique
-  pendingAvatar     MediaAsset?    @relation("PendingAvatar", fields: [pendingAvatarId], references: [id], onDelete: SetNull)
-  mediaAssets       MediaAsset[]   @relation("MediaOwner")
-  createdAt         DateTime       @default(now())
-  followers         Follow[]       @relation("Following")
-  following         Follow[]       @relation("Follower")
-  ratings           Rating[]
-  savedRecipes      SavedRecipe[]
-  recipes           Recipe[]
-  comments          Comment[]
-  commentLikes      CommentLike[]
-  notifications     Notification[] @relation("NotificationRecipient")
-  sentNotifications Notification[] @relation("NotificationActor")
+  id                    Int                   @id @default(autoincrement())
+  email                 String                @unique
+  username              String?               @unique
+  passwordHash          String
+  name                  String?
+  isAdmin               Boolean               @default(false)
+  isVerified            Boolean               @default(false)
+  bio                   String?
+  avatarUrl             String?               @default("/api/media/default-avatar.svg")
+  avatarMediaId         String?               @unique
+  avatarMedia           MediaAsset?           @relation("ApprovedAvatar", fields: [avatarMediaId], references: [id], onDelete: SetNull)
+  pendingAvatarId       String?               @unique
+  pendingAvatar         MediaAsset?           @relation("PendingAvatar", fields: [pendingAvatarId], references: [id], onDelete: SetNull)
+  mediaAssets           MediaAsset[]          @relation("MediaOwner")
+  createdAt             DateTime              @default(now())
+  followers             Follow[]              @relation("Following")
+  following             Follow[]              @relation("Follower")
+  ratings               Rating[]
+  savedRecipes          SavedRecipe[]
+  savedCategories       SavedCategory[]
+  recipes               Recipe[]
+  recipeViews           RecipeView[]
+  comments              Comment[]
+  commentLikes          CommentLike[]
+  notifications         Notification[]        @relation("NotificationRecipient")
+  sentNotifications     Notification[]        @relation("NotificationActor")
+  verification          CreatorVerification?  @relation("VerificationApplicant")
+  reviewedVerifications CreatorVerification[] @relation("VerificationReviewer")
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+model CreatorVerification {
+  id               Int                @id @default(autoincrement())
+  userId           Int                @unique
+  user             User               @relation("VerificationApplicant", fields: [userId], references: [id], onDelete: Cascade)
+  status           VerificationStatus @default(PENDING)
+  socialLinks      Json
+  message          String?
+  verificationCode String
+  rejectionReason  String?
+  reviewedById     Int?
+  reviewedBy       User?              @relation("VerificationReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedAt       DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  @@index([status, createdAt])
+  @@index([reviewedById])
 }
 
 model Recipe {
@@ -60,6 +90,21 @@ model Recipe {
   comments      Comment[]
   notifications Notification[]
   mediaAssets   MediaAsset[]
+  views         RecipeView[]
+  followSources Follow[]          @relation("FollowSourceRecipe")
+}
+
+model RecipeView {
+  id        Int      @id @default(autoincrement())
+  recipeId  Int
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  viewerId  Int?
+  viewer    User?    @relation(fields: [viewerId], references: [id], onDelete: SetNull)
+  visitorId String?
+  viewedAt  DateTime @default(now())
+
+  @@index([recipeId, viewedAt])
+  @@index([viewerId, viewedAt])
 }
 
 enum MediaKind {
@@ -139,8 +184,12 @@ model Follow {
   followingId Int
   following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
+  sourceRecipeId Int?
+  sourceRecipe   Recipe? @relation("FollowSourceRecipe", fields: [sourceRecipeId], references: [id], onDelete: SetNull)
 
   @@unique([followerId, followingId])
+  @@index([followingId, createdAt])
+  @@index([sourceRecipeId])
 }
 
 model Rating {
@@ -156,14 +205,28 @@ model Rating {
 }
 
 model SavedRecipe {
-  id       Int      @id @default(autoincrement())
-  userId   Int
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  recipeId Int
-  recipe   Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  savedAt  DateTime @default(now())
+  id              Int            @id @default(autoincrement())
+  userId          Int
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipeId        Int
+  recipe          Recipe         @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  savedCategoryId Int?
+  savedCategory   SavedCategory? @relation(fields: [savedCategoryId], references: [id], onDelete: SetNull)
+  savedAt         DateTime       @default(now())
 
   @@unique([userId, recipeId])
+  @@index([savedCategoryId])
+}
+
+model SavedCategory {
+  id        Int           @id @default(autoincrement())
+  userId    Int
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  createdAt DateTime      @default(now())
+  recipes   SavedRecipe[]
+
+  @@unique([userId, name])
 }
 
 model Comment {
