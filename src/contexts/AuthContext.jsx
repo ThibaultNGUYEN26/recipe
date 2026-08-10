@@ -31,7 +31,6 @@ export function AuthProvider({ children }) {
         }
         return null;
       }
-<<<<<<< HEAD
       if (!res.ok) return null;
       const data = await res.json();
       setUser(data.user);
