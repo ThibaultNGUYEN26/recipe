@@ -38,7 +38,7 @@ export default function App() {
   return (
     <div className="flex flex-col h-dvh overflow-hidden" style={{ backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}>
       <Header />
-      <main className="flex-1 overflow-y-auto flex flex-col">
+      <main className="flex-1 overflow-y-auto flex flex-col" style={{ overflowX: 'clip' }}>
         <Suspense fallback={<LoadingFallback />}>
           <Routes>
             <Route path="/" element={<HomeFeed />} />
