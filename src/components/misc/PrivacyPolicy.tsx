@@ -3,7 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 
 export default function PrivacyPolicy() {
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
+    <div className="max-w-2xl mx-auto px-4 py-6 pb-24">
       <Link to="/" className="flex items-center gap-2 text-sm mb-6" style={{ color: 'var(--color-muted)' }}>
         <ArrowLeft size={16} /> Back
       </Link>

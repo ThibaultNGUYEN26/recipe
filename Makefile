@@ -1,6 +1,7 @@
 all: build deploy
 
 install:
+	npm install
 	npm ci
 	npm --prefix backend ci
 
@@ -15,31 +16,13 @@ deploy:
 # --------------------------------------------------
 
 db-install:
-	brew install postgresql@16
-	echo 'export PATH="/opt/homebrew/opt/postgresql@16/bin:$$PATH"' >> ~/.zshrc
-	@echo "✅ Done. Open a new terminal to pick up the updated PATH, then run: make db-setup"
-
-db-start:
-	brew services start postgresql@16
-
-db-stop:
-	brew services stop postgresql@16
-
-db-create:
-	createdb recipes || echo "Database already exists"
-
-db-setup: db-start db-create
-	cd backend && npm install
-	cd backend && npx prisma migrate deploy
-	cd backend && node prisma/seedCategories.js
-	cd backend && node prisma/importRecipes.js
-
-db-reset:
-	dropdb --if-exists recipes
-	createdb recipes
-	cd backend && npx prisma migrate deploy
-	cd backend && node prisma/seedCategories.js
-	cd backend && node prisma/importRecipes.js
+	docker run -d \
+		--name recipe-postgres \
+		-e POSTGRES_USER=I769706 \
+		-e POSTGRES_DB=recipes \
+		-e POSTGRES_HOST_AUTH_METHOD=trust \
+		-p 5432:5432 \
+		postgres:16
 
 # --------------------------------------------------
 # Dev servers
@@ -47,6 +30,7 @@ db-reset:
 
 db:
 	docker start recipe-postgres
+	cd backend && npx prisma migrate deploy && cd ..
 
 backend:
 	cd backend && npm run dev
@@ -54,8 +38,11 @@ backend:
 frontend:
 	npm run dev
 
+prisma:
+	cd backend && npx prisma studio
+
 # --------------------------------------------------
 
 .PHONY: all install build deploy \
-        db-install db-start db-stop db-create db-setup db-reset \
-        db backend frontend
+        db-install \
+        db backend frontend prisma
