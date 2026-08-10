@@ -37,10 +37,22 @@ export async function moderateMedia({ buffer, mimeType, kind = "avatar" }) {
       signal: controller.signal,
     });
 
-    if (!res.ok) throw new Error(`Sightengine returned ${res.status}`);
+    if (!res.ok) {
+      // Quota exceeded or billing issue — fall back to manual review
+      if (res.status === 402 || res.status === 429) {
+        return { decision: "review_required", categories: {}, provider: "sightengine-quota-exceeded" };
+      }
+      throw new Error(`Sightengine returned ${res.status}`);
+    }
     const data = await res.json();
 
-    if (data.status !== "success") throw new Error(`Sightengine error: ${data.error?.message ?? "unknown"}`);
+    if (data.status !== "success") {
+      // API-level error (e.g. quota) — fall back to manual review
+      if (data.error?.code === 4 || data.error?.type === "quota") {
+        return { decision: "review_required", categories: {}, provider: "sightengine-quota-exceeded" };
+      }
+      throw new Error(`Sightengine error: ${data.error?.message ?? "unknown"}`);
+    }
 
     // Evaluate scores — reject if any unsafe category exceeds threshold
     const categories = {};
