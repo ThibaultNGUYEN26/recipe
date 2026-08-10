@@ -58,6 +58,22 @@ app.get("/api/categories", async (_req, res) => {
     res.status(500).json({ error: "Failed to fetch categories" });
   }
 });
+app.post("/api/categories", async (req, res) => {
+  const { prisma } = await import("./lib/prisma.js");
+  const { authenticate } = await import("./middleware/authenticate.js");
+  authenticate(req, res, async () => {
+    const { label } = req.body;
+    if (!label?.trim()) return res.status(400).json({ error: "Label is required" });
+    const slug = label.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    try {
+      const category = await prisma.category.create({ data: { label: label.trim(), slug } });
+      res.status(201).json(category);
+    } catch (err) {
+      if (err.code === "P2002") return res.status(409).json({ error: "Category already exists" });
+      res.status(500).json({ error: err.message || "Failed to create category" });
+    }
+  });
+});
 // Legacy alias kept for backward-compat
 app.use("/api/my-recipes", async (req, res) => {
   const { prisma } = await import("./lib/prisma.js");
