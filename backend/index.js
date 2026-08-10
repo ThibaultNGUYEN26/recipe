@@ -32,6 +32,8 @@ app.use(cors({
     else cb(new Error(`CORS blocked: ${origin}`));
   },
   credentials: true,
+  allowedHeaders: ["Content-Type", "Authorization"],
+  exposedHeaders: ["Authorization"],
 }));
 app.use(express.json());
 app.use(cookieParser());
