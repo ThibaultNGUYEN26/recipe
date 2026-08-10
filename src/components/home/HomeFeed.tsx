@@ -115,7 +115,7 @@ export default function HomeFeed() {
   const gridRecipes = filteredRecipes.slice(1);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-4 space-y-6 pb-12">
+    <div className="max-w-4xl mx-auto px-4 py-4 space-y-6 pb-12 w-full">
       {/* Featured hero */}
       {featuredRecipe && activeFilter === 'all' && !loading && (
         <HeroCard recipe={featuredRecipe} />
@@ -136,7 +136,7 @@ export default function HomeFeed() {
       )}
 
       {/* Feed filter bar */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none border-b pt-2"
+      <div className="-mx-4 px-4 flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none border-b pt-2"
         style={{ borderColor: 'var(--color-border)' }}>
         {FEED_FILTERS.map(({ key, labelKey, Icon }) => (
           <button key={key} onClick={() => setActiveFilter(key)}

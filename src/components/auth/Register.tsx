@@ -93,6 +93,7 @@ export default function Register() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    if (!email.trim()) { setError('Email is required'); return; }
     if (username.length < 3 || username.length > 30 || !/^[a-z0-9._]+$/.test(username)) {
       setError('Choose a valid username'); return;
     }
@@ -163,7 +164,7 @@ export default function Register() {
           {/* Email */}
           <div>
             <label className="text-xs font-semibold uppercase tracking-wide mb-1 block" style={{ color: 'var(--color-muted)' }}>Email</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="you@example.com"
+            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com"
               className={inputCls} style={inputStyle} />
           </div>
 
