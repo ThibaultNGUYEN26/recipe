@@ -114,7 +114,7 @@ export default function SearchDiscover() {
   const hasSearch = q.length > 0 || activeFilterCount > 0;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-4 space-y-6 pb-16">
+    <div className="max-w-6xl mx-auto px-4 py-4 space-y-6 pb-16">
 
       {/* Search bar */}
       <div className="relative flex items-center gap-2">
@@ -183,7 +183,7 @@ export default function SearchDiscover() {
           <h3 className="font-serif text-lg font-bold flex items-center gap-1.5" style={{ color: 'var(--color-text)' }}>
             <Sparkles className="discover-accent w-4 h-4" /> Discover Categories
           </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             {CATEGORIES.map((cat) => (
               <button key={cat.tag} onClick={() => setQuery(cat.tag)}
                 className="relative h-24 rounded-2xl overflow-hidden cursor-pointer group shadow-sm text-left">
@@ -242,7 +242,7 @@ export default function SearchDiscover() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="rounded-2xl aspect-square animate-pulse" style={{ backgroundColor: 'var(--color-border)' }} />
             ))}
@@ -255,7 +255,7 @@ export default function SearchDiscover() {
             <button onClick={clearAll} className="discover-accent mt-3 text-xs font-semibold underline">Reset</button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5">
             {(hasSearch ? searchResults : discoveryRecipes).map((r) => (
               <Link key={r.slug} to={`/recipe/${r.slug}`}
                 className="recipe-card__image-placeholder group relative aspect-square rounded-2xl overflow-hidden shadow-sm border"
