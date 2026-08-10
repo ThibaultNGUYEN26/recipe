@@ -10,22 +10,20 @@ export function AuthProvider({ children }) {
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/me`, { credentials: "include" });
       if (res.status === 401) {
-        setUser(null);
+        if (clearOnError) setUser(null);
         return null;
       }
-      if (!res.ok) throw new Error("Failed to refresh session");
+      if (!res.ok) return null;
       const data = await res.json();
       setUser(data.user);
       return data.user;
-    } catch (error) {
-      if (clearOnError) setUser(null);
-      throw error;
+    } catch {
+      return null;
     }
   }, []);
 
   useEffect(() => {
     refreshUser({ clearOnError: true })
-      .catch(() => {})
       .finally(() => setLoading(false));
   }, [refreshUser]);
 
