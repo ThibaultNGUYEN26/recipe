@@ -7,6 +7,7 @@ import {
 import { useLanguage } from '../../contexts/LanguageContext';
 import type { RecipeListItem } from '../../types';
 import VerifiedBadge from '../profile/VerifiedBadge';
+import { apiFetch } from '../../lib/apiFetch';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -50,8 +51,8 @@ export default function SearchDiscover() {
   useEffect(() => {
     inputRef.current?.focus();
     Promise.all([
-      fetch(`${API}/api/recipes?lang=${language}`, { credentials: 'include' }).then((response) => response.json()),
-      fetch(`${API}/api/recipes/recommended?lang=${language}`, { credentials: 'include' }).then((response) => response.ok ? response.json() : null),
+      apiFetch(`/api/recipes?lang=${language}`).then((response) => response.json()),
+      apiFetch(`/api/recipes/recommended?lang=${language}`).then((response) => response.ok ? response.json() : null),
     ])
       .then(([all, recommendations]) => {
         const recipes = Array.isArray(all) ? all : [];
@@ -67,7 +68,7 @@ export default function SearchDiscover() {
     if (!query.trim()) { setUsers([]); return; }
     const controller = new AbortController();
     const t = setTimeout(() => {
-      fetch(`${API}/api/users?q=${encodeURIComponent(query)}`, { credentials: 'include', signal: controller.signal })
+      apiFetch(`/api/users?q=${encodeURIComponent(query)}`, { signal: controller.signal })
         .then((r) => r.json())
         .then((d) => setUsers(Array.isArray(d) ? d : []))
         .catch((error) => {
@@ -380,13 +381,12 @@ function TrendingCreators({ lang }: { lang: string }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const API = import.meta.env.VITE_API_URL;
-    fetch(`${API}/api/users`, { credentials: 'include' })
+    apiFetch('/api/users')
       .then((r) => r.json())
       .then(async (users: UserResult[]) => {
         const withCounts = await Promise.all(
           users.slice(0, 6).map(async (u) => {
-            const res = await fetch(`${API}/api/users/${u.id}`, { credentials: 'include' });
+            const res = await apiFetch(`/api/users/${u.id}`);
             const data = await res.json();
             return { ...u, recipeCount: data.recipeCount ?? 0 };
           })

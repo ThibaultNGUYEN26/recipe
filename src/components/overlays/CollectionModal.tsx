@@ -3,8 +3,7 @@ import { useUI } from '../../contexts/UIContext';
 import { useAuth } from '../../contexts/AuthContext';
 import type { SavedCategory } from '../../types';
 import { X, BookmarkPlus, Check, Folder, Plus } from 'lucide-react';
-
-const API = import.meta.env.VITE_API_URL;
+import { apiFetch } from '../../lib/apiFetch';
 
 export default function CollectionModal() {
   const { saveModalSlug, closeSaveModal, showToast } = useUI();
@@ -23,7 +22,7 @@ export default function CollectionModal() {
     setSelectedCategoryId(null);
     setNewCategoryName('');
     setLoadingCategories(true);
-    fetch(`${API}/api/users/me/saved-categories`, { credentials: 'include' })
+    apiFetch('/api/users/me/saved-categories')
       .then(async (res) => {
         if (!res.ok) throw new Error('Failed to load categories');
         return res.json();
@@ -40,10 +39,8 @@ export default function CollectionModal() {
     if (!name) return;
     setCreating(true);
     try {
-      const res = await fetch(`${API}/api/users/me/saved-categories`, {
+      const res = await apiFetch('/api/users/me/saved-categories', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ name }),
       });
       const data = await res.json();
@@ -64,10 +61,8 @@ export default function CollectionModal() {
   async function save() {
     setSaving(true);
     try {
-      const res = await fetch(`${API}/api/recipes/${saveModalSlug}/save`, {
+      const res = await apiFetch(`/api/recipes/${saveModalSlug}/save`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ savedCategoryId: selectedCategoryId }),
       });
       const data = await res.json();

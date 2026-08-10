@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUI } from '../../contexts/UIContext';
 import { ArrowLeft, Camera } from 'lucide-react';
-
-const API = import.meta.env.VITE_API_URL;
+import { apiFetch } from '../../lib/apiFetch';
 
 export default function EditProfile() {
   const { user, logout, updateUser } = useAuth();
@@ -43,7 +42,7 @@ export default function EditProfile() {
     fd.append('bio', bio);
     if (avatarFile) fd.append('avatar', avatarFile);
     try {
-      const res = await fetch(`${API}/api/users/me`, { method: 'PATCH', credentials: 'include', body: fd });
+      const res = await apiFetch('/api/users/me', { method: 'PATCH', body: fd });
       if (res.ok) {
         const d = await res.json();
         updateUser({

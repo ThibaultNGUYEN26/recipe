@@ -5,6 +5,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useUI } from '../../contexts/UIContext';
 import type { RecipeListItem, SavedCategory } from '../../types';
 import { Bookmark, Plus, Folder, Star, Clock, ChefHat, Trash2 } from 'lucide-react';
+import { apiFetch } from '../../lib/apiFetch';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -12,6 +13,7 @@ function imgSrc(url: string | null | undefined) {
   if (!url) return null;
   return url.startsWith('/') ? `${API}${url}` : url;
 }
+
 
 export default function SavedRecipes() {
   const { user } = useAuth();
@@ -30,9 +32,9 @@ export default function SavedRecipes() {
     if (!user) return;
     setLoading(true);
     Promise.all([
-      fetch(`${API}/api/users/me/recipes?lang=${language}`, { credentials: 'include' }).then((r) => r.json()),
-      fetch(`${API}/api/users/me/saved?lang=${language}`, { credentials: 'include' }).then((r) => r.json()),
-      fetch(`${API}/api/users/me/saved-categories`, { credentials: 'include' }).then((r) => r.json()),
+      apiFetch(`/api/users/me/recipes?lang=${language}`).then((r) => r.json()),
+      apiFetch(`/api/users/me/saved?lang=${language}`).then((r) => r.json()),
+      apiFetch('/api/users/me/saved-categories').then((r) => r.json()),
     ])
       .then(([mine, saved, categories]) => {
         setMyRecipes(Array.isArray(mine) ? mine : []);
@@ -44,12 +46,12 @@ export default function SavedRecipes() {
   }, [user, language]);
 
   async function deleteRecipe(slug: string) {
-    const res = await fetch(`${API}/api/recipes/${slug}`, { method: 'DELETE', credentials: 'include' });
+    const res = await apiFetch(`/api/recipes/${slug}`, { method: 'DELETE' });
     if (res.ok) { setMyRecipes((p) => p.filter((r) => r.slug !== slug)); showToast('Recipe deleted'); }
   }
 
   async function unsaveRecipe(slug: string) {
-    const res = await fetch(`${API}/api/recipes/${slug}/save`, { method: 'DELETE', credentials: 'include' });
+    const res = await apiFetch(`/api/recipes/${slug}/save`, { method: 'DELETE' });
     if (res.ok) { setSavedRecipes((p) => p.filter((r) => r.slug !== slug)); showToast('Removed from saved'); }
   }
 
@@ -58,10 +60,8 @@ export default function SavedRecipes() {
     if (!name) return;
     setCreatingCategory(true);
     try {
-      const res = await fetch(`${API}/api/users/me/saved-categories`, {
+      const res = await apiFetch('/api/users/me/saved-categories', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ name }),
       });
       const data = await res.json();
@@ -78,10 +78,8 @@ export default function SavedRecipes() {
   }
 
   async function moveSavedRecipe(slug: string, savedCategoryId: number | null) {
-    const res = await fetch(`${API}/api/recipes/${slug}/save`, {
+    const res = await apiFetch(`/api/recipes/${slug}/save`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
       body: JSON.stringify({ savedCategoryId }),
     });
     if (!res.ok) { showToast('Failed to move recipe', undefined, 'error'); return; }

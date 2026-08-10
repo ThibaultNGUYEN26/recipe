@@ -6,6 +6,7 @@ import { useUI } from '../../contexts/UIContext';
 import type { RecipeDetail as RecipeDetailType, Comment, IngredientSection, InstructionStep } from '../../types';
 import { ArrowLeft, Star, Bookmark, BookmarkCheck, Share2, Clock, Users, ChefHat, Timer, Check, Heart, Send, Flag, Trash2, Languages, ExternalLink } from 'lucide-react';
 import VerifiedBadge from '../profile/VerifiedBadge';
+import { apiFetch } from '../../lib/apiFetch';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -56,10 +57,8 @@ function CommentItem({ comment, recipeSlug, onDelete, onLike }: {
     if (!replyText.trim()) return;
     setSubmitting(true);
     try {
-      const res = await fetch(`${API}/api/recipes/${recipeSlug}/comments`, {
+      const res = await apiFetch(`/api/recipes/${recipeSlug}/comments`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ text: replyText.trim(), parentId: comment.id }),
       });
       if (res.ok) {
@@ -74,9 +73,8 @@ function CommentItem({ comment, recipeSlug, onDelete, onLike }: {
 
   async function toggleLike() {
     if (!user) return;
-    const res = await fetch(`${API}/api/recipes/${recipeSlug}/comments/${comment.id}/like`, {
+    const res = await apiFetch(`/api/recipes/${recipeSlug}/comments/${comment.id}/like`, {
       method: 'POST',
-      credentials: 'include',
     });
     if (res.ok) {
       const d = await res.json();
@@ -162,8 +160,8 @@ export default function RecipeDetail() {
     if (!slug) return;
     setLoading(true);
     Promise.all([
-      fetch(`${API}/api/recipes/${slug}?lang=${contentLanguage ?? language}`, { credentials: 'include' }).then((r) => r.json()),
-      fetch(`${API}/api/recipes/${slug}/comments`, { credentials: 'include' }).then((r) => r.json()),
+      apiFetch(`/api/recipes/${slug}?lang=${contentLanguage ?? language}`).then((r) => r.json()),
+      apiFetch(`/api/recipes/${slug}/comments`).then((r) => r.json()),
     ])
       .then(([rd, cm]) => {
         setRecipe(rd);
@@ -177,10 +175,8 @@ export default function RecipeDetail() {
             visitorId = crypto.randomUUID();
             localStorage.setItem(storageKey, visitorId);
           }
-          fetch(`${API}/api/recipes/${slug}/view`, {
+          apiFetch(`/api/recipes/${slug}/view`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
             body: JSON.stringify({ visitorId }),
           }).catch(() => {});
         }
@@ -210,10 +206,8 @@ export default function RecipeDetail() {
   async function rate(score: number) {
     if (!user) { showToast('Sign in to rate', undefined, 'info'); return; }
     setUserScore(score);
-    const res = await fetch(`${API}/api/recipes/${slug}/rate`, {
+    const res = await apiFetch(`/api/recipes/${slug}/rate`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
       body: JSON.stringify({ score }),
     });
     if (res.ok) {
@@ -227,7 +221,7 @@ export default function RecipeDetail() {
     if (!user) { showToast('Sign in to save', undefined, 'info'); return; }
     if (!recipe) return;
     if (recipe.isSaved) {
-      await fetch(`${API}/api/recipes/${slug}/save`, { method: 'DELETE', credentials: 'include' });
+      await apiFetch(`/api/recipes/${slug}/save`, { method: 'DELETE' });
       setRecipe((r) => r ? { ...r, isSaved: false, savedCategoryId: null } : r);
       showToast('Removed from saved');
     } else {
@@ -239,10 +233,8 @@ export default function RecipeDetail() {
     if (!commentText.trim() || !user) return;
     setSubmittingComment(true);
     try {
-      const res = await fetch(`${API}/api/recipes/${slug}/comments`, {
+      const res = await apiFetch(`/api/recipes/${slug}/comments`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ text: commentText.trim() }),
       });
       if (res.ok) {
@@ -256,7 +248,7 @@ export default function RecipeDetail() {
   }
 
   function deleteComment(id: number) {
-    fetch(`${API}/api/recipes/${slug}/comments/${id}`, { method: 'DELETE', credentials: 'include' })
+    apiFetch(`/api/recipes/${slug}/comments/${id}`, { method: 'DELETE' })
       .then(() => setComments((prev) => prev.filter((c) => c.id !== id)));
   }
 

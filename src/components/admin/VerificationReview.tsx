@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom';
 import { BadgeCheck, Check, ExternalLink, ShieldX, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUI } from '../../contexts/UIContext';
-
-const API = import.meta.env.VITE_API_URL;
+import { apiFetch } from '../../lib/apiFetch';
 
 interface ReviewItem {
   id: number;
@@ -23,7 +22,7 @@ export default function VerificationReview() {
 
   useEffect(() => {
     if (!user?.isAdmin) { setLoading(false); return; }
-    fetch(`${API}/api/verifications/admin`, { credentials: 'include' })
+    apiFetch('/api/verifications/admin')
       .then(async (response) => {
         if (!response.ok) throw new Error('Failed to load requests');
         return response.json();
@@ -36,10 +35,8 @@ export default function VerificationReview() {
   async function review(item: ReviewItem, decision: 'VERIFIED' | 'REJECTED') {
     const rejectionReason = decision === 'REJECTED' ? window.prompt('Reason shown to the creator:')?.trim() : '';
     if (decision === 'REJECTED' && !rejectionReason) return;
-    const response = await fetch(`${API}/api/verifications/admin/${item.id}`, {
+    const response = await apiFetch(`/api/verifications/admin/${item.id}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
       body: JSON.stringify({ decision, rejectionReason }),
     });
     const data = await response.json();

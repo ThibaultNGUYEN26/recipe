@@ -9,8 +9,7 @@ import {
 } from 'lucide-react';
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
-
-const API = import.meta.env.VITE_API_URL;
+import { apiFetch } from '../../lib/apiFetch';
 
 const PRESET_IMAGES = [
   { url: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600', name: 'Fresh Bowl' },
@@ -131,7 +130,7 @@ export default function AddRecipeFlow() {
   const [importWarnings, setImportWarnings] = useState<string[]>([]);
 
   useEffect(() => {
-    fetch(`${API}/api/categories`, { credentials: 'include' })
+    apiFetch('/api/categories')
       .then((r) => r.json())
       .then(setCategories)
       .catch(console.error);
@@ -160,10 +159,8 @@ export default function AddRecipeFlow() {
     if (!tiktokUrl.trim()) return;
     setImportingTikTok(true);
     try {
-      const response = await fetch(`${API}/api/recipes/import/tiktok`, {
+      const response = await apiFetch('/api/recipes/import/tiktok', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ url: tiktokUrl.trim() }),
       });
       const payload: TikTokImportResponse = await response.json();
@@ -365,7 +362,7 @@ export default function AddRecipeFlow() {
         fd.append('video', videoFile);
       }
 
-      const res = await fetch(`${API}/api/recipes`, { method: 'POST', credentials: 'include', body: fd });
+      const res = await apiFetch('/api/recipes', { method: 'POST', body: fd });
       if (res.ok) {
         const d = await res.json();
         showToast('Recipe published!', undefined, 'success');
