@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Bookmark, Eye, MessageCircle, Star, TrendingDown, TrendingUp, Users } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { apiFetch } from '../../lib/apiFetch';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -100,7 +101,7 @@ export default function CreatorAnalytics() {
     const controller = new AbortController();
     setLoading(true);
     setError('');
-    fetch(`${API}/api/users/me/analytics?days=${days}&lang=${language}`, { credentials: 'include', signal: controller.signal })
+    apiFetch(`/api/users/me/analytics?days=${days}&lang=${language}`, { signal: controller.signal })
       .then(async (response) => {
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.error || 'Could not load analytics');

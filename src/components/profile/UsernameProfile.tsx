@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import UserProfile from './UserProfile';
-
-const API = import.meta.env.VITE_API_URL;
+import { apiFetch } from '../../lib/apiFetch';
 
 export default function UsernameProfile() {
   const { username } = useParams<{ username: string }>();
@@ -13,7 +12,7 @@ export default function UsernameProfile() {
     if (!username) return;
     setUserId(null);
     setNotFound(false);
-    fetch(`${API}/api/users/by-username/${encodeURIComponent(username)}`)
+    apiFetch(`/api/users/by-username/${encodeURIComponent(username)}`)
       .then(async (response) => {
         if (response.status === 404) { setNotFound(true); return null; }
         if (!response.ok) throw new Error('Failed to load profile');

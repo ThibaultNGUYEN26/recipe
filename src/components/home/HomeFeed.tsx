@@ -5,6 +5,7 @@ import RecipeCard from './RecipeCard';
 import type { RecipeListItem } from '../../types';
 import { Sparkles, Flame, Clock, Leaf, UtensilsCrossed, Star } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { apiFetch } from '../../lib/apiFetch';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -81,7 +82,7 @@ export default function HomeFeed() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`${API}/api/recipes/recommended?lang=${language}`, { credentials: 'include' })
+    apiFetch(`/api/recipes/recommended?lang=${language}`)
       .then(async (response) => {
         if (!response.ok) throw new Error('Recommendations unavailable');
         return response.json();
@@ -92,7 +93,7 @@ export default function HomeFeed() {
         setFollowing(Array.isArray(data.following) ? data.following : []);
         setIsPersonalized(Boolean(data.personalizedForUser));
       })
-      .catch(() => fetch(`${API}/api/recipes?lang=${language}`, { credentials: 'include' })
+      .catch(() => apiFetch(`/api/recipes?lang=${language}`)
         .then((response) => response.json())
         .then((data) => setRecipes(Array.isArray(data) ? data : [])))
       .finally(() => setLoading(false));

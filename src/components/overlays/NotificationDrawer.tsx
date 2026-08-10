@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useUI } from '../../contexts/UIContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { X, Bell, Heart, MessageSquare, UserPlus, Star, CheckCheck } from 'lucide-react';
+import { apiFetch } from '../../lib/apiFetch';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -58,7 +59,7 @@ export default function NotificationDrawer() {
   useEffect(() => {
     if (!notifDrawerOpen || !user) return;
     setLoading(true);
-    fetch(`${API}/api/notifications`, { credentials: 'include' })
+    apiFetch('/api/notifications')
       .then((r) => r.json())
       .then((d) => {
         setNotifications(Array.isArray(d) ? d : []);
@@ -85,7 +86,7 @@ export default function NotificationDrawer() {
   }, [user?.id]);
 
   async function markAllRead() {
-    await fetch(`${API}/api/notifications/read`, { method: 'PATCH', credentials: 'include' });
+    await apiFetch('/api/notifications/read', { method: 'PATCH' });
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     setUnreadNotifCount(0);
   }

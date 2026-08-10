@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { translate } from '../i18n/translations';
+import { apiFetch } from '../lib/apiFetch';
 
 const LanguageContext = createContext();
 
@@ -35,10 +36,8 @@ export const LanguageProvider = ({ children }) => {
       return;
     }
 
-    fetch(`${import.meta.env.VITE_API_URL}/api/users/me/preferences`, {
+    apiFetch('/api/users/me/preferences', {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
       body: JSON.stringify({ preferredLanguage: language }),
     })
       .then((response) => response.ok && updateUser({ preferredLanguage: language }))
@@ -52,10 +51,8 @@ export const LanguageProvider = ({ children }) => {
 
     updateUser({ preferredLanguage: nextLanguage });
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/users/me/preferences`, {
+      const response = await apiFetch('/api/users/me/preferences', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ preferredLanguage: nextLanguage }),
       });
       if (!response.ok) throw new Error('Failed to save language preference');

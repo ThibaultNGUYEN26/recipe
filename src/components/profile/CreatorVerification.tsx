@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom';
 import { BadgeCheck, CheckCircle2, Clock3, Copy, ExternalLink, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUI } from '../../contexts/UIContext';
-
-const API = import.meta.env.VITE_API_URL;
+import { apiFetch } from '../../lib/apiFetch';
 
 interface VerificationRequest {
   status: 'PENDING' | 'VERIFIED' | 'REJECTED';
@@ -28,7 +27,7 @@ export default function CreatorVerification() {
 
   useEffect(() => {
     if (!user) return;
-    fetch(`${API}/api/verifications/me`, { credentials: 'include' })
+    apiFetch('/api/verifications/me')
       .then((response) => response.json())
       .then((data) => {
         setRequest(data.request ?? null);
@@ -46,10 +45,8 @@ export default function CreatorVerification() {
     const socialLinks = linksText.split(/\r?\n/).map((link) => link.trim()).filter(Boolean);
     setSubmitting(true);
     try {
-      const response = await fetch(`${API}/api/verifications`, {
+      const response = await apiFetch('/api/verifications', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ socialLinks, message }),
       });
       const data = await response.json();

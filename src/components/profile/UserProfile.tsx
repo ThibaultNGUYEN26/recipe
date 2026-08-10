@@ -12,6 +12,7 @@ import {
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import VerifiedBadge from './VerifiedBadge';
+import { apiFetch } from '../../lib/apiFetch';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -70,11 +71,11 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
     if (!userId) return;
     setLoading(true);
     const promises: Promise<unknown>[] = [
-      fetch(`${API}/api/users/${userId}`, { credentials: 'include' }).then((r) => r.json()),
-      fetch(`${API}/api/users/${userId}/recipes?lang=${language}`, { credentials: 'include' }).then((r) => r.json()),
+      apiFetch(`/api/users/${userId}`).then((r) => r.json()),
+      apiFetch(`/api/users/${userId}/recipes?lang=${language}`).then((r) => r.json()),
     ];
-    if (me) promises.push(fetch(`${API}/api/users/${userId}/followers`, { credentials: 'include' }).then((r) => r.json()));
-    if (isOwnProfile) promises.push(fetch(`${API}/api/users/me/saved?lang=${language}`, { credentials: 'include' }).then((r) => r.json()));
+    if (me) promises.push(apiFetch(`/api/users/${userId}/followers`).then((r) => r.json()));
+    if (isOwnProfile) promises.push(apiFetch(`/api/users/me/saved?lang=${language}`).then((r) => r.json()));
 
     Promise.all(promises)
       .then(([p, r, ...rest]) => {
@@ -102,10 +103,8 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
     try {
       const method = isFollowing ? 'DELETE' : 'POST';
       const sourceRecipeSlug = searchParams.get('fromRecipe');
-      const res = await fetch(`${API}/api/users/${userId}/follow`, {
+      const res = await apiFetch(`/api/users/${userId}/follow`, {
         method,
-        credentials: 'include',
-        headers: method === 'POST' ? { 'Content-Type': 'application/json' } : undefined,
         body: method === 'POST' ? JSON.stringify({ sourceRecipeSlug }) : undefined,
       });
       if (res.ok) {
@@ -127,7 +126,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
     fd.append('bio', editBio);
     if (editAvatar) fd.append('avatar', editAvatar);
     try {
-      const res = await fetch(`${API}/api/users/me`, { method: 'PATCH', credentials: 'include', body: fd });
+      const res = await apiFetch('/api/users/me', { method: 'PATCH', body: fd });
       if (res.ok) {
         const d = await res.json();
         setProfile((p) => p ? { ...p, username: d.user.username, name: d.user.name, bio: d.user.bio, avatarUrl: d.user.avatarUrl } : p);
