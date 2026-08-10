@@ -1,5 +1,17 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 
+const API = import.meta.env.VITE_API_URL;
+const TOKEN_KEY = "savor_token";
+
+export function getStoredToken() {
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+function authHeaders() {
+  const token = getStoredToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
@@ -8,9 +20,15 @@ export function AuthProvider({ children }) {
 
   const refreshUser = useCallback(async ({ clearOnError = false } = {}) => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/me`, { credentials: "include" });
+      const res = await fetch(`${API}/api/auth/me`, {
+        credentials: "include",
+        headers: authHeaders(),
+      });
       if (res.status === 401) {
-        if (clearOnError) setUser(null);
+        if (clearOnError) {
+          localStorage.removeItem(TOKEN_KEY);
+          setUser(null);
+        }
         return null;
       }
 <<<<<<< HEAD
@@ -48,7 +66,7 @@ export function AuthProvider({ children }) {
   }, [authenticatedUserId, avatarPending, refreshUser]);
 
   async function login(identifier, password) {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/login`, {
+    const res = await fetch(`${API}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -56,12 +74,13 @@ export function AuthProvider({ children }) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Login failed");
+    if (data.token) localStorage.setItem(TOKEN_KEY, data.token);
     setUser(data.user);
     return data.user;
   }
 
   async function register(email, password, name, username) {
-    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/auth/register`, {
+    const res = await fetch(`${API}/api/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -69,15 +88,18 @@ export function AuthProvider({ children }) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Registration failed");
+    if (data.token) localStorage.setItem(TOKEN_KEY, data.token);
     setUser(data.user);
     return data.user;
   }
 
   async function logout() {
-    await fetch(`${import.meta.env.VITE_API_URL}/api/auth/logout`, {
+    await fetch(`${API}/api/auth/logout`, {
       method: "POST",
       credentials: "include",
+      headers: authHeaders(),
     });
+    localStorage.removeItem(TOKEN_KEY);
     setUser(null);
   }
 

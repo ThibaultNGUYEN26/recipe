@@ -1,7 +1,14 @@
 import jwt from "jsonwebtoken";
 
+function extractToken(req) {
+  if (req.cookies?.token) return req.cookies.token;
+  const auth = req.headers.authorization;
+  if (auth?.startsWith("Bearer ")) return auth.slice(7);
+  return null;
+}
+
 export function authenticate(req, res, next) {
-  const token = req.cookies?.token;
+  const token = extractToken(req);
   if (!token) return res.status(401).json({ error: "Not authenticated" });
 
   try {
@@ -14,7 +21,7 @@ export function authenticate(req, res, next) {
 }
 
 export function optionalAuthenticate(req, _res, next) {
-  const token = req.cookies?.token;
+  const token = extractToken(req);
   if (token) {
     try {
       const payload = jwt.verify(token, process.env.JWT_SECRET);

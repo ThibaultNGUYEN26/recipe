@@ -52,7 +52,7 @@ router.post("/register", async (req, res) => {
 
     const token = jwt.sign({ id: user.id, email: user.email, username: user.username, name: user.name }, process.env.JWT_SECRET, { expiresIn: "7d" });
     res.cookie("token", token, COOKIE_OPTIONS);
-    res.status(201).json({ user: { id: user.id, email: user.email, username: user.username, name: user.name, isAdmin: user.isAdmin, isVerified: user.isVerified, avatarUrl: user.avatarUrl || DEFAULT_AVATAR_URL, avatarPending: false, preferredLanguage: user.preferredLanguage } });
+    res.status(201).json({ token, user: { id: user.id, email: user.email, username: user.username, name: user.name, isAdmin: user.isAdmin, isVerified: user.isVerified, avatarUrl: user.avatarUrl || DEFAULT_AVATAR_URL, avatarPending: false, preferredLanguage: user.preferredLanguage } });
   } catch (err) {
     if (err.code === "P2002") {
       const target = Array.isArray(err.meta?.target) ? err.meta.target.join(" ") : String(err.meta?.target ?? "");
@@ -107,7 +107,7 @@ router.post("/login", async (req, res) => {
 
     const token = jwt.sign({ id: user.id, email: user.email, username: user.username, name: user.name }, process.env.JWT_SECRET, { expiresIn: "7d" });
     res.cookie("token", token, COOKIE_OPTIONS);
-    res.json({ user: { id: user.id, email: user.email, username: user.username, name: user.name, isAdmin: user.isAdmin, isVerified: user.isVerified, avatarUrl: user.avatarUrl || DEFAULT_AVATAR_URL, avatarPending: Boolean(user.pendingAvatarId), preferredLanguage: user.preferredLanguage } });
+    res.json({ token, user: { id: user.id, email: user.email, username: user.username, name: user.name, isAdmin: user.isAdmin, isVerified: user.isVerified, avatarUrl: user.avatarUrl || DEFAULT_AVATAR_URL, avatarPending: Boolean(user.pendingAvatarId), preferredLanguage: user.preferredLanguage } });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message || "Login failed" });
