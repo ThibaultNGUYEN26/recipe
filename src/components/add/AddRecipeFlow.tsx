@@ -19,7 +19,7 @@ const PRESET_IMAGES = [
   { url: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600', name: 'Burger' },
   { url: 'https://images.unsplash.com/photo-1551782450-a2132b4ba21d?w=600', name: 'Steak' },
   { url: 'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=600', name: 'Dessert' },
-  { url: 'https://images.unsplash.com/photo-1621996346565-e3d5d6281232?w=600', name: 'Pasta' },
+  { url: 'https://images.unsplash.com/photo-1555949258-eb67b1ef0ceb?w=600', name: 'Pasta' },
 ];
 
 const DIETARY_LIST = ['vegetarian', 'vegan', 'gluten-free', 'dairy-free', 'low-carb', 'nut-free', 'keto'];
