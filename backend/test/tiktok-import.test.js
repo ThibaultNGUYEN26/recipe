@@ -1,0 +1,67 @@
+import { describe, expect, it, vi } from "vitest";
+import { captionToRecipeDraft, fetchTikTokImport, validateTikTokUrl } from "../lib/tiktokImport.js";
+
+describe("TikTok recipe import", () => {
+  it("accepts official TikTok video and short-link hosts only", () => {
+    expect(validateTikTokUrl("https://www.tiktok.com/@chef/video/123?x=1#comments")).toBe("https://www.tiktok.com/@chef/video/123?x=1");
+    expect(validateTikTokUrl("https://vm.tiktok.com/ZM123/ ")).toBe("https://vm.tiktok.com/ZM123/");
+    expect(validateTikTokUrl("https://tiktok.com.evil.example/@chef/video/123")).toBeNull();
+    expect(validateTikTokUrl("http://www.tiktok.com/@chef/video/123")).toBeNull();
+  });
+
+  it("extracts editable ingredients and steps from a structured caption", () => {
+    const draft = captionToRecipeDraft(`Creamy tomato pasta\nIngredients:\n- 200 g pasta\n- 2 tbsp olive oil\nInstructions:\n1. Boil the pasta\n2. Stir in the sauce`);
+    expect(draft.title).toBe("Creamy tomato pasta");
+    expect(draft.ingredients).toEqual([
+      { amount: "200", unit: "g", name: "pasta" },
+      { amount: "2", unit: "tbsp", name: "olive oil" },
+    ]);
+    expect(draft.instructions).toEqual([
+      { step: 1, text: "Boil the pasta" },
+      { step: 2, text: "Stir in the sauce" },
+    ]);
+    expect(draft.warnings).toEqual([]);
+  });
+
+  it("returns an editable partial draft instead of inventing missing details", () => {
+    const draft = captionToRecipeDraft("My easiest weeknight pasta #dinner");
+    expect(draft.title).toBe("My easiest weeknight pasta");
+    expect(draft.ingredients).toEqual([]);
+    expect(draft.instructions).toEqual([]);
+    expect(draft.warnings).toHaveLength(2);
+  });
+
+  it("extracts a dense one-paragraph TikTok recipe caption", () => {
+    const caption = "Creamy pasta recipe 🍝✨  1/2 onion 2 cloves fresh garlic 3 tbsp tomato paste 1 1/4 cup heavy cream 1/3 cup shredded mozzarella Salt, pepper, paprika to taste 1 tsp chicken bouillon powder (optional) Parsley In a pan, add oil and fry the onion and garlic until softened. Then add the tomato paste and heavy cream, mix well. Next, add the spices and stir well. Add the pasta and mozzarella cheese. Top with parsley. 👀 Add the mozzarella cheese little by little. I suggest cooking on medium low heat so the cheese melts slowly and the sauce doesn’t get thick. You can also add a little pasta water to help make the sauce extra creamy.  #creamypasta #pasta #easyrecipe";
+    const draft = captionToRecipeDraft(caption);
+
+    expect(draft.title).toBe("Creamy pasta recipe 🍝✨");
+    expect(draft.ingredients).toEqual([
+      { amount: "1/2", unit: "", name: "onion" },
+      { amount: "2", unit: "", name: "cloves fresh garlic" },
+      { amount: "3", unit: "tbsp", name: "tomato paste" },
+      { amount: "1 1/4", unit: "cup", name: "heavy cream" },
+      { amount: "1/3", unit: "cup", name: "shredded mozzarella" },
+      { amount: "", unit: "", name: "Salt, pepper, paprika to taste" },
+      { amount: "1", unit: "tsp", name: "chicken bouillon powder (optional)" },
+      { amount: "", unit: "", name: "Parsley" },
+    ]);
+    expect(draft.instructions).toHaveLength(5);
+    expect(draft.instructions[0].text).toBe("In a pan, add oil and fry the onion and garlic until softened.");
+    expect(draft.tips).toHaveLength(3);
+    expect(draft.tags).toEqual(["creamypasta", "pasta", "easyrecipe"]);
+    expect(draft.warnings).toEqual([]);
+  });
+
+  it("loads official oEmbed metadata without downloading the TikTok video", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ title: "Lemon pasta", author_name: "Chef Ana", author_url: "https://www.tiktok.com/@ana", thumbnail_url: "https://cdn.example/cover.jpg" }),
+    });
+    const result = await fetchTikTokImport("https://www.tiktok.com/@ana/video/42", fetchImpl);
+    expect(fetchImpl).toHaveBeenCalledOnce();
+    expect(String(fetchImpl.mock.calls[0][0])).toContain("https://www.tiktok.com/oembed");
+    expect(result.source).toMatchObject({ platform: "tiktok", author: "Chef Ana" });
+    expect(result.draft.title).toBe("Lemon pasta");
+  });
+});
