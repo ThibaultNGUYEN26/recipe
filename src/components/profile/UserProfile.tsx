@@ -175,7 +175,8 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
 
   function onCropImageLoad(e: React.SyntheticEvent<HTMLImageElement>) {
     const { naturalWidth: w, naturalHeight: h } = e.currentTarget;
-    const initial = centerCrop(makeAspectCrop({ unit: '%', width: 80 }, 1, w, h), w, h);
+    const size = Math.min(80, (Math.min(w, h) / Math.max(w, h)) * 80);
+    const initial = centerCrop(makeAspectCrop({ unit: '%', width: size }, 1, w, h), w, h);
     setCrop(initial);
   }
 
@@ -340,9 +341,8 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
 
       {/* Avatar Crop Modal */}
       {cropSrc && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-stone-900/70 backdrop-blur-sm"
-          onClick={() => setCropSrc(null)}>
-          <div className="profile-modal w-full max-w-sm rounded-3xl p-6 shadow-2xl border space-y-4"
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-stone-900/70 backdrop-blur-sm overflow-y-auto">
+          <div className="profile-modal w-full max-w-sm rounded-3xl p-6 shadow-2xl border space-y-4 my-auto"
             onClick={(e) => e.stopPropagation()}>
             <div className="profile-divider flex items-center justify-between border-b pb-3">
               <div className="flex items-center gap-2">
@@ -354,13 +354,14 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
               </button>
             </div>
             <p className="profile-muted text-xs">Drag the circle to choose your profile area.</p>
-            <div className="flex justify-center max-h-[50vh] overflow-auto rounded-2xl" style={{ backgroundColor: 'var(--color-subtle)' }}>
+            <div className="flex justify-center max-h-[65vh] overflow-auto rounded-2xl" style={{ backgroundColor: 'var(--color-subtle)' }}>
               <ReactCrop
                 crop={crop}
                 onChange={(c) => setCrop(c)}
                 onComplete={(c) => setCompletedCrop(c)}
                 aspect={1}
                 circularCrop
+                keepSelection
                 className="max-w-full"
               >
                 <img
