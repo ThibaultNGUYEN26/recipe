@@ -13,12 +13,13 @@ export function AuthProvider({ children }) {
         if (clearOnError) setUser(null);
         return null;
       }
-      if (!res.ok) return null; // network/server error — don't touch user state
+<<<<<<< HEAD
+      if (!res.ok) return null;
       const data = await res.json();
       setUser(data.user);
       return data.user;
     } catch {
-      return null; // network error — don't touch user state
+      return null;
     }
   }, []);
 
