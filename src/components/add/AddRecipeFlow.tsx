@@ -15,9 +15,9 @@ const PRESET_IMAGES = [
   { url: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600', name: 'Fresh Bowl' },
   { url: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600', name: 'Pizza' },
   { url: 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=600', name: 'Pancakes' },
-  { url: 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=600', name: 'Colorful Dish' },
-  { url: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600', name: 'Burger' },
-  { url: 'https://images.unsplash.com/photo-1551782450-a2132b4ba21d?w=600', name: 'Steak' },
+  { url: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=600', name: 'Fish' },
+  { url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600', name: 'Burger' },
+  { url: 'https://images.unsplash.com/photo-1558030006-450675393462?w=600', name: 'Steak' },
   { url: 'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=600', name: 'Dessert' },
   { url: 'https://images.unsplash.com/photo-1555949258-eb67b1ef0ceb?w=600', name: 'Pasta' },
 ];
