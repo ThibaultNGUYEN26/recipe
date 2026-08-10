@@ -123,6 +123,9 @@ export default function AddRecipeFlow() {
   const [completedCrop, setCompletedCrop] = useState<Crop>();
   const cropImgRef = useRef<HTMLImageElement>(null);
 
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [creatingCategory, setCreatingCategory] = useState(false);
+
   const [submitting, setSubmitting] = useState(false);
   const [tiktokUrl, setTikTokUrl] = useState('');
   const [importingTikTok, setImportingTikTok] = useState(false);
@@ -490,11 +493,47 @@ export default function AddRecipeFlow() {
             </div>
             <div className="space-y-1.5">
               <label className={labelCls}>Category *</label>
-              <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}
+              <select value={categoryId} onChange={(e) => { if (e.target.value === '__new__') { setCreatingCategory(true); } else { setCreatingCategory(false); setCategoryId(e.target.value); } }}
                 className="w-full bg-stone-50 border border-stone-200 text-stone-900 text-xs font-bold rounded-xl px-3 py-2.5 focus:outline-none">
                 <option value="">Select…</option>
                 {categories.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+                <option value="__new__">+ New category…</option>
               </select>
+              {creatingCategory && (
+                <div className="flex gap-2 mt-1">
+                  <input
+                    type="text"
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    placeholder="Category name…"
+                    className="flex-1 bg-stone-50 border border-stone-200 text-stone-900 text-xs font-bold rounded-xl px-3 py-2 focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    disabled={!newCategoryName.trim()}
+                    onClick={async () => {
+                      if (!newCategoryName.trim()) return;
+                      try {
+                        const res = await apiFetch('/api/categories', {
+                          method: 'POST',
+                          body: JSON.stringify({ label: newCategoryName.trim() }),
+                        });
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data.error || 'Failed');
+                        setCategories((prev) => [...prev, data]);
+                        setCategoryId(String(data.id));
+                        setCreatingCategory(false);
+                        setNewCategoryName('');
+                      } catch (err: unknown) {
+                        showToast('Failed to create category', err instanceof Error ? err.message : '', 'error');
+                      }
+                    }}
+                    className="add-recipe-primary text-xs font-bold px-3 py-2 rounded-xl disabled:opacity-40 transition-colors whitespace-nowrap"
+                  >
+                    Create
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -578,22 +617,26 @@ export default function AddRecipeFlow() {
                   {/* Rows */}
                   <div className="space-y-2 pl-3 border-l-2 border-stone-200">
                     {sec.rows.map((row, idx) => (
-                      <div key={row.id} className="flex items-center gap-2 bg-stone-50 p-2.5 rounded-2xl border border-stone-200/80">
-                        <span className="text-xs font-mono text-stone-400 w-5 text-center shrink-0">{idx + 1}.</span>
-                        <input type="text" placeholder="Ingredient name…" value={row.name}
-                          onChange={(e) => updateIngredient(sec.id, row.id, 'name', e.target.value)}
-                          className="flex-1 bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 font-medium focus:outline-none" />
-                        <input type="text" value={row.amount} onChange={(e) => updateIngredient(sec.id, row.id, 'amount', e.target.value)}
-                          placeholder="200"
-                          className="w-16 bg-white text-xs border border-stone-200 rounded-xl px-2 py-2 font-bold text-center focus:outline-none" />
-                        <input type="text" placeholder="g / tbsp…" value={row.unit}
-                          onChange={(e) => updateIngredient(sec.id, row.id, 'unit', e.target.value)}
-                          className="w-20 bg-white text-xs border border-stone-200 rounded-xl px-2 py-2 focus:outline-none" />
-                        <button type="button" onClick={() => removeIngredient(sec.id, row.id)}
-                          disabled={sec.rows.length === 1}
-                          className="p-1.5 text-stone-400 hover:text-rose-600 rounded-lg hover:bg-stone-200 transition-colors disabled:opacity-30">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                      <div key={row.id} className="bg-stone-50 p-2.5 rounded-2xl border border-stone-200/80 space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-mono text-stone-400 w-5 text-center shrink-0">{idx + 1}.</span>
+                          <input type="text" placeholder="Ingredient name…" value={row.name}
+                            onChange={(e) => updateIngredient(sec.id, row.id, 'name', e.target.value)}
+                            className="flex-1 bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 font-medium focus:outline-none" />
+                          <button type="button" onClick={() => removeIngredient(sec.id, row.id)}
+                            disabled={sec.rows.length === 1}
+                            className="p-1.5 text-stone-400 hover:text-rose-600 rounded-lg hover:bg-stone-200 transition-colors disabled:opacity-30">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <div className="flex gap-2 pl-7">
+                          <input type="text" value={row.amount} onChange={(e) => updateIngredient(sec.id, row.id, 'amount', e.target.value)}
+                            placeholder="Amount"
+                            className="flex-1 bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 font-bold text-center focus:outline-none" />
+                          <input type="text" placeholder="Unit (g, tbsp…)" value={row.unit}
+                            onChange={(e) => updateIngredient(sec.id, row.id, 'unit', e.target.value)}
+                            className="flex-1 bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 focus:outline-none" />
+                        </div>
                       </div>
                     ))}
                     <button type="button" onClick={() => addIngredient(sec.id)}
@@ -644,7 +687,7 @@ export default function AddRecipeFlow() {
                     className="w-full bg-white text-xs border border-stone-200 rounded-xl p-3 focus:outline-none resize-none" />
                   <input type="number" placeholder="Timer in minutes (optional)" value={st.timerMinutes}
                     onChange={(e) => updateStep(st.id, 'timerMinutes', e.target.value)}
-                    className="w-full sm:w-52 bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 focus:outline-none font-mono" />
+                    className="w-full bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 focus:outline-none font-mono" />
                 </div>
               ))}
             </div>
