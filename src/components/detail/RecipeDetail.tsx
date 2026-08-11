@@ -294,38 +294,45 @@ export default function RecipeDetail() {
   const baseServings = (info?.servings as number) ?? 4;
 
   return (
-    <div className="max-w-5xl mx-auto pb-10">
-      {/* Back + actions bar */}
-      <div className="sticky top-14 z-30 flex items-center justify-between px-4 py-2" style={{ backgroundColor: 'var(--color-bg)' }}>
-        <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-sm" style={{ color: 'var(--color-muted)' }}>
-          <ArrowLeft size={18} />
-          Back
-        </button>
-        <div className="flex items-center gap-2">
-          {user?.id === recipe.authorId && (
-            <Link to={`/edit-recipe/${recipe.slug}`} aria-label="Edit recipe" style={{ color: 'var(--color-muted)' }}>
-              <Pencil size={18} />
-            </Link>
-          )}
-          <button onClick={() => openShare({
-            type: 'recipe',
-            path: `/recipe/${encodeURIComponent(recipe.slug)}`,
-            title: recipe.title,
-            text: recipe.description,
-          })} aria-label="Share recipe" style={{ color: 'var(--color-muted)' }}><Share2 size={18} /></button>
-          <button onClick={toggleSave} style={{ color: recipe.isSaved ? '#92400e' : 'var(--color-muted)' }}>
-            {recipe.isSaved ? <BookmarkCheck size={20} className="fill-amber-800" /> : <Bookmark size={20} />}
+    <>
+      {/* Back + actions bar — full viewport width so background doesn't gap at sides */}
+      <div className="sticky top-14 z-30" style={{ backgroundColor: 'var(--color-bg)', borderBottom: '1px solid var(--color-border)' }}>
+        <div className="max-w-5xl mx-auto px-4 py-2 flex items-center justify-between">
+          <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-sm" style={{ color: 'var(--color-muted)' }}>
+            <ArrowLeft size={18} />
+            Back
           </button>
-          <button onClick={() => openReport(recipe.slug, 'recipe')} style={{ color: 'var(--color-muted)' }}><Flag size={17} /></button>
+          <div className="flex items-center gap-2">
+            {user?.id === recipe.authorId && (
+              <Link to={`/edit-recipe/${recipe.slug}`} aria-label="Edit recipe" style={{ color: 'var(--color-muted)' }}>
+                <Pencil size={18} />
+              </Link>
+            )}
+            <button onClick={() => openShare({
+              type: 'recipe',
+              path: `/recipe/${encodeURIComponent(recipe.slug)}`,
+              title: recipe.title,
+              text: recipe.description,
+            })} aria-label="Share recipe" style={{ color: 'var(--color-muted)' }}><Share2 size={18} /></button>
+            <button onClick={toggleSave} style={{ color: recipe.isSaved ? '#92400e' : 'var(--color-muted)' }}>
+              {recipe.isSaved ? <BookmarkCheck size={20} className="fill-amber-800" /> : <Bookmark size={20} />}
+            </button>
+            <button onClick={() => openReport(recipe.slug, 'recipe')} style={{ color: 'var(--color-muted)' }}><Flag size={17} /></button>
+          </div>
         </div>
       </div>
 
-      {/* Hero image */}
-      {recipe.image && (
-        <div className="mx-4 rounded-3xl overflow-hidden aspect-[4/3] lg:aspect-[21/9] mb-6">
+      <div className="max-w-5xl mx-auto pb-10">
+      {/* Hero image — always rendered; gradient placeholder when no image */}
+      <div className="mx-4 mt-4 rounded-3xl overflow-hidden aspect-[4/3] lg:aspect-[21/9] mb-6">
+        {recipe.image ? (
           <img src={imgSrc(recipe.image)!} alt={recipe.title} className="w-full h-full object-cover" />
-        </div>
-      )}
+        ) : (
+          <div className="w-full h-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 40%, #d97706 100%)' }}>
+            <ChefHat size={56} className="opacity-30" style={{ color: '#78350f' }} />
+          </div>
+        )}
+      </div>
 
       {/* Two-column on desktop, single column on mobile */}
       <div className="px-4 flex flex-col gap-6 lg:grid lg:grid-cols-[1fr_320px] lg:gap-10 lg:items-start">
@@ -570,5 +577,6 @@ export default function RecipeDetail() {
         </div>
       </div>
     </div>
+    </>
   );
 }
