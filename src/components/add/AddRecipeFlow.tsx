@@ -403,7 +403,7 @@ export default function AddRecipeFlow() {
         {([1, 2, 3] as const).map((n) => (
           <button key={n} onClick={() => setStepPage(n)}
             className={`add-recipe-tab py-2 text-xs font-bold rounded-xl transition-all ${stepPage === n ? 'add-recipe-tab--active' : ''}`}>
-            {n === 1 ? '1. Basic Info' : n === 2 ? '2. Ingredients & Steps' : '3. Tags & Publish'}
+            {n === 1 ? 'Basic Info' : n === 2 ? 'Ingredients' : 'Tags & Publish'}
           </button>
         ))}
       </div>
@@ -576,7 +576,7 @@ export default function AddRecipeFlow() {
       {stepPage === 2 && (
         <div className="space-y-6">
           {/* Ingredients */}
-          <section className="p-6 rounded-3xl border border-stone-200/80 shadow-sm space-y-4"
+          <section className="p-4 sm:p-6 rounded-3xl border border-stone-200/80 shadow-sm space-y-4"
             style={{ backgroundColor: 'var(--color-surface)' }}>
             <div className="flex items-center justify-between border-b border-stone-100 pb-3">
               <div>
@@ -584,7 +584,7 @@ export default function AddRecipeFlow() {
                 <p className="text-xs" style={{ color: 'var(--color-muted)' }}>Group by section (e.g. Brownie, Cookie)</p>
               </div>
               <button type="button" onClick={addSection}
-                className="add-recipe-accent-soft flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-xl transition-colors">
+                className="add-recipe-accent-soft flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-xl transition-colors shrink-0">
                 <Plus className="w-3.5 h-3.5" /> Add Section
               </button>
             </div>
@@ -608,34 +608,34 @@ export default function AddRecipeFlow() {
                         }}
                       />
                       <button type="button" onClick={() => removeSection(sec.id)}
-                        className="p-1.5 text-stone-400 hover:text-rose-600 rounded-lg hover:bg-stone-100 transition-colors">
+                        className="p-1.5 text-stone-400 hover:text-rose-600 rounded-lg hover:bg-stone-100 transition-colors shrink-0">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   )}
 
                   {/* Rows */}
-                  <div className="space-y-2 pl-3 border-l-2 border-stone-200">
+                  <div className="space-y-2">
                     {sec.rows.map((row, idx) => (
-                      <div key={row.id} className="bg-stone-50 p-2.5 rounded-2xl border border-stone-200/80 space-y-1.5">
+                      <div key={row.id} className="bg-stone-50 p-3 rounded-2xl border border-stone-200/80 space-y-2">
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-mono text-stone-400 w-5 text-center shrink-0">{idx + 1}.</span>
                           <input type="text" placeholder="Ingredient name…" value={row.name}
                             onChange={(e) => updateIngredient(sec.id, row.id, 'name', e.target.value)}
-                            className="flex-1 bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 font-medium focus:outline-none" />
+                            className="flex-1 min-w-0 bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 font-medium focus:outline-none" />
                           <button type="button" onClick={() => removeIngredient(sec.id, row.id)}
                             disabled={sec.rows.length === 1}
-                            className="p-1.5 text-stone-400 hover:text-rose-600 rounded-lg hover:bg-stone-200 transition-colors disabled:opacity-30">
+                            className="p-1.5 text-stone-400 hover:text-rose-600 rounded-lg hover:bg-stone-200 transition-colors disabled:opacity-30 shrink-0">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
-                        <div className="flex gap-2 pl-7">
+                        <div className="grid grid-cols-2 gap-2">
                           <input type="text" value={row.amount} onChange={(e) => updateIngredient(sec.id, row.id, 'amount', e.target.value)}
                             placeholder="Amount"
-                            className="flex-1 bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 font-bold text-center focus:outline-none" />
+                            className="bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 font-bold text-center focus:outline-none w-full" />
                           <input type="text" placeholder="Unit (g, tbsp…)" value={row.unit}
                             onChange={(e) => updateIngredient(sec.id, row.id, 'unit', e.target.value)}
-                            className="flex-1 bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 focus:outline-none" />
+                            className="bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 focus:outline-none w-full" />
                         </div>
                       </div>
                     ))}
@@ -650,7 +650,7 @@ export default function AddRecipeFlow() {
           </section>
 
           {/* Steps */}
-          <section className="p-6 rounded-3xl border border-stone-200/80 shadow-sm space-y-4"
+          <section className="p-4 sm:p-6 rounded-3xl border border-stone-200/80 shadow-sm space-y-4"
             style={{ backgroundColor: 'var(--color-surface)' }}>
             <div className="flex items-center justify-between border-b border-stone-100 pb-3">
               <div>
@@ -658,26 +658,26 @@ export default function AddRecipeFlow() {
                 <p className="text-xs" style={{ color: 'var(--color-muted)' }}>Order steps logically, add timer durations</p>
               </div>
               <button type="button" onClick={addStep}
-                className="add-recipe-accent-soft flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-xl transition-colors">
+                className="add-recipe-accent-soft flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-xl transition-colors shrink-0">
                 <Plus className="w-3.5 h-3.5" /> Add Step
               </button>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {tr.steps.map((st, idx) => (
-                <div key={st.id} className="bg-stone-50 p-4 rounded-2xl border border-stone-200 space-y-2">
+                <div key={st.id} className="bg-stone-50 p-3 sm:p-4 rounded-2xl border border-stone-200 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="add-recipe-accent-soft text-xs font-bold px-2.5 py-1 rounded-full">Step {st.stepNumber}</span>
+                    <span className="add-recipe-accent-soft text-xs font-bold px-2.5 py-1 rounded-full shrink-0">Step {st.stepNumber}</span>
                     <div className="flex items-center gap-1">
                       <button type="button" onClick={() => moveStep(idx, 'up')} disabled={idx === 0}
-                        className="p-1 text-stone-500 hover:text-stone-900 disabled:opacity-30">
-                        <MoveUp className="w-3.5 h-3.5" />
+                        className="p-1.5 text-stone-500 hover:text-stone-900 disabled:opacity-30 rounded-lg hover:bg-stone-200 transition-colors">
+                        <MoveUp className="w-4 h-4" />
                       </button>
                       <button type="button" onClick={() => moveStep(idx, 'down')} disabled={idx === tr.steps.length - 1}
-                        className="p-1 text-stone-500 hover:text-stone-900 disabled:opacity-30">
-                        <MoveDown className="w-3.5 h-3.5" />
+                        className="p-1.5 text-stone-500 hover:text-stone-900 disabled:opacity-30 rounded-lg hover:bg-stone-200 transition-colors">
+                        <MoveDown className="w-4 h-4" />
                       </button>
                       <button type="button" onClick={() => removeStep(st.id)}
-                        className="p-1 text-stone-400 hover:text-rose-600 ml-2">
+                        className="p-1.5 text-stone-400 hover:text-rose-600 rounded-lg hover:bg-stone-200 transition-colors ml-1">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
