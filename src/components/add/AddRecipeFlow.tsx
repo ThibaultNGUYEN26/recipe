@@ -484,7 +484,7 @@ export default function AddRecipeFlow() {
           </div>
 
           {/* Slug & category */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <label className={labelCls}>URL Slug *</label>
               <input type="text" value={slug} onChange={(e) => setSlug(slugify(e.target.value))}
@@ -492,46 +492,64 @@ export default function AddRecipeFlow() {
                 className="w-full bg-stone-50 border border-stone-200 text-stone-900 text-xs font-mono rounded-xl px-3 py-2.5 focus:outline-none" />
             </div>
             <div className="space-y-1.5">
-              <label className={labelCls}>Category *</label>
-              <select value={categoryId} onChange={(e) => { if (e.target.value === '__new__') { setCreatingCategory(true); } else { setCreatingCategory(false); setCategoryId(e.target.value); } }}
-                className="w-full bg-stone-50 border border-stone-200 text-stone-900 text-xs font-bold rounded-xl px-3 py-2.5 focus:outline-none">
-                <option value="">Select…</option>
-                {categories.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
-                <option value="__new__">+ New category…</option>
-              </select>
-              {creatingCategory && (
-                <div className="flex gap-2 mt-1">
+              <div className="flex items-center justify-between">
+                <label className={labelCls}>Category *</label>
+                {!creatingCategory && (
+                  <button type="button" onClick={() => setCreatingCategory(true)}
+                    className="add-recipe-accent text-xs font-semibold hover:underline">
+                    + New
+                  </button>
+                )}
+              </div>
+              {!creatingCategory ? (
+                <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}
+                  className="w-full bg-stone-50 border border-stone-200 text-stone-900 text-xs font-bold rounded-xl px-3 py-2.5 focus:outline-none">
+                  <option value="">Select…</option>
+                  {categories.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+                </select>
+              ) : (
+                <div className="space-y-2">
                   <input
                     type="text"
                     value={newCategoryName}
                     onChange={(e) => setNewCategoryName(e.target.value)}
                     placeholder="Category name…"
-                    className="flex-1 bg-stone-50 border border-stone-200 text-stone-900 text-xs font-bold rounded-xl px-3 py-2 focus:outline-none"
+                    autoFocus
+                    className="w-full bg-stone-50 border border-stone-200 text-stone-900 text-xs font-bold rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-amber-800/30"
                   />
-                  <button
-                    type="button"
-                    disabled={!newCategoryName.trim()}
-                    onClick={async () => {
-                      if (!newCategoryName.trim()) return;
-                      try {
-                        const res = await apiFetch('/api/categories', {
-                          method: 'POST',
-                          body: JSON.stringify({ label: newCategoryName.trim() }),
-                        });
-                        const data = await res.json();
-                        if (!res.ok) throw new Error(data.error || 'Failed');
-                        setCategories((prev) => [...prev, data]);
-                        setCategoryId(String(data.id));
-                        setCreatingCategory(false);
-                        setNewCategoryName('');
-                      } catch (err: unknown) {
-                        showToast('Failed to create category', err instanceof Error ? err.message : '', 'error');
-                      }
-                    }}
-                    className="add-recipe-primary text-xs font-bold px-3 py-2 rounded-xl disabled:opacity-40 transition-colors whitespace-nowrap"
-                  >
-                    Create
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => { setCreatingCategory(false); setNewCategoryName(''); }}
+                      className="add-recipe-secondary flex-1 text-xs font-bold py-2 rounded-xl transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!newCategoryName.trim()}
+                      onClick={async () => {
+                        if (!newCategoryName.trim()) return;
+                        try {
+                          const res = await apiFetch('/api/categories', {
+                            method: 'POST',
+                            body: JSON.stringify({ label: newCategoryName.trim() }),
+                          });
+                          const data = await res.json();
+                          if (!res.ok) throw new Error(data.error || 'Failed');
+                          setCategories((prev) => [...prev, data]);
+                          setCategoryId(String(data.id));
+                          setCreatingCategory(false);
+                          setNewCategoryName('');
+                        } catch (err: unknown) {
+                          showToast('Failed to create category', err instanceof Error ? err.message : '', 'error');
+                        }
+                      }}
+                      className="add-recipe-primary flex-1 text-xs font-bold py-2 rounded-xl disabled:opacity-40 transition-colors"
+                    >
+                      Create
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
