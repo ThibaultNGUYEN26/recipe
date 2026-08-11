@@ -4,7 +4,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUI } from '../../contexts/UIContext';
 import type { RecipeDetail as RecipeDetailType, Comment, IngredientSection, InstructionStep } from '../../types';
-import { ArrowLeft, Star, Bookmark, BookmarkCheck, Share2, Clock, Users, ChefHat, Timer, Check, Heart, Send, Flag, Trash2, Languages, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Star, Bookmark, BookmarkCheck, Share2, Clock, Users, ChefHat, Timer, Check, Heart, Send, Flag, Trash2, Languages, ExternalLink, Pencil } from 'lucide-react';
 import VerifiedBadge from '../profile/VerifiedBadge';
 import { apiFetch } from '../../lib/apiFetch';
 
@@ -302,6 +302,11 @@ export default function RecipeDetail() {
           Back
         </button>
         <div className="flex items-center gap-2">
+          {user?.id === recipe.authorId && (
+            <Link to={`/edit-recipe/${recipe.slug}`} aria-label="Edit recipe" style={{ color: 'var(--color-muted)' }}>
+              <Pencil size={18} />
+            </Link>
+          )}
           <button onClick={() => openShare({
             type: 'recipe',
             path: `/recipe/${encodeURIComponent(recipe.slug)}`,

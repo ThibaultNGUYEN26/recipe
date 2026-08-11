@@ -407,6 +407,95 @@ router.delete("/:slug", authenticate, async (req, res) => {
   }
 });
 
+// PUT /api/recipes/:slug — update own recipe
+router.put("/:slug", authenticate, handleRecipeMedia, async (req, res) => {
+  const { slug } = req.params;
+  try {
+    const recipe = await prisma.recipe.findUnique({ where: { slug }, include: { images: { where: { isMain: true } } } });
+    if (!recipe) return res.status(404).json({ error: "Recipe not found" });
+    if (recipe.authorId !== req.user.id) return res.status(403).json({ error: "Not your recipe" });
+
+    const { categoryId, info, tags, originalLanguage: rawOriginalLanguage, isPublic } = req.body;
+    const rawTranslations = req.body.translations;
+
+    const imageFile = req.files?.image?.[0];
+    const videoFile = req.files?.video?.[0];
+    const uploadedFiles = [imageFile, videoFile].filter(Boolean);
+    const removeUploadedFiles = () => uploadedFiles.forEach((f) => fs.unlink(f.path, () => {}));
+
+    if (imageFile && imageFile.size > 5 * 1024 * 1024) {
+      removeUploadedFiles();
+      return res.status(400).json({ error: "Cover image must be under 5 MB" });
+    }
+
+    const rawCoverImageUrl = req.body.coverImageUrl;
+    const externalImageUrl = !imageFile && rawCoverImageUrl && /^https:\/\//i.test(rawCoverImageUrl)
+      ? String(rawCoverImageUrl).slice(0, 2048)
+      : null;
+    const newImageUrl = imageFile ? `/uploads/${imageFile.filename}` : externalImageUrl;
+    const newVideoUrl = videoFile ? `/uploads/${videoFile.filename}` : undefined;
+
+    let translationRows = [];
+    if (rawTranslations) {
+      translationRows = JSON.parse(rawTranslations);
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.recipe.update({
+        where: { slug },
+        data: {
+          ...(categoryId ? { categoryId: parseInt(categoryId) } : {}),
+          ...(info ? { info: JSON.parse(info) } : {}),
+          ...(tags ? { tags: JSON.parse(tags) } : {}),
+          ...(rawOriginalLanguage ? { originalLanguage: normalizeLanguage(rawOriginalLanguage) } : {}),
+          ...(isPublic !== undefined ? { isPublic: isPublic === "true" } : {}),
+          ...(newVideoUrl !== undefined ? { videoUrl: newVideoUrl } : {}),
+        },
+      });
+
+      if (newImageUrl) {
+        const existing = recipe.images[0];
+        if (existing) {
+          await tx.recipeImage.update({ where: { id: existing.id }, data: { url: newImageUrl } });
+          if (existing.url.startsWith("/uploads/")) {
+            fs.unlink(`${process.env.UPLOAD_DIR || "uploads"}/${existing.url.replace("/uploads/", "")}`, () => {});
+          }
+        } else {
+          await tx.recipeImage.create({ data: { recipeId: recipe.id, url: newImageUrl, isMain: true } });
+        }
+      }
+
+      for (const tr of translationRows) {
+        const lang = normalizeLanguage(tr.language);
+        await tx.recipeTranslation.upsert({
+          where: { recipeId_language: { recipeId: recipe.id, language: lang } },
+          update: {
+            title: tr.title,
+            description: tr.description || null,
+            ingredients: typeof tr.ingredients === "string" ? JSON.parse(tr.ingredients) : tr.ingredients,
+            instructions: typeof tr.instructions === "string" ? JSON.parse(tr.instructions) : tr.instructions,
+            tips: tr.tips ? (typeof tr.tips === "string" ? JSON.parse(tr.tips) : tr.tips) : null,
+          },
+          create: {
+            recipeId: recipe.id,
+            language: lang,
+            title: tr.title,
+            description: tr.description || null,
+            ingredients: typeof tr.ingredients === "string" ? JSON.parse(tr.ingredients) : tr.ingredients,
+            instructions: typeof tr.instructions === "string" ? JSON.parse(tr.instructions) : tr.instructions,
+            tips: tr.tips ? (typeof tr.tips === "string" ? JSON.parse(tr.tips) : tr.tips) : null,
+          },
+        });
+      }
+    });
+
+    res.json({ slug });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message || "Failed to update recipe" });
+  }
+});
+
 // POST /api/recipes/:slug/rate
 router.post("/:slug/rate", authenticate, async (req, res) => {
   const { score } = req.body;

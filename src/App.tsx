@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useParams } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import Header from './components/layout/Header';
 import BottomNav from './components/layout/BottomNav';
@@ -34,6 +34,11 @@ function LoadingFallback() {
   );
 }
 
+function EditRecipeWrapper() {
+  const { slug } = useParams<{ slug: string }>();
+  return <AddRecipeFlow editSlug={slug} />;
+}
+
 export default function App() {
   return (
     <div className="flex flex-col h-dvh overflow-hidden" style={{ backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}>
@@ -45,6 +50,7 @@ export default function App() {
             <Route path="/recipe/:slug" element={<RecipeDetail />} />
             <Route path="/search" element={<SearchDiscover />} />
             <Route path="/add-recipe" element={<AddRecipeFlow />} />
+            <Route path="/edit-recipe/:slug" element={<EditRecipeWrapper />} />
             <Route path="/my-recipes" element={<SavedRecipes />} />
             <Route path="/profile/:userId" element={<UserProfile />} />
             <Route path="/u/:username" element={<UsernameProfile />} />

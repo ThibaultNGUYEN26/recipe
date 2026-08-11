@@ -1,5 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useRef, useEffect, useCallback } from 'react';import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUI } from '../../contexts/UIContext';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -24,6 +23,12 @@ const PRESET_IMAGES = [
 
 const DIETARY_LIST = ['vegetarian', 'vegan', 'gluten-free', 'dairy-free', 'low-carb', 'nut-free', 'keto'];
 const DIFFICULTY_LIST = ['Facile', 'Moyen', 'Difficile'];
+
+function parseIngredientItem(item: string): { amount: string; unit: string; name: string } {
+  const m = item.match(/^(\d+(?:[.,]\d+)?)\s*([a-zA-Z]+(?:\.)?)?[\s]+(.+)$/);
+  if (m) return { amount: m[1], unit: m[2] || '', name: m[3] };
+  return { amount: '', unit: '', name: item };
+}
 
 interface IngRow { id: string; name: string; amount: string; unit: string }
 interface IngSection { id: string; section: string; rows: IngRow[] }
@@ -82,7 +87,7 @@ function parseReferenceTags(value: string) {
   )];
 }
 
-export default function AddRecipeFlow() {
+export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
   const { user } = useAuth();
   const { showToast } = useUI();
   const { language } = useLanguage();
@@ -127,6 +132,8 @@ export default function AddRecipeFlow() {
   const [creatingCategory, setCreatingCategory] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
+  const [coverImageEdited, setCoverImageEdited] = useState(false);
+  const [pendingCategoryLabel, setPendingCategoryLabel] = useState<string | null>(null);
   const [tiktokUrl, setTikTokUrl] = useState('');
   const [importingTikTok, setImportingTikTok] = useState(false);
   const [importedSource, setImportedSource] = useState<TikTokImportSource | null>(null);
@@ -135,9 +142,58 @@ export default function AddRecipeFlow() {
   useEffect(() => {
     apiFetch('/api/categories')
       .then((r) => r.json())
-      .then(setCategories)
+      .then((cats) => {
+        setCategories(cats);
+        if (pendingCategoryLabel) {
+          const found = cats.find((c: { id: number; label: string }) => c.label === pendingCategoryLabel);
+          if (found) { setCategoryId(String(found.id)); setPendingCategoryLabel(null); }
+        }
+      })
       .catch(console.error);
-  }, []);
+  }, [pendingCategoryLabel]);
+
+  // Pre-fill form when editing an existing recipe
+  useEffect(() => {
+    if (!editSlug) return;
+    apiFetch(`/api/recipes/${editSlug}`)
+      .then((r) => r.json())
+      .then((recipe) => {
+        setSlug(recipe.slug ?? '');
+        if (recipe.image) setCoverImage(recipe.image.startsWith('/') ? `${import.meta.env.VITE_API_URL}${recipe.image}` : recipe.image);
+        const info = (recipe.info as Record<string, unknown>) || {};
+        if (info.prepTime) setPrepTime(String(info.prepTime).replace(' min', ''));
+        if (info.cookTime) setCookTime(String(info.cookTime).replace(' min', ''));
+        if (typeof info.servings === 'number') setServings(info.servings);
+        if (info.difficulty) setDifficulty(String(info.difficulty));
+        const allTags = (recipe.tags as string[]) || [];
+        setDietaryTags(allTags.filter((t) => DIETARY_LIST.includes(t)));
+        setReferenceTagsInput(allTags.filter((t) => !DIETARY_LIST.includes(t)).map((t) => `#${t}`).join(' '));
+        if (recipe.category?.label) setPendingCategoryLabel(recipe.category.label);
+        const lang: RecipeLanguage = (recipe.originalLanguage as RecipeLanguage) || editLang;
+        const sections = ((recipe.ingredients as { section: string; items: string[] }[]) || []).map((sec, si) => ({
+          id: `sec-${si}`,
+          section: sec.section === 'main' ? '' : (sec.section || ''),
+          rows: (sec.items || []).map((item, ri) => ({ id: `row-${si}-${ri}`, ...parseIngredientItem(item) })),
+        }));
+        const steps = ((recipe.instructions as { step: number; text: string; timerMinutes?: number }[]) || []).map((s, i) => ({
+          id: `step-${i}`,
+          stepNumber: s.step || i + 1,
+          instruction: s.text || '',
+          timerMinutes: s.timerMinutes ? String(s.timerMinutes) : '',
+        }));
+        setTranslations((prev) => ({
+          ...prev,
+          [lang]: {
+            title: recipe.title || '',
+            description: recipe.description || '',
+            ingredients: sections.length ? sections : emptyTranslation().ingredients,
+            steps: steps.length ? steps : emptyTranslation().steps,
+            tips: Array.isArray(recipe.tips) ? recipe.tips.join('\n') : (recipe.tips || ''),
+          },
+        }));
+      })
+      .catch(console.error);
+  }, [editSlug]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!user) {
     return (
@@ -296,6 +352,7 @@ export default function AddRecipeFlow() {
       const file = new File([blob], 'cover.jpg', { type: 'image/jpeg' });
       setImageFile(file);
       setCoverImage(URL.createObjectURL(blob));
+      setCoverImageEdited(true);
       setCropSrc(null);
       showToast('Cover photo set!', undefined, 'success');
     }, 'image/jpeg', 0.92);
@@ -360,17 +417,19 @@ export default function AddRecipeFlow() {
       }
       if (imageFile) {
         fd.append('image', imageFile);
-      } else if (coverImage && !coverImage.startsWith('blob:')) {
+      } else if ((!editSlug || coverImageEdited) && coverImage && !coverImage.startsWith('blob:') && coverImage.startsWith('http')) {
         fd.append('coverImageUrl', coverImage);
       }
       if (videoFile) {
         fd.append('video', videoFile);
       }
 
-      const res = await apiFetch('/api/recipes', { method: 'POST', body: fd });
+      const method = editSlug ? 'PUT' : 'POST';
+      const endpoint = editSlug ? `/api/recipes/${editSlug}` : '/api/recipes';
+      const res = await apiFetch(endpoint, { method, body: fd });
       if (res.ok) {
         const d = await res.json();
-        showToast('Recipe published!', undefined, 'success');
+        showToast(editSlug ? 'Recipe updated!' : 'Recipe published!', undefined, 'success');
         navigate(`/recipe/${d.slug}`);
       } else {
         const d = await res.json();
@@ -391,8 +450,8 @@ export default function AddRecipeFlow() {
       <div className="p-5 rounded-3xl border border-stone-200/80 shadow-sm flex items-center justify-between"
         style={{ backgroundColor: 'var(--color-surface)' }}>
         <div>
-          <h1 className="font-serif text-2xl font-bold" style={{ color: 'var(--color-text)' }}>Publish New Recipe</h1>
-          <p className="text-xs mt-0.5" style={{ color: 'var(--color-muted)' }}>Share your culinary masterpiece with the world</p>
+          <h1 className="font-serif text-2xl font-bold" style={{ color: 'var(--color-text)' }}>{editSlug ? 'Edit Recipe' : 'Publish New Recipe'}</h1>
+          <p className="text-xs mt-0.5" style={{ color: 'var(--color-muted)' }}>{editSlug ? 'Update your recipe details' : 'Share your culinary masterpiece with the world'}</p>
         </div>
         <button onClick={() => setShowPreview(true)}
           className="add-recipe-accent-soft flex items-center gap-1.5 text-xs font-bold border px-3 py-2 rounded-2xl transition-colors">
@@ -825,7 +884,7 @@ export default function AddRecipeFlow() {
             <button type="button" onClick={publish} disabled={submitting}
               className="add-recipe-primary flex items-center gap-2 font-bold text-xs px-8 py-3.5 rounded-2xl transition-colors shadow-lg disabled:opacity-50">
               <Sparkles className="w-4 h-4" />
-              {submitting ? 'Publishing…' : 'Publish Recipe Now'}
+              {submitting ? (editSlug ? 'Saving…' : 'Publishing…') : (editSlug ? 'Save Changes' : 'Publish Recipe Now')}
             </button>
           </div>
         </section>
@@ -893,7 +952,7 @@ export default function AddRecipeFlow() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               {PRESET_IMAGES.map((item) => (
-                <button key={item.url} onClick={() => { setCoverImage(item.url); setImageFile(null); setShowImagePicker(false); }}
+                <button key={item.url} onClick={() => { setCoverImage(item.url); setImageFile(null); setCoverImageEdited(true); setShowImagePicker(false); }}
                   className="group relative aspect-square rounded-2xl overflow-hidden border border-stone-200 hover:ring-4 hover:ring-amber-700/50 transition-all">
                   <img src={item.url} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                   <div className="absolute inset-0 bg-gradient-to-t from-stone-950/80 via-transparent to-transparent flex items-end p-2.5">
