@@ -107,6 +107,25 @@
   background-color: #fbbf24;
 }
 
+button,
+a,
+select,
+label,
+[role="button"],
+input[type="checkbox"],
+input[type="radio"],
+input[type="file"],
+input[type="submit"],
+input[type="reset"] {
+  cursor: pointer;
+}
+
+button:disabled,
+input:disabled,
+select:disabled {
+  cursor: not-allowed;
+}
+
 [data-theme="dark"] .savor-header__sign-in:hover {
   background-color: #f59e0b;
 }
