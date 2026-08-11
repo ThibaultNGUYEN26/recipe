@@ -311,7 +311,11 @@ router.post("/", authenticate, handleRecipeMedia, async (req, res) => {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
-  const imageUrl = imageFile ? `/uploads/${imageFile.filename}` : null;
+  const rawCoverImageUrl = req.body.coverImageUrl;
+  const externalImageUrl = !imageFile && rawCoverImageUrl && /^https:\/\//i.test(rawCoverImageUrl)
+    ? String(rawCoverImageUrl).slice(0, 2048)
+    : null;
+  const imageUrl = imageFile ? `/uploads/${imageFile.filename}` : externalImageUrl;
   const videoUrl = videoFile ? `/uploads/${videoFile.filename}` : null;
   const validatedSourceUrl = sourcePlatform === "tiktok" ? validateTikTokUrl(sourceUrl) : null;
 

@@ -360,6 +360,8 @@ export default function AddRecipeFlow() {
       }
       if (imageFile) {
         fd.append('image', imageFile);
+      } else if (coverImage && !coverImage.startsWith('blob:')) {
+        fd.append('coverImageUrl', coverImage);
       }
       if (videoFile) {
         fd.append('video', videoFile);

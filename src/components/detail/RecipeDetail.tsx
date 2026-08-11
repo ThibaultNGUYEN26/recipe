@@ -294,7 +294,7 @@ export default function RecipeDetail() {
   const baseServings = (info?.servings as number) ?? 4;
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-5xl mx-auto pb-10">
       {/* Back + actions bar */}
       <div className="sticky top-14 z-30 flex items-center justify-between px-4 py-2" style={{ backgroundColor: 'var(--color-bg)' }}>
         <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-sm" style={{ color: 'var(--color-muted)' }}>
@@ -317,14 +317,16 @@ export default function RecipeDetail() {
 
       {/* Hero image */}
       {recipe.image && (
-        <div className="mx-4 rounded-3xl overflow-hidden aspect-[4/3] mb-5">
+        <div className="mx-4 rounded-3xl overflow-hidden aspect-[4/3] lg:aspect-[21/9] mb-6">
           <img src={imgSrc(recipe.image)!} alt={recipe.title} className="w-full h-full object-cover" />
         </div>
       )}
 
-      <div className="px-4 space-y-6">
-        {/* Title + meta */}
-        <div>
+      {/* Two-column on desktop, single column on mobile */}
+      <div className="px-4 flex flex-col gap-6 lg:grid lg:grid-cols-[1fr_320px] lg:gap-10 lg:items-start">
+
+        {/* ── Title + author (order 1 on mobile, left col row 1 on desktop) ── */}
+        <div className="order-1 lg:[grid-column:1] lg:[grid-row:1] min-w-0">
           <div className="flex gap-2 flex-wrap mb-2">
             <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
               {recipe.category.label}
@@ -333,7 +335,7 @@ export default function RecipeDetail() {
               <span key={t} className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--color-border)', color: 'var(--color-muted)' }}>{t}</span>
             ))}
           </div>
-          <h1 className="font-serif text-2xl font-semibold leading-snug mb-2" style={{ color: 'var(--color-text)' }}>{recipe.title}</h1>
+          <h1 className="font-serif text-2xl lg:text-3xl font-semibold leading-snug mb-2" style={{ color: 'var(--color-text)' }}>{recipe.title}</h1>
           {recipe.description && <p className="text-sm leading-relaxed" style={{ color: 'var(--color-muted)' }}>{recipe.description}</p>}
           {recipe.availableLanguages && recipe.availableLanguages.length > 1 && (
             <div className="flex items-center gap-2 mt-2 text-xs" style={{ color: 'var(--color-muted)' }}>
@@ -350,8 +352,6 @@ export default function RecipeDetail() {
               ) : null}
             </div>
           )}
-
-          {/* Author */}
           {recipe.authorName && (
             <Link to={`${recipe.authorUsername ? `/u/${encodeURIComponent(recipe.authorUsername)}` : `/profile/${recipe.authorId}`}?fromRecipe=${encodeURIComponent(recipe.slug)}`} className="flex items-center gap-2 mt-3">
               <div className="w-7 h-7 rounded-full bg-amber-800 text-white flex items-center justify-center text-xs font-bold overflow-hidden">
@@ -363,166 +363,167 @@ export default function RecipeDetail() {
           )}
         </div>
 
-        {/* Stats row */}
-        <div className="grid grid-cols-4 gap-2">
-          {[
-            { icon: <Clock size={16} />, label: 'Total', value: info?.totalTime as string },
-            { icon: <Clock size={16} />, label: 'Prep', value: info?.prepTime as string },
-            { icon: <ChefHat size={16} />, label: 'Level', value: info?.difficulty as string },
-            { icon: <Star size={16} />, label: 'Rating', value: recipe.avgRating ? recipe.avgRating.toFixed(1) : '—' },
-          ].map(({ icon, label, value }) => value ? (
-            <div key={label} className="flex flex-col items-center gap-1 py-3 rounded-2xl" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
-              <span className="text-amber-800">{icon}</span>
-              <span className="text-xs font-semibold" style={{ color: 'var(--color-text)' }}>{value}</span>
-              <span className="text-[10px]" style={{ color: 'var(--color-muted)' }}>{label}</span>
-            </div>
-          ) : null)}
-        </div>
-
-        {/* Servings scaler */}
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="font-serif text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Ingredients</h2>
-            <div className="flex items-center gap-3">
-              <button onClick={() => setServings(Math.max(1, servings - 1))} className="w-7 h-7 rounded-full border text-lg flex items-center justify-center" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}>−</button>
-              <div className="flex items-center gap-1">
-                <Users size={14} style={{ color: 'var(--color-muted)' }} />
-                <span className="text-sm font-semibold tabular-nums" style={{ color: 'var(--color-text)' }}>{servings}</span>
+        {/* ── Sidebar: stats + ingredients + rating (order 2 on mobile, right col on desktop) ── */}
+        <aside className="order-2 lg:[grid-column:2] lg:[grid-row:1/span_3] lg:sticky lg:top-20 space-y-4">
+          {/* Stats */}
+          <div className="grid grid-cols-4 lg:grid-cols-2 gap-2">
+            {[
+              { icon: <Clock size={16} />, label: 'Total', value: info?.totalTime as string },
+              { icon: <Clock size={16} />, label: 'Prep', value: info?.prepTime as string },
+              { icon: <ChefHat size={16} />, label: 'Level', value: info?.difficulty as string },
+              { icon: <Star size={16} />, label: 'Rating', value: recipe.avgRating ? recipe.avgRating.toFixed(1) : '—' },
+            ].map(({ icon, label, value }) => value ? (
+              <div key={label} className="flex flex-col items-center gap-1 py-3 rounded-2xl" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+                <span className="text-amber-800">{icon}</span>
+                <span className="text-xs font-semibold" style={{ color: 'var(--color-text)' }}>{value}</span>
+                <span className="text-[10px]" style={{ color: 'var(--color-muted)' }}>{label}</span>
               </div>
-              <button onClick={() => setServings(servings + 1)} className="w-7 h-7 rounded-full border text-lg flex items-center justify-center" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}>+</button>
-            </div>
+            ) : null)}
           </div>
 
-          {(recipe.ingredients as IngredientSection[]).map((section) => (
-            <div key={section.section} className="mb-4">
-              {section.section && section.section !== 'main' && (
-                <h3 className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--color-muted)' }}>{section.section}</h3>
+          {/* Ingredients */}
+          <div className="rounded-2xl p-4 space-y-3" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+            <div className="flex items-center justify-between">
+              <h2 className="font-serif text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Ingredients</h2>
+              <div className="flex items-center gap-2">
+                <button onClick={() => setServings(Math.max(1, servings - 1))} className="w-7 h-7 rounded-full border text-lg flex items-center justify-center" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}>−</button>
+                <div className="flex items-center gap-1">
+                  <Users size={14} style={{ color: 'var(--color-muted)' }} />
+                  <span className="text-sm font-semibold tabular-nums" style={{ color: 'var(--color-text)' }}>{servings}</span>
+                </div>
+                <button onClick={() => setServings(servings + 1)} className="w-7 h-7 rounded-full border text-lg flex items-center justify-center" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}>+</button>
+              </div>
+            </div>
+            {(recipe.ingredients as IngredientSection[]).map((section) => (
+              <div key={section.section}>
+                {section.section && section.section !== 'main' && (
+                  <h3 className="text-xs font-semibold uppercase tracking-wide mb-2 mt-3" style={{ color: 'var(--color-muted)' }}>{section.section}</h3>
+                )}
+                <div className="space-y-2">
+                  {section.items.map((item, i) => {
+                    const key = `${section.section}-${i}`;
+                    const checked = checkedIngredients.has(key);
+                    return (
+                      <button key={key} onClick={() => toggleIngredient(key)} className="w-full flex items-center gap-3 text-left">
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${checked ? 'bg-amber-800 border-amber-800' : ''}`} style={checked ? {} : { borderColor: 'var(--color-border)' }}>
+                          {checked && <Check size={11} className="text-white" />}
+                        </div>
+                        <span className={`text-sm ${checked ? 'line-through' : ''}`} style={{ color: checked ? 'var(--color-muted)' : 'var(--color-text)' }}>
+                          {scaleAmount(item)}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Rating */}
+          <div className="rounded-2xl p-4 space-y-3" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+            <div className="flex items-center justify-between">
+              <h2 className="font-serif text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Ratings</h2>
+              {recipe.avgRating != null && (
+                <div className="flex items-center gap-1.5">
+                  <Star size={16} className="text-amber-500 fill-amber-500" />
+                  <span className="font-semibold text-sm" style={{ color: 'var(--color-text)' }}>{recipe.avgRating.toFixed(1)}</span>
+                  <span className="text-xs" style={{ color: 'var(--color-muted)' }}>({recipe.ratingCount})</span>
+                </div>
               )}
-              <div className="space-y-2">
-                {section.items.map((item, i) => {
-                  const key = `${section.section}-${i}`;
-                  const checked = checkedIngredients.has(key);
-                  return (
-                    <button key={key} onClick={() => toggleIngredient(key)} className="w-full flex items-center gap-3 text-left">
-                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${checked ? 'bg-amber-800 border-amber-800' : ''}`} style={checked ? {} : { borderColor: 'var(--color-border)' }}>
-                        {checked && <Check size={11} className="text-white" />}
-                      </div>
-                      <span className={`text-sm ${checked ? 'line-through' : ''}`} style={{ color: checked ? 'var(--color-muted)' : 'var(--color-text)' }}>
-                        {scaleAmount(item)}
-                      </span>
-                    </button>
-                  );
-                })}
+            </div>
+            {user ? (
+              <div>
+                <p className="text-xs mb-2" style={{ color: 'var(--color-muted)' }}>{userScore ? 'Your rating' : 'Rate this recipe'}</p>
+                <StarRow value={userScore} onChange={rate} />
+              </div>
+            ) : (
+              <p className="text-xs" style={{ color: 'var(--color-muted)' }}>
+                <Link to="/login" className="text-amber-800 underline">Sign in</Link> to rate this recipe
+              </p>
+            )}
+          </div>
+
+          {/* Nutrition */}
+          {recipe.nutrition && (
+            <div className="rounded-2xl p-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+              <h2 className="font-serif text-lg font-semibold mb-3" style={{ color: 'var(--color-text)' }}>Nutrition</h2>
+              <div className="grid grid-cols-2 gap-2">
+                {Object.entries(recipe.nutrition as Record<string, string>).map(([k, v]) => (
+                  <div key={k} className="px-3 py-2 rounded-xl" style={{ backgroundColor: 'var(--color-subtle)', border: '1px solid var(--color-border)' }}>
+                    <p className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{v}</p>
+                    <p className="text-xs capitalize" style={{ color: 'var(--color-muted)' }}>{k}</p>
+                  </div>
+                ))}
               </div>
             </div>
-          ))}
-        </div>
+          )}
+        </aside>
 
-        {/* Cooking video */}
-        {recipe.videoUrl && (
+        {/* ── Instructions + video + tips (order 3 on mobile, left col row 2 on desktop) ── */}
+        <div className="order-3 lg:[grid-column:1] lg:[grid-row:2] space-y-6 min-w-0">
+          {/* Instructions */}
           <div>
-            <h2 className="font-serif text-lg font-semibold mb-3" style={{ color: 'var(--color-text)' }}>Cooking Video</h2>
-            <video
-              controls
-              preload="metadata"
-              src={imgSrc(recipe.videoUrl)!}
-              className="w-full rounded-3xl bg-black aspect-video"
-            >
-              Your browser does not support embedded videos.
-            </video>
-          </div>
-        )}
-
-        {recipe.sourcePlatform === 'tiktok' && recipe.sourceUrl && (
-          <a href={recipe.sourceUrl} target="_blank" rel="noreferrer"
-            className="flex items-center gap-3 rounded-2xl border p-4 transition-colors hover:bg-[var(--color-hover)]"
-            style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
-            {recipe.sourceThumbnailUrl && <img src={recipe.sourceThumbnailUrl} alt="" className="h-14 w-10 shrink-0 rounded-lg object-cover" />}
-            <span className="min-w-0 flex-1">
-              <span className="block text-sm font-bold">Watch the original TikTok</span>
-              <span className="block truncate text-xs" style={{ color: 'var(--color-muted)' }}>{recipe.sourceAuthor ? `By ${recipe.sourceAuthor}` : 'Source video'}</span>
-            </span>
-            <ExternalLink size={17} style={{ color: 'var(--color-muted)' }} />
-          </a>
-        )}
-
-        {/* Instructions */}
-        <div>
-          <h2 className="font-serif text-lg font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Instructions</h2>
-          <div className="space-y-4">
-            {(recipe.instructions as InstructionStep[]).map((step, i) => (
-              <div key={i} className="flex gap-4">
-                <div className="w-8 h-8 rounded-full bg-amber-800 text-white flex items-center justify-center text-sm font-bold shrink-0 mt-0.5">
-                  {step.step ?? i + 1}
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text)' }}>{step.text}</p>
-                  {step.timerMinutes && (
-                    <button
-                      onClick={() => startTimer(`Step ${step.step ?? i + 1}`, step.timerMinutes!, recipe.title)}
-                      className="mt-2 flex items-center gap-1.5 text-xs font-medium text-amber-800"
-                    >
-                      <Timer size={13} />
-                      Start {step.timerMinutes} min timer
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Tips */}
-        {recipe.tips && (recipe.tips as string[]).length > 0 && (
-          <div className="rounded-2xl p-4 space-y-2" style={{ backgroundColor: '#fffbeb', border: '1px solid #fde68a' }}>
-            <h3 className="text-sm font-semibold text-amber-800">💡 Tips</h3>
-            {(recipe.tips as string[]).map((tip, i) => (
-              <p key={i} className="text-sm text-amber-900 leading-relaxed">• {tip}</p>
-            ))}
-          </div>
-        )}
-
-        {/* Nutrition */}
-        {recipe.nutrition && (
-          <div>
-            <h2 className="font-serif text-lg font-semibold mb-3" style={{ color: 'var(--color-text)' }}>Nutrition</h2>
-            <div className="grid grid-cols-2 gap-2">
-              {Object.entries(recipe.nutrition as Record<string, string>).map(([k, v]) => (
-                <div key={k} className="px-3 py-2 rounded-xl" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
-                  <p className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{v}</p>
-                  <p className="text-xs capitalize" style={{ color: 'var(--color-muted)' }}>{k}</p>
+            <h2 className="font-serif text-lg font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Instructions</h2>
+            <div className="space-y-4">
+              {(recipe.instructions as InstructionStep[]).map((step, i) => (
+                <div key={i} className="flex gap-4">
+                  <div className="w-8 h-8 rounded-full bg-amber-800 text-white flex items-center justify-center text-sm font-bold shrink-0 mt-0.5">
+                    {step.step ?? i + 1}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text)' }}>{step.text}</p>
+                    {step.timerMinutes && (
+                      <button
+                        onClick={() => startTimer(`Step ${step.step ?? i + 1}`, step.timerMinutes!, recipe.title)}
+                        className="mt-2 flex items-center gap-1.5 text-xs font-medium text-amber-800"
+                      >
+                        <Timer size={13} />
+                        Start {step.timerMinutes} min timer
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
-        )}
 
-        {/* Rating */}
-        <div className="rounded-2xl p-4 space-y-3" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
-          <div className="flex items-center justify-between">
-            <h2 className="font-serif text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Ratings</h2>
-            {recipe.avgRating != null && (
-              <div className="flex items-center gap-1.5">
-                <Star size={16} className="text-amber-500 fill-amber-500" />
-                <span className="font-semibold text-sm" style={{ color: 'var(--color-text)' }}>{recipe.avgRating.toFixed(1)}</span>
-                <span className="text-xs" style={{ color: 'var(--color-muted)' }}>({recipe.ratingCount})</span>
-              </div>
-            )}
-          </div>
-          {user ? (
+          {/* Cooking video */}
+          {recipe.videoUrl && (
             <div>
-              <p className="text-xs mb-2" style={{ color: 'var(--color-muted)' }}>{userScore ? 'Your rating' : 'Rate this recipe'}</p>
-              <StarRow value={userScore} onChange={rate} />
+              <h2 className="font-serif text-lg font-semibold mb-3" style={{ color: 'var(--color-text)' }}>Cooking Video</h2>
+              <video controls preload="metadata" src={imgSrc(recipe.videoUrl)!} className="w-full rounded-3xl bg-black aspect-video">
+                Your browser does not support embedded videos.
+              </video>
             </div>
-          ) : (
-            <p className="text-xs" style={{ color: 'var(--color-muted)' }}>
-              <Link to="/login" className="text-amber-800 underline">Sign in</Link> to rate this recipe
-            </p>
+          )}
+
+          {/* TikTok source */}
+          {recipe.sourcePlatform === 'tiktok' && recipe.sourceUrl && (
+            <a href={recipe.sourceUrl} target="_blank" rel="noreferrer"
+              className="flex items-center gap-3 rounded-2xl border p-4 transition-colors hover:bg-[var(--color-hover)]"
+              style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
+              {recipe.sourceThumbnailUrl && <img src={recipe.sourceThumbnailUrl} alt="" className="h-14 w-10 shrink-0 rounded-lg object-cover" />}
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-bold">Watch the original TikTok</span>
+                <span className="block truncate text-xs" style={{ color: 'var(--color-muted)' }}>{recipe.sourceAuthor ? `By ${recipe.sourceAuthor}` : 'Source video'}</span>
+              </span>
+              <ExternalLink size={17} style={{ color: 'var(--color-muted)' }} />
+            </a>
+          )}
+
+          {/* Tips */}
+          {recipe.tips && (recipe.tips as string[]).length > 0 && (
+            <div className="rounded-2xl p-4 space-y-2" style={{ backgroundColor: '#fffbeb', border: '1px solid #fde68a' }}>
+              <h3 className="text-sm font-semibold text-amber-800">💡 Tips</h3>
+              {(recipe.tips as string[]).map((tip, i) => (
+                <p key={i} className="text-sm text-amber-900 leading-relaxed">• {tip}</p>
+              ))}
+            </div>
           )}
         </div>
 
-        {/* Comments */}
-        <div className="pb-6">
+        {/* ── Comments (order 4 on mobile, left col row 3 on desktop) ── */}
+        <div className="order-4 lg:[grid-column:1] lg:[grid-row:3] pb-6">
           <h2 className="font-serif text-lg font-semibold mb-4" style={{ color: 'var(--color-text)' }}>
             Comments {comments.length > 0 && <span className="text-base font-normal" style={{ color: 'var(--color-muted)' }}>({comments.length})</span>}
           </h2>
