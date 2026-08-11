@@ -76,7 +76,7 @@ export default function CreatorVerification() {
   if (loading) return <div className="min-h-[60vh] flex items-center justify-center"><div className="w-8 h-8 rounded-full border-2 border-amber-800 border-t-transparent animate-spin" /></div>;
 
   return (
-    <div className="max-w-xl mx-auto px-4 py-8 pb-24 space-y-5">
+    <div className="w-full max-w-xl mx-auto px-4 py-8 pb-24 space-y-5">
       <div>
         <h1 className="font-serif text-2xl font-bold flex items-center gap-2" style={{ color: 'var(--color-text)' }}>
           <BadgeCheck className="w-6 h-6 text-blue-500" /> Creator verification

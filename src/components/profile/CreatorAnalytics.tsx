@@ -130,7 +130,7 @@ export default function CreatorAnalytics() {
   if (!user) return null;
 
   return (
-    <div className="analytics-page max-w-6xl mx-auto px-4 py-6 pb-28 space-y-6">
+    <div className="analytics-page w-full max-w-6xl mx-auto px-4 py-6 pb-28 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <Link to={user.username ? `/u/${encodeURIComponent(user.username)}` : `/profile/${user.id}`} className="inline-flex items-center gap-1 text-xs font-bold mb-3" style={{ color: 'var(--color-muted)' }}><ArrowLeft className="w-4 h-4" /> Back to profile</Link>

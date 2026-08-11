@@ -221,7 +221,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
   const tabContent = activeTab === 'recipes' ? recipes : savedRecipes;
 
   return (
-    <div className="profile-page max-w-4xl mx-auto px-4 py-4 space-y-6 pb-24">
+    <div className="profile-page w-full max-w-4xl mx-auto px-4 py-4 space-y-6 pb-24">
 
       {/* Profile header card */}
       <section className="profile-card p-6 sm:p-8 rounded-3xl border shadow-sm space-y-5">

@@ -49,7 +49,7 @@ export default function VerificationReview() {
   if (!user?.isAdmin) return <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3"><ShieldX className="w-10 h-10 text-rose-500" /><p>Administrator access required.</p><Link to="/" className="text-amber-800 underline">Go home</Link></div>;
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-8 pb-24 space-y-5">
+    <div className="w-full max-w-3xl mx-auto px-4 py-8 pb-24 space-y-5">
       <div><h1 className="font-serif text-2xl font-bold flex items-center gap-2"><BadgeCheck className="w-6 h-6 text-blue-500" /> Verification review</h1><p className="text-sm mt-1" style={{ color: 'var(--color-muted)' }}>{items.length} pending request{items.length === 1 ? '' : 's'}</p></div>
       {items.length === 0 ? <div className="rounded-3xl border p-10 text-center" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>No pending requests.</div> : items.map((item) => (
         <article key={item.id} className="rounded-3xl border p-5 space-y-4" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>

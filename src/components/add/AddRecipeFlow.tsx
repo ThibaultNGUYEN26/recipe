@@ -444,7 +444,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
   const labelCls = "text-xs font-bold text-stone-700 uppercase tracking-wider";
 
   return (
-    <div className="add-recipe-page max-w-2xl mx-auto px-4 space-y-6 py-4 pb-24">
+    <div className="add-recipe-page w-full max-w-2xl mx-auto px-4 space-y-6 py-4 pb-24">
 
       {/* Header */}
       <div className="p-5 rounded-3xl border border-stone-200/80 shadow-sm flex items-center justify-between"

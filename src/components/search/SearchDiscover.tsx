@@ -114,7 +114,7 @@ export default function SearchDiscover() {
   const hasSearch = q.length > 0 || activeFilterCount > 0;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-4 space-y-6 pb-16">
+    <div className="w-full max-w-6xl mx-auto px-4 py-4 space-y-6 pb-16">
 
       {/* Search bar */}
       <div className="relative flex items-center gap-2">

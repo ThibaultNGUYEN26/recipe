@@ -4,7 +4,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUI } from '../../contexts/UIContext';
 import type { RecipeDetail as RecipeDetailType, Comment, IngredientSection, InstructionStep } from '../../types';
-import { ArrowLeft, Star, Bookmark, BookmarkCheck, Share2, Clock, Users, ChefHat, Timer, Check, Heart, Send, Flag, Trash2, Languages, ExternalLink, Pencil } from 'lucide-react';
+import { ArrowLeft, Star, StarHalf, Bookmark, BookmarkCheck, Share2, Clock, Users, ChefHat, Timer, Check, Heart, Send, Flag, Trash2, Languages, ExternalLink, Pencil } from 'lucide-react';
 import VerifiedBadge from '../profile/VerifiedBadge';
 import { apiFetch } from '../../lib/apiFetch';
 
@@ -21,23 +21,43 @@ function languageName(language: string | undefined) {
 
 function StarRow({ value, onChange, readonly }: { value: number; onChange?: (v: number) => void; readonly?: boolean }) {
   const [hover, setHover] = useState(0);
+  const displayed = hover || value;
+
   return (
     <div className="flex gap-1">
-      {[1, 2, 3, 4, 5].map((n) => (
-        <button
-          key={n}
-          disabled={readonly}
-          onMouseEnter={() => !readonly && setHover(n)}
-          onMouseLeave={() => !readonly && setHover(0)}
-          onClick={() => onChange?.(n)}
-          className="p-0.5"
-        >
-          <Star
-            size={20}
-            className={(hover || value) >= n ? 'text-amber-500 fill-amber-500' : 'text-stone-300'}
-          />
-        </button>
-      ))}
+      {[1, 2, 3, 4, 5].map((n) => {
+        const filled = displayed >= n;
+        const half = !filled && displayed >= n - 0.5;
+        return (
+          <div
+            key={n}
+            className="relative p-0.5"
+            onMouseLeave={() => !readonly && setHover(0)}
+          >
+            {!readonly && (
+              <>
+                <div
+                  className="absolute inset-y-0 left-0 w-1/2 z-10 cursor-pointer"
+                  onMouseEnter={() => setHover(n - 0.5)}
+                  onClick={() => onChange?.(n - 0.5)}
+                />
+                <div
+                  className="absolute inset-y-0 right-0 w-1/2 z-10 cursor-pointer"
+                  onMouseEnter={() => setHover(n)}
+                  onClick={() => onChange?.(n)}
+                />
+              </>
+            )}
+            {filled ? (
+              <Star size={20} className="text-amber-500 fill-amber-500" />
+            ) : half ? (
+              <StarHalf size={20} className="text-amber-500 fill-amber-500" />
+            ) : (
+              <Star size={20} className="text-stone-300" />
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -296,7 +316,7 @@ export default function RecipeDetail() {
   return (
     <>
       {/* Back + actions bar — full viewport width so background doesn't gap at sides */}
-      <div className="sticky top-14 z-30" style={{ backgroundColor: 'var(--color-bg)', borderBottom: '1px solid var(--color-border)' }}>
+      <div className="sticky top-0 z-30" style={{ backgroundColor: 'var(--color-bg)', borderBottom: '1px solid var(--color-border)' }}>
         <div className="max-w-5xl mx-auto px-4 py-2 flex items-center justify-between">
           <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-sm" style={{ color: 'var(--color-muted)' }}>
             <ArrowLeft size={18} />
@@ -322,7 +342,7 @@ export default function RecipeDetail() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto pb-10">
+      <div className="w-full max-w-5xl mx-auto pb-10">
       {/* Hero image — always rendered; gradient placeholder when no image */}
       <div className="mx-4 mt-4 rounded-3xl overflow-hidden aspect-[4/3] lg:aspect-[21/9] mb-6">
         {recipe.image ? (
@@ -376,7 +396,7 @@ export default function RecipeDetail() {
         </div>
 
         {/* ── Sidebar: stats + ingredients + rating (order 2 on mobile, right col on desktop) ── */}
-        <aside className="order-2 lg:[grid-column:2] lg:[grid-row:1/span_3] lg:sticky lg:top-20 space-y-4">
+        <aside className="order-2 lg:[grid-column:2] lg:[grid-row:1/span_3] lg:sticky lg:top-10 space-y-4">
           {/* Stats */}
           <div className="grid grid-cols-4 lg:grid-cols-2 gap-2">
             {[

@@ -71,7 +71,7 @@ export default function EditProfile() {
   }
 
   return (
-    <div className="max-w-lg mx-auto px-4 py-4">
+    <div className="w-full max-w-lg mx-auto px-4 py-4">
       <div className="flex items-center gap-3 mb-6">
         <button onClick={() => navigate(-1)} style={{ color: 'var(--color-muted)' }}><ArrowLeft size={20} /></button>
         <h1 className="font-serif text-xl font-semibold" style={{ color: 'var(--color-text)' }}>Edit Profile</h1>

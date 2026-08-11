@@ -499,7 +499,7 @@ router.put("/:slug", authenticate, handleRecipeMedia, async (req, res) => {
 // POST /api/recipes/:slug/rate
 router.post("/:slug/rate", authenticate, async (req, res) => {
   const { score } = req.body;
-  if (!score || score < 1 || score > 5) return res.status(400).json({ error: "Score must be 1–5" });
+  if (!score || score < 0.5 || score > 5 || (score * 2) % 1 !== 0) return res.status(400).json({ error: "Score must be 0.5–5 in 0.5 increments" });
 
   try {
     const recipe = await prisma.recipe.findUnique({ where: { slug: req.params.slug } });

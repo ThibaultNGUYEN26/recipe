@@ -108,7 +108,7 @@ export default function SavedRecipes() {
   const current = activeTab === 'mine' ? myRecipes : visibleSavedRecipes;
 
   return (
-    <div className="saved-page max-w-6xl mx-auto px-4 py-4 space-y-6 pb-24">
+    <div className="saved-page w-full max-w-6xl mx-auto px-4 py-4 space-y-6 pb-24">
 
       {/* Header */}
       <div className="saved-card flex items-center justify-between p-5 rounded-3xl border shadow-sm"

@@ -204,7 +204,7 @@ model Rating {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   recipeId  Int
   recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
-  score     Int
+  score     Float
   createdAt DateTime @default(now())
 
   @@unique([userId, recipeId])
