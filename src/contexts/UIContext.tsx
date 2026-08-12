@@ -4,7 +4,7 @@ import type { ToastData, TimerData } from '../types';
 interface UIContextValue {
   // Toast
   toast: ToastData | null;
-  showToast: (title: string, description?: string, type?: ToastData['type']) => void;
+  showToast: (title: string, description?: string, type?: ToastData['type'], duration?: number) => void;
 
   // Timer
   activeTimer: TimerData | null;
@@ -53,10 +53,10 @@ export function UIProvider({ children }: { children: ReactNode }) {
   const [notifDrawerOpen, setNotifDrawerOpen] = useState(false);
   const [unreadNotifCount, setUnreadNotifCount] = useState(0);
 
-  const showToast = useCallback((title: string, description?: string, type: ToastData['type'] = 'success') => {
+  const showToast = useCallback((title: string, description?: string, type: ToastData['type'] = 'success', duration = 3500) => {
     const id = ++toastCounter;
     setToast({ id, title, description, type });
-    setTimeout(() => setToast((t) => (t?.id === id ? null : t)), 3500);
+    setTimeout(() => setToast((t) => (t?.id === id ? null : t)), duration);
   }, []);
 
   const startTimer = useCallback((title: string, minutes: number, recipeTitle: string) => {

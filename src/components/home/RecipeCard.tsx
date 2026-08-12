@@ -46,7 +46,7 @@ export default function RecipeCard({ recipe, hideAuthor = false }: Props) {
       setIsSaved(false);
       await apiFetch(`/api/recipes/${recipe.slug}/save`, { method: 'DELETE' });
       queryClient.invalidateQueries({ queryKey: ['saved'] });
-      showToast('Removed from saved');
+      showToast('Removed from saved', undefined, 'success', 6000);
     } else {
       openSaveModal(recipe.slug);
     }
