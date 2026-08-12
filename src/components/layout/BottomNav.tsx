@@ -33,14 +33,15 @@ export default function BottomNav() {
   }
 
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 py-2 px-3 rounded-full shadow-2xl"
+    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 py-1.5 px-2 rounded-full shadow-2xl"
       style={{
         backgroundColor: 'rgba(28,25,23,0.95)',
         backdropFilter: 'blur(20px)',
         border: '1px solid rgba(68,64,60,0.5)',
         marginBottom: 'env(safe-area-inset-bottom)',
+        maxWidth: 'calc(100vw - 24px)',
       }}>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-0.5">
         {NAV.map(({ id, to, labelKey, icon: Icon, authRequired }) => {
           const dest = id === 'profile' && user ? (user.username ? `/u/${encodeURIComponent(user.username)}` : `/profile/${user.id}`) : to;
           const href = (authRequired && !user) ? '/login' : dest;
@@ -51,7 +52,7 @@ export default function BottomNav() {
               : location.pathname.startsWith(to);
           return (
             <Link key={id} to={href}
-              className="flex items-center gap-1.5 px-2.5 py-2 sm:px-4 rounded-full text-[11px] sm:text-xs font-semibold transition-all"
+              className="flex items-center gap-1 px-2 py-1.5 sm:px-4 sm:py-2 rounded-full text-[10px] sm:text-xs font-semibold transition-all whitespace-nowrap"
               style={isActive ? { backgroundColor: '#d97706', color: '#fff' } : { color: '#a8a29e' }}>
               {renderIcon(id, Icon, isActive, 'lg')}
               <span>{t(labelKey)}</span>
