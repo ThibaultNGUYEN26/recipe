@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useUI } from '../../contexts/UIContext';
 import { useAuth } from '../../contexts/AuthContext';
 import type { SavedCategory } from '../../types';
@@ -8,6 +9,7 @@ import { apiFetch } from '../../lib/apiFetch';
 export default function CollectionModal() {
   const { saveModalSlug, closeSaveModal, showToast } = useUI();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [categories, setCategories] = useState<SavedCategory[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -68,6 +70,7 @@ export default function CollectionModal() {
       const data = await res.json();
       if (res.ok) {
         setDone(true);
+        queryClient.invalidateQueries({ queryKey: ['saved'] });
         window.dispatchEvent(new CustomEvent('recipe-saved', {
           detail: { slug: saveModalSlug, savedCategoryId: data.savedCategoryId ?? null },
         }));
