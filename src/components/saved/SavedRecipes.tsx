@@ -62,7 +62,7 @@ export default function SavedRecipes() {
     const res = await apiFetch(`/api/recipes/${slug}/save`, { method: 'DELETE' });
     if (res.ok) {
       queryClient.invalidateQueries({ queryKey: ['saved'] });
-      showToast('Removed from saved');
+      showToast('Removed from saved', undefined, 'success', 6000);
     }
   }
 
@@ -120,17 +120,14 @@ export default function SavedRecipes() {
     <div className="saved-page w-full max-w-6xl mx-auto px-4 py-4 space-y-6 pb-24">
 
       {/* Header */}
-      <div className="saved-card flex items-center justify-between p-5 rounded-3xl border shadow-sm"
+      <div className="saved-card flex items-center justify-between gap-3 px-5 py-4 rounded-3xl border shadow-sm"
         style={{ backgroundColor: 'var(--color-surface)' }}>
-        <div>
-          <h1 className="font-serif text-2xl font-bold flex items-center gap-2" style={{ color: 'var(--color-text)' }}>
-            <Bookmark className="saved-accent w-6 h-6" />
-            Saved Collections
-          </h1>
-          <p className="text-xs mt-0.5" style={{ color: 'var(--color-muted)' }}>Your organized culinary cookbook</p>
-        </div>
+        <h1 className="font-serif text-lg font-bold flex items-center gap-2 min-w-0" style={{ color: 'var(--color-text)' }}>
+          <Bookmark className="saved-accent w-5 h-5 shrink-0" />
+          <span className="truncate">Saved Collections</span>
+        </h1>
         <Link to="/add-recipe"
-          className="saved-primary flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-2xl transition-colors shadow-sm">
+          className="saved-primary shrink-0 flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-2xl transition-colors shadow-sm">
           <Plus className="w-4 h-4" /> New Recipe
         </Link>
       </div>

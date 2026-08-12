@@ -13,7 +13,7 @@ export default function Toast() {
 
   return (
     <div
-      className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 flex items-start gap-3 px-4 py-3 rounded-2xl shadow-lg max-w-[280px] w-auto"
+      className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 flex items-start gap-3 px-4 py-3 rounded-2xl shadow-lg max-w-[320px] w-auto"
       style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
     >
       {icons[toast.type ?? 'success']}
