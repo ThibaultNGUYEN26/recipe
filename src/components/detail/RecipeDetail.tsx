@@ -342,7 +342,7 @@ export default function RecipeDetail() {
         </div>
       </div>
 
-      <div className="w-full max-w-5xl mx-auto pb-10">
+      <div className="w-full max-w-5xl mx-auto pb-24">
       {/* Hero image — always rendered; gradient placeholder when no image */}
       <div className="mx-4 mt-4 rounded-3xl overflow-hidden aspect-[4/3] lg:aspect-[21/9] mb-6">
         {recipe.image ? (
