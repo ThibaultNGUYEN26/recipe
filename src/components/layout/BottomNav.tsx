@@ -51,10 +51,10 @@ export default function BottomNav() {
               : location.pathname.startsWith(to);
           return (
             <Link key={id} to={href}
-              className="flex items-center gap-2 px-3 py-2 sm:px-4 rounded-full text-xs font-semibold transition-all"
+              className="flex items-center gap-1.5 px-2.5 py-2 sm:px-4 rounded-full text-[11px] sm:text-xs font-semibold transition-all"
               style={isActive ? { backgroundColor: '#d97706', color: '#fff' } : { color: '#a8a29e' }}>
               {renderIcon(id, Icon, isActive, 'lg')}
-              <span className="hidden sm:inline">{t(labelKey)}</span>
+              <span>{t(labelKey)}</span>
             </Link>
           );
         })}
