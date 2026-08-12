@@ -7,14 +7,14 @@ import VerifiedBadge from '../profile/VerifiedBadge';
 
 const API = import.meta.env.VITE_API_URL;
 
-interface Props { recipe: RecipeListItem }
+interface Props { recipe: RecipeListItem; hideAuthor?: boolean }
 
 function imgSrc(url: string | null | undefined) {
   if (!url) return null;
   return url.startsWith('/') ? `${API}${url}` : url;
 }
 
-export default function RecipeCard({ recipe }: Props) {
+export default function RecipeCard({ recipe, hideAuthor = false }: Props) {
   const { openSaveModal, openShare, showToast } = useUI();
   const { user } = useAuth();
   const info = recipe.info as Record<string, string> | null | undefined;
@@ -38,6 +38,7 @@ export default function RecipeCard({ recipe }: Props) {
     <article className="recipe-card rounded-3xl overflow-hidden border shadow-sm hover:shadow-md transition-all duration-200 group">
 
       {/* Creator header */}
+      {!hideAuthor && (
       <div className="flex items-center justify-between p-3.5 sm:p-4">
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-10 h-10 rounded-full bg-amber-800 text-white flex items-center justify-center text-sm font-bold shrink-0 ring-2 ring-stone-100 overflow-hidden">
@@ -60,6 +61,7 @@ export default function RecipeCard({ recipe }: Props) {
           </Link>
         )}
       </div>
+      )}
 
       {/* Square image */}
       <Link to={`/recipe/${recipe.slug}`}
@@ -112,6 +114,7 @@ export default function RecipeCard({ recipe }: Props) {
         </Link>
 
         {/* Time & difficulty */}
+        {(info?.totalTime || info?.difficulty) && (
         <div className="recipe-card__muted recipe-card__divider flex items-center gap-4 text-xs font-semibold mt-3 pt-3 border-t">
           {info?.totalTime && (
             <div className="flex items-center gap-1">
@@ -126,10 +129,11 @@ export default function RecipeCard({ recipe }: Props) {
             </div>
           )}
         </div>
+        )}
 
         {/* Actions row */}
         <div className="recipe-card__divider flex items-center justify-between pt-4 mt-3 border-t">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-5">
             <button className="recipe-card__action flex items-center gap-1.5 text-xs font-bold transition-colors">
               <Heart className="w-5 h-5 stroke-[1.8]" />
               <span>{recipe.ratingCount ?? 0}</span>
@@ -137,6 +141,7 @@ export default function RecipeCard({ recipe }: Props) {
             <Link to={`/recipe/${recipe.slug}`}
               className="recipe-card__action flex items-center gap-1.5 text-xs font-bold transition-colors">
               <MessageCircle className="w-5 h-5 stroke-[1.8]" />
+              <span>{recipe.commentCount ?? 0}</span>
             </Link>
             <button onClick={handleShare} className="recipe-card__action transition-colors">
               <Share2 className="w-4 h-4" />

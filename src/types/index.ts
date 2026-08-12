@@ -35,6 +35,7 @@ export interface RecipeListItem {
   authorAvatar?: string | null;
   avgRating?: number | null;
   ratingCount?: number;
+  commentCount?: number;
   savedCategory?: SavedCategory | null;
   recommendationReason?: string;
   contentLanguage?: string;

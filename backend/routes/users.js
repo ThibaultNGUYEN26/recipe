@@ -432,6 +432,8 @@ router.get("/:id/recipes", async (req, res) => {
         category: true,
         images: { where: { isMain: true } },
         translations: true,
+        author: { select: { id: true, name: true, username: true, avatarUrl: true, isVerified: true } },
+        _count: { select: { ratings: true, comments: true } },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -449,6 +451,13 @@ router.get("/:id/recipes", async (req, res) => {
         originalLanguage: selected.originalLanguage,
         availableLanguages: selected.availableLanguages,
         isTranslated: selected.isTranslated,
+        authorId: r.author.id,
+        authorName: r.author.name,
+        authorUsername: r.author.username,
+        authorAvatar: r.author.avatarUrl,
+        authorIsVerified: r.author.isVerified,
+        ratingCount: r._count.ratings,
+        commentCount: r._count.comments,
       };
     }));
   } catch (err) {
