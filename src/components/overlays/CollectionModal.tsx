@@ -16,11 +16,9 @@ export default function CollectionModal() {
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [creating, setCreating] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [done, setDone] = useState(false);
 
   useEffect(() => {
     if (!saveModalSlug || !user) return;
-    setDone(false);
     setSelectedCategoryId(null);
     setNewCategoryName('');
     setLoadingCategories(true);
@@ -69,13 +67,12 @@ export default function CollectionModal() {
       });
       const data = await res.json();
       if (res.ok) {
-        setDone(true);
         queryClient.invalidateQueries({ queryKey: ['saved'] });
         window.dispatchEvent(new CustomEvent('recipe-saved', {
           detail: { slug: saveModalSlug, savedCategoryId: data.savedCategoryId ?? null },
         }));
         showToast(selectedCategoryId ? 'Recipe saved to category!' : 'Recipe saved!', undefined, 'success');
-        window.setTimeout(closeSaveModal, 800);
+        closeSaveModal();
       } else {
         showToast(data.error ?? 'Failed to save', undefined, 'error');
       }
@@ -97,13 +94,7 @@ export default function CollectionModal() {
           <h2 className="font-serif text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Save recipe</h2>
           <button onClick={closeSaveModal} style={{ color: 'var(--color-muted)' }}><X size={20} /></button>
         </div>
-        {done ? (
-          <div className="flex flex-col items-center gap-2 py-4">
-            <Check size={32} className="text-green-500" />
-            <p className="text-sm" style={{ color: 'var(--color-muted)' }}>Saved to your collection</p>
-          </div>
-        ) : (
-          <>
+        <>
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: 'var(--color-muted)' }}>
                 Choose a category
@@ -169,7 +160,6 @@ export default function CollectionModal() {
               {saving ? 'Saving…' : 'Save recipe'}
             </button>
           </>
-        )}
       </div>
     </div>
   );
