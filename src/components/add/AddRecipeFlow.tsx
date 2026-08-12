@@ -11,6 +11,8 @@ import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-cr
 import 'react-image-crop/dist/ReactCrop.css';
 import { apiFetch } from '../../lib/apiFetch';
 
+const DRAFT_KEY = 'recipe_draft';
+
 const PRESET_IMAGES = [
   { url: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600', name: 'Fresh Bowl' },
   { url: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600', name: 'Pizza' },
@@ -113,7 +115,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
   const [difficulty, setDifficulty] = useState('Facile');
   const [prepTime, setPrepTime] = useState('');
   const [cookTime, setCookTime] = useState('');
-  const [servings, setServings] = useState(4);
+  const [servings, setServings] = useState('4');
   const [dietaryTags, setDietaryTags] = useState<string[]>([]);
   const [referenceTagsInput, setReferenceTagsInput] = useState('');
   const [videoFile, setVideoFile] = useState<File | null>(null);
@@ -140,6 +142,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
   const [importingTikTok, setImportingTikTok] = useState(false);
   const [importedSource, setImportedSource] = useState<TikTokImportSource | null>(null);
   const [importWarnings, setImportWarnings] = useState<string[]>([]);
+  const [draftRestored, setDraftRestored] = useState(false);
 
   useEffect(() => {
     apiFetch('/api/categories')
@@ -154,6 +157,50 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
       .catch(console.error);
   }, [pendingCategoryLabel]);
 
+  // Restore draft on mount (new recipes only)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (editSlug) return;
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) return;
+    try {
+      const d = JSON.parse(raw);
+      if (d.translations) setTranslations(d.translations);
+      if (d.slug) setSlug(d.slug);
+      if (d.categoryId) setCategoryId(d.categoryId);
+      if (d.difficulty) setDifficulty(d.difficulty);
+      if (d.prepTime) setPrepTime(d.prepTime);
+      if (d.cookTime) setCookTime(d.cookTime);
+      if (d.servings) setServings(d.servings);
+      if (d.dietaryTags) setDietaryTags(d.dietaryTags);
+      if (d.referenceTagsInput) setReferenceTagsInput(d.referenceTagsInput);
+      if (d.coverImage) setCoverImage(d.coverImage);
+      if (d.stepPage) setStepPage(d.stepPage);
+      setDraftRestored(true);
+    } catch { localStorage.removeItem(DRAFT_KEY); }
+  }, []); // run once on mount
+
+  // Auto-save draft (debounced, new recipes only)
+  useEffect(() => {
+    if (editSlug) return;
+    const hasContent = slug || Object.values(translations).some(
+      (t) => t.title || t.steps.some((s) => s.instruction) ||
+             t.ingredients.some((sec) => sec.rows.some((r) => r.name)),
+    );
+    if (!hasContent) return;
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(DRAFT_KEY, JSON.stringify({
+          stepPage, translations, slug, categoryId, difficulty,
+          prepTime, cookTime, servings, dietaryTags, referenceTagsInput,
+          coverImage: coverImage.startsWith('blob:') ? PRESET_IMAGES[0].url : coverImage,
+        }));
+      } catch { /* quota exceeded */ }
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [editSlug, stepPage, translations, slug, categoryId, difficulty,
+    prepTime, cookTime, servings, dietaryTags, referenceTagsInput, coverImage]);
+
   // Pre-fill form when editing an existing recipe
   useEffect(() => {
     if (!editSlug) return;
@@ -165,7 +212,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
         const info = (recipe.info as Record<string, unknown>) || {};
         if (info.prepTime) setPrepTime(String(info.prepTime).replace(' min', ''));
         if (info.cookTime) setCookTime(String(info.cookTime).replace(' min', ''));
-        if (typeof info.servings === 'number') setServings(info.servings);
+        if (typeof info.servings === 'number') setServings(String(info.servings));
         if (info.difficulty) setDifficulty(String(info.difficulty));
         const allTags = (recipe.tags as string[]) || [];
         setDietaryTags(allTags.filter((t) => DIETARY_LIST.includes(t)));
@@ -190,7 +237,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
             description: recipe.description || '',
             ingredients: sections.length ? sections : emptyTranslation().ingredients,
             steps: steps.length ? steps : emptyTranslation().steps,
-            tips: Array.isArray(recipe.tips) ? recipe.tips.join('\n') : (recipe.tips || ''),
+            tips: Array.isArray(recipe.tips) ? recipe.tips.map((t) => `• ${t}`).join('\n') : (recipe.tips || ''),
           },
         }));
       })
@@ -244,7 +291,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
           description: payload.draft.description || previous[editLang].description,
           ingredients: ingredientSections || previous[editLang].ingredients,
           steps: steps || previous[editLang].steps,
-          tips: payload.draft.tips.length ? payload.draft.tips.join('\n') : previous[editLang].tips,
+          tips: payload.draft.tips.length ? payload.draft.tips.map((t) => `• ${t}`).join('\n') : previous[editLang].tips,
         },
       }));
       setSlug((current) => current || slugify(payload.draft.title));
@@ -379,7 +426,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
         prepTime: prepTime ? `${prepTime} min` : undefined,
         cookTime: cookTime ? `${cookTime} min` : undefined,
         totalTime,
-        servings,
+        servings: parseInt(servings) || 1,
         difficulty,
       };
 
@@ -400,7 +447,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
               text: s.instruction.trim(),
               timerMinutes: s.timerMinutes ? parseInt(s.timerMinutes) : undefined,
             })),
-            tips: t.tips ? t.tips.split('\n').filter(Boolean) : undefined,
+            tips: t.tips ? t.tips.split('\n').map((l) => l.replace(/^•\s*/, '').trim()).filter(Boolean) : undefined,
           };
         });
 
@@ -437,6 +484,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
         queryClient.invalidateQueries({ queryKey: ['discover'] });
         if (editSlug) queryClient.invalidateQueries({ queryKey: ['recipe', editSlug] });
         showToast(editSlug ? 'Recipe updated!' : 'Recipe published!', undefined, 'success');
+        if (!editSlug) localStorage.removeItem(DRAFT_KEY);
         navigate(`/recipe/${d.slug}`);
       } else {
         const d = await res.json();
@@ -447,11 +495,32 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
     }
   }
 
+  function discardDraft() {
+    localStorage.removeItem(DRAFT_KEY);
+    setTranslations({ fr: emptyTranslation(), en: emptyTranslation(), es: emptyTranslation() });
+    setSlug(''); setCategoryId(''); setDifficulty('Facile');
+    setPrepTime(''); setCookTime(''); setServings('4');
+    setDietaryTags([]); setReferenceTagsInput('');
+    setCoverImage(PRESET_IMAGES[0].url); setStepPage(1);
+    setDraftRestored(false);
+  }
+
   const inputCls = "w-full bg-stone-50 border border-stone-200 text-stone-900 text-sm rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-amber-800/30 font-medium";
   const labelCls = "text-xs font-bold text-stone-700 uppercase tracking-wider";
 
   return (
     <div className="add-recipe-page w-full max-w-2xl mx-auto px-4 space-y-6 py-4 pb-24">
+
+      {/* Draft restored banner */}
+      {draftRestored && (
+        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200">
+          <span className="text-xs font-semibold text-amber-800">📝 Draft restored — pick up where you left off</span>
+          <button onClick={discardDraft}
+            className="text-xs font-bold text-rose-600 hover:text-rose-800 transition-colors shrink-0">
+            Discard
+          </button>
+        </div>
+      )}
 
       {/* Header */}
       <div className="p-5 rounded-3xl border border-stone-200/80 shadow-sm flex items-center justify-between"
@@ -471,7 +540,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
         {([1, 2, 3] as const).map((n) => (
           <button key={n} onClick={() => setStepPage(n)}
             className={`add-recipe-tab py-2 text-xs font-bold rounded-xl transition-all ${stepPage === n ? 'add-recipe-tab--active' : ''}`}>
-            {n === 1 ? 'Basic Info' : n === 2 ? 'Ingredients' : 'Tags & Publish'}
+            {n === 1 ? 'Basic Info' : n === 2 ? 'Ingredients & Steps' : 'Tags & Publish'}
           </button>
         ))}
       </div>
@@ -637,7 +706,9 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
             ))}
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">Servings</label>
-              <input type="number" min={1} value={servings} onChange={(e) => setServings(parseInt(e.target.value) || 1)}
+              <input type="text" inputMode="numeric" value={servings}
+                onChange={(e) => setServings(e.target.value.replace(/[^0-9]/g, ''))}
+                onBlur={() => { if (!servings || parseInt(servings) < 1) setServings('1'); }}
                 className="w-full bg-stone-50 border border-stone-200 text-stone-900 text-xs font-bold rounded-xl px-3 py-2 focus:outline-none text-center" />
             </div>
             <div className="space-y-1">
@@ -706,22 +777,22 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                       <div key={row.id} className="bg-stone-50 p-3 rounded-2xl border border-stone-200/80 space-y-2">
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-mono text-stone-400 w-5 text-center shrink-0">{idx + 1}.</span>
-                          <input type="text" placeholder="Ingredient name…" value={row.name}
-                            onChange={(e) => updateIngredient(sec.id, row.id, 'name', e.target.value)}
-                            className="flex-1 min-w-0 bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 font-medium focus:outline-none" />
+                          <input type="text" value={row.amount} onChange={(e) => updateIngredient(sec.id, row.id, 'amount', e.target.value)}
+                            placeholder="Amount"
+                            className="bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 font-bold text-center focus:outline-none w-20 shrink-0" />
+                          <input type="text" placeholder="Unit (g, tbsp…)" value={row.unit}
+                            onChange={(e) => updateIngredient(sec.id, row.id, 'unit', e.target.value)}
+                            className="bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 focus:outline-none w-24 shrink-0" />
                           <button type="button" onClick={() => removeIngredient(sec.id, row.id)}
                             disabled={sec.rows.length === 1}
                             className="p-1.5 text-stone-400 hover:text-rose-600 rounded-lg hover:bg-stone-200 transition-colors disabled:opacity-30 shrink-0">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
-                        <div className="grid grid-cols-2 gap-2">
-                          <input type="text" value={row.amount} onChange={(e) => updateIngredient(sec.id, row.id, 'amount', e.target.value)}
-                            placeholder="Amount"
-                            className="bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 font-bold text-center focus:outline-none w-full" />
-                          <input type="text" placeholder="Unit (g, tbsp…)" value={row.unit}
-                            onChange={(e) => updateIngredient(sec.id, row.id, 'unit', e.target.value)}
-                            className="bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 focus:outline-none w-full" />
+                        <div className="pl-7">
+                          <input type="text" placeholder="Ingredient name…" value={row.name}
+                            onChange={(e) => updateIngredient(sec.id, row.id, 'name', e.target.value)}
+                            className="w-full bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 font-medium focus:outline-none" />
                         </div>
                       </div>
                     ))}
@@ -741,12 +812,8 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
             <div className="flex items-center justify-between border-b border-stone-100 pb-3">
               <div>
                 <h2 className="font-serif text-lg font-bold" style={{ color: 'var(--color-text)' }}>Preparation Steps</h2>
-                <p className="text-xs" style={{ color: 'var(--color-muted)' }}>Order steps logically, add timer durations</p>
+                <p className="text-xs" style={{ color: 'var(--color-muted)' }}>Order steps logically</p>
               </div>
-              <button type="button" onClick={addStep}
-                className="add-recipe-accent-soft flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-xl transition-colors shrink-0">
-                <Plus className="w-3.5 h-3.5" /> Add Step
-              </button>
             </div>
             <div className="space-y-3">
               {tr.steps.map((st, idx) => (
@@ -771,11 +838,14 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                   <textarea rows={3} placeholder="Describe what to do in this step…" value={st.instruction}
                     onChange={(e) => updateStep(st.id, 'instruction', e.target.value)}
                     className="w-full bg-white text-xs border border-stone-200 rounded-xl p-3 focus:outline-none resize-none" />
-                  <input type="number" placeholder="Timer in minutes (optional)" value={st.timerMinutes}
-                    onChange={(e) => updateStep(st.id, 'timerMinutes', e.target.value)}
-                    className="w-full bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 focus:outline-none font-mono" />
                 </div>
               ))}
+            </div>
+            <div className="flex justify-end">
+              <button type="button" onClick={addStep}
+                className="add-recipe-accent-soft flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-xl transition-colors">
+                <Plus className="w-3.5 h-3.5" /> Add Step
+              </button>
             </div>
           </section>
 
@@ -878,8 +948,21 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
             <p className="text-xs" style={{ color: 'var(--color-muted)' }}>
               Add substitutions, technique notes, or serving advice.
             </p>
-            <textarea rows={3} value={tr.tips} onChange={(e) => setTr({ tips: e.target.value })}
-              placeholder={'e.g. Reserve pasta water before draining\nSubstitute with lemon juice'}
+            <textarea rows={4} value={tr.tips}
+              placeholder={'• Reserve pasta water before draining\n• Substitute with lemon juice'}
+              onChange={(e) => setTr({ tips: e.target.value })}
+              onFocus={(e) => { if (!e.target.value) setTr({ tips: '• ' }); }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  const el = e.currentTarget;
+                  const pos = el.selectionStart;
+                  const val = el.value;
+                  const newVal = val.slice(0, pos) + '\n• ' + val.slice(el.selectionEnd);
+                  setTr({ tips: newVal });
+                  requestAnimationFrame(() => { el.selectionStart = el.selectionEnd = pos + 3; });
+                }
+              }}
               className="w-full bg-stone-50 border border-stone-200 text-stone-900 text-xs rounded-xl p-3 focus:outline-none resize-none font-medium" />
           </div>
 

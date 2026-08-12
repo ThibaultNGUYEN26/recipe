@@ -470,30 +470,6 @@ export default function RecipeDetail() {
             ))}
           </div>
 
-          {/* Rating */}
-          <div className="rounded-2xl p-4 space-y-3" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
-            <div className="flex items-center justify-between">
-              <h2 className="font-serif text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Ratings</h2>
-              {recipe.avgRating != null && (
-                <div className="flex items-center gap-1.5">
-                  <Star size={16} className="text-amber-500 fill-amber-500" />
-                  <span className="font-semibold text-sm" style={{ color: 'var(--color-text)' }}>{recipe.avgRating.toFixed(1)}</span>
-                  <span className="text-xs" style={{ color: 'var(--color-muted)' }}>({recipe.ratingCount})</span>
-                </div>
-              )}
-            </div>
-            {user ? (
-              <div>
-                <p className="text-xs mb-2" style={{ color: 'var(--color-muted)' }}>{userScore ? 'Your rating' : 'Rate this recipe'}</p>
-                <StarRow value={userScore} onChange={rate} />
-              </div>
-            ) : (
-              <p className="text-xs" style={{ color: 'var(--color-muted)' }}>
-                <Link to="/login" className="text-amber-800 underline">Sign in</Link> to rate this recipe
-              </p>
-            )}
-          </div>
-
           {/* Nutrition */}
           {recipe.nutrition && (
             <div className="rounded-2xl p-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
@@ -571,6 +547,30 @@ export default function RecipeDetail() {
               ))}
             </div>
           )}
+
+          {/* Rating */}
+          <div className="rounded-2xl p-4 space-y-3" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+            <div className="flex items-center justify-between">
+              <h2 className="font-serif text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Ratings</h2>
+              {recipe.avgRating != null && (
+                <div className="flex items-center gap-1.5">
+                  <Star size={16} className="text-amber-500 fill-amber-500" />
+                  <span className="font-semibold text-sm" style={{ color: 'var(--color-text)' }}>{recipe.avgRating.toFixed(1)}</span>
+                  <span className="text-xs" style={{ color: 'var(--color-muted)' }}>({recipe.ratingCount})</span>
+                </div>
+              )}
+            </div>
+            {user && user.id !== recipe.authorId ? (
+              <div>
+                <p className="text-xs mb-2" style={{ color: 'var(--color-muted)' }}>{userScore ? 'Your rating' : 'Rate this recipe'}</p>
+                <StarRow value={userScore} onChange={rate} />
+              </div>
+            ) : !user ? (
+              <p className="text-xs" style={{ color: 'var(--color-muted)' }}>
+                <Link to="/login" className="text-amber-800 underline">Sign in</Link> to rate this recipe
+              </p>
+            ) : null}
+          </div>
         </div>
 
         {/* ── Comments (order 4 on mobile, left col row 3 on desktop) ── */}
