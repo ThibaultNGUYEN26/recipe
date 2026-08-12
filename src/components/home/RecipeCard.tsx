@@ -69,7 +69,7 @@ export default function RecipeCard({ recipe, hideAuthor = false }: Props) {
       {!hideAuthor && (
       <div className="flex items-center justify-between p-3.5 sm:p-4">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-10 h-10 rounded-full bg-amber-800 text-white flex items-center justify-center text-sm font-bold shrink-0 ring-2 ring-stone-100 overflow-hidden">
+          <div className="w-10 h-10 rounded-full bg-amber-800 text-white flex items-center justify-center text-sm font-bold shrink-0 ring-2 ring-amber-700 overflow-hidden">
             {recipe.authorAvatar
               ? <img src={imgSrc(recipe.authorAvatar)!} alt="" className="w-full h-full object-cover" />
               : (recipe.authorName?.[0]?.toUpperCase() ?? '?')}

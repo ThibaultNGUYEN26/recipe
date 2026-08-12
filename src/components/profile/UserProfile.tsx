@@ -247,7 +247,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
         <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 text-center sm:text-left">
 
           {/* Avatar */}
-          <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-amber-800 text-white flex items-center justify-center text-3xl font-bold shrink-0 ring-4 ring-amber-700/20 shadow-md overflow-hidden">
+          <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-amber-800 text-white flex items-center justify-center text-3xl font-bold shrink-0 ring-4 ring-amber-700 shadow-md overflow-hidden">
             {profile.avatarUrl
               ? <img src={imgSrc(profile.avatarUrl)!} alt="" className="w-full h-full object-cover" />
               : profile.name?.[0]?.toUpperCase() ?? '?'}

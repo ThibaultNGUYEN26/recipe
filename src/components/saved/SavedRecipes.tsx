@@ -122,9 +122,9 @@ export default function SavedRecipes() {
       {/* Header */}
       <div className="saved-card flex items-center justify-between gap-3 px-5 py-4 rounded-3xl border shadow-sm"
         style={{ backgroundColor: 'var(--color-surface)' }}>
-        <h1 className="font-serif text-lg font-bold flex items-center gap-2 min-w-0" style={{ color: 'var(--color-text)' }}>
+        <h1 className="font-serif text-base sm:text-lg font-bold flex items-center gap-2 min-w-0" style={{ color: 'var(--color-text)' }}>
           <Bookmark className="saved-accent w-5 h-5 shrink-0" />
-          <span className="truncate">Saved Collections</span>
+          Saved Collections
         </h1>
         <Link to="/add-recipe"
           className="saved-primary shrink-0 flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-2xl transition-colors shadow-sm">
