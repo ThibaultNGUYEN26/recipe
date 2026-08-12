@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import {
   Search, SlidersHorizontal, Star, Clock, UserPlus, X,
   Sparkles, Flame, ChefHat
@@ -36,10 +37,7 @@ export default function SearchDiscover() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [query, setQuery] = useState('');
-  const [allRecipes, setAllRecipes] = useState<RecipeListItem[]>([]);
-  const [discoveryRecipes, setDiscoveryRecipes] = useState<RecipeListItem[]>([]);
   const [users, setUsers] = useState<UserResult[]>([]);
-  const [loading, setLoading] = useState(true);
 
   // Filters
   const [difficulty, setDifficulty] = useState('All');
@@ -48,20 +46,20 @@ export default function SearchDiscover() {
   const [dietary, setDietary] = useState<string | null>(null);
   const [showFilterModal, setShowFilterModal] = useState(false);
 
-  useEffect(() => {
-    inputRef.current?.focus();
-    Promise.all([
-      apiFetch(`/api/recipes?lang=${language}`).then((response) => response.json()),
-      apiFetch(`/api/recipes/recommended?lang=${language}`).then((response) => response.ok ? response.json() : null),
-    ])
-      .then(([all, recommendations]) => {
-        const recipes = Array.isArray(all) ? all : [];
-        setAllRecipes(recipes);
-        setDiscoveryRecipes(Array.isArray(recommendations?.trending) ? recommendations.trending : recipes);
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [language]);
+  const { data, isLoading: loading } = useQuery({
+    queryKey: ['discover', language],
+    queryFn: () =>
+      Promise.all([
+        apiFetch(`/api/recipes?lang=${language}`).then((r) => r.json()),
+        apiFetch(`/api/recipes/recommended?lang=${language}`).then((r) => (r.ok ? r.json() : null)),
+      ]).then(([all, recommendations]) => ({
+        allRecipes: Array.isArray(all) ? (all as RecipeListItem[]) : [],
+        discoveryRecipes: Array.isArray(recommendations?.trending) ? recommendations.trending : (Array.isArray(all) ? all : []),
+      })),
+  });
+
+  const allRecipes: RecipeListItem[] = data?.allRecipes ?? [];
+  const discoveryRecipes: RecipeListItem[] = data?.discoveryRecipes ?? [];
 
   // Fast, debounced creator search by @username or display name.
   useEffect(() => {

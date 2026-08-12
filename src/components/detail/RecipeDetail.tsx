@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -161,9 +162,8 @@ export default function RecipeDetail() {
   const { user } = useAuth();
   const { openShare, openSaveModal, openReport, startTimer, showToast } = useUI();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  const [recipe, setRecipe] = useState<RecipeDetailType | null>(null);
-  const [loading, setLoading] = useState(true);
   const [servings, setServings] = useState(1);
   const [checkedIngredients, setCheckedIngredients] = useState<Set<string>>(new Set());
   const [userScore, setUserScore] = useState(0);
@@ -176,45 +176,55 @@ export default function RecipeDetail() {
     setContentLanguage(null);
   }, [slug, language]);
 
-  useEffect(() => {
-    if (!slug) return;
-    setLoading(true);
-    Promise.all([
-      apiFetch(`/api/recipes/${slug}?lang=${contentLanguage ?? language}`).then((r) => r.json()),
-      apiFetch(`/api/recipes/${slug}/comments`).then((r) => r.json()),
-    ])
-      .then(([rd, cm]) => {
-        setRecipe(rd);
-        setServings((rd.info as Record<string, unknown> | null | undefined)?.servings as number ?? 4);
-        setUserScore(rd.myRating ?? 0);
-        setComments(Array.isArray(cm) ? cm : []);
-        if (!rd.error) {
-          const storageKey = 'savor-analytics-visitor';
-          let visitorId = localStorage.getItem(storageKey);
-          if (!visitorId) {
-            visitorId = crypto.randomUUID();
-            localStorage.setItem(storageKey, visitorId);
-          }
-          apiFetch(`/api/recipes/${slug}/view`, {
-            method: 'POST',
-            body: JSON.stringify({ visitorId }),
-          }).catch(() => {});
+  const { data: recipe, isLoading: loading } = useQuery<RecipeDetailType>({
+    queryKey: ['recipe', slug, contentLanguage ?? language],
+    queryFn: async () => {
+      const r = await apiFetch(`/api/recipes/${slug}?lang=${contentLanguage ?? language}`);
+      const data = await r.json();
+      // Track view
+      if (!data.error) {
+        let visitorId = localStorage.getItem('savor-analytics-visitor');
+        if (!visitorId) {
+          visitorId = crypto.randomUUID();
+          localStorage.setItem('savor-analytics-visitor', visitorId);
         }
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [slug, language, contentLanguage]);
+        apiFetch(`/api/recipes/${slug}/view`, { method: 'POST', body: JSON.stringify({ visitorId }) }).catch(() => {});
+      }
+      return data;
+    },
+    enabled: Boolean(slug),
+  });
+
+  const { data: fetchedComments } = useQuery<Comment[]>({
+    queryKey: ['comments', slug],
+    queryFn: () => apiFetch(`/api/recipes/${slug}/comments`).then((r) => r.json()),
+    enabled: Boolean(slug),
+  });
+
+  // Sync fetched comments into local state (local state used for optimistic updates)
+  useEffect(() => {
+    if (fetchedComments) setComments(Array.isArray(fetchedComments) ? fetchedComments : []);
+  }, [fetchedComments]);
+
+  useEffect(() => {
+    if (recipe && !recipe.error) {
+      setServings((recipe.info as Record<string, unknown> | null | undefined)?.servings as number ?? 4);
+      setUserScore(recipe.myRating ?? 0);
+    }
+  }, [recipe?.slug]);
 
   useEffect(() => {
     function handleRecipeSaved(event: Event) {
       const detail = (event as CustomEvent<{ slug: string; savedCategoryId: number | null }>).detail;
       if (detail.slug === slug) {
-        setRecipe((current) => current ? { ...current, isSaved: true, savedCategoryId: detail.savedCategoryId } : current);
+        queryClient.setQueryData<RecipeDetailType>(['recipe', slug, contentLanguage ?? language], (old) =>
+          old ? { ...old, isSaved: true, savedCategoryId: detail.savedCategoryId } : old
+        );
       }
     }
     window.addEventListener('recipe-saved', handleRecipeSaved);
     return () => window.removeEventListener('recipe-saved', handleRecipeSaved);
-  }, [slug]);
+  }, [slug, contentLanguage, language]);
 
   useEffect(() => {
     if (!recipe?.title) return;
@@ -232,7 +242,9 @@ export default function RecipeDetail() {
     });
     if (res.ok) {
       const d = await res.json();
-      setRecipe((r) => r ? { ...r, avgRating: d.avgRating, ratingCount: d.ratingCount, myRating: d.myRating } : r);
+      queryClient.setQueryData<RecipeDetailType>(['recipe', slug, contentLanguage ?? language], (old) =>
+        old ? { ...old, avgRating: d.avgRating, ratingCount: d.ratingCount, myRating: d.myRating } : old
+      );
       showToast('Rating saved!');
     }
   }
@@ -242,7 +254,10 @@ export default function RecipeDetail() {
     if (!recipe) return;
     if (recipe.isSaved) {
       await apiFetch(`/api/recipes/${slug}/save`, { method: 'DELETE' });
-      setRecipe((r) => r ? { ...r, isSaved: false, savedCategoryId: null } : r);
+      queryClient.setQueryData<RecipeDetailType>(['recipe', slug, contentLanguage ?? language], (old) =>
+        old ? { ...old, isSaved: false, savedCategoryId: null } : old
+      );
+      queryClient.invalidateQueries({ queryKey: ['saved'] });
       showToast('Removed from saved');
     } else {
       openSaveModal(slug!);
@@ -261,6 +276,7 @@ export default function RecipeDetail() {
         const c: Comment = await res.json();
         setComments((prev) => [c, ...prev]);
         setCommentText('');
+        queryClient.invalidateQueries({ queryKey: ['comments', slug] });
       }
     } finally {
       setSubmittingComment(false);
@@ -269,7 +285,10 @@ export default function RecipeDetail() {
 
   function deleteComment(id: number) {
     apiFetch(`/api/recipes/${slug}/comments/${id}`, { method: 'DELETE' })
-      .then(() => setComments((prev) => prev.filter((c) => c.id !== id)));
+      .then(() => {
+        setComments((prev) => prev.filter((c) => c.id !== id));
+        queryClient.invalidateQueries({ queryKey: ['comments', slug] });
+      });
   }
 
   function handleLike(id: number, isLiked: boolean, likesCount: number) {
@@ -302,7 +321,7 @@ export default function RecipeDetail() {
     </div>
   );
 
-  if (!recipe) return (
+  if (!recipe || (recipe as { error?: string }).error) return (
     <div className="text-center py-20">
       <p className="text-4xl mb-3">🍽️</p>
       <p style={{ color: 'var(--color-muted)' }}>Recipe not found</p>

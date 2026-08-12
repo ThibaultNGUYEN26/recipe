@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '../../contexts/LanguageContext';
 import RecipeCard from './RecipeCard';
 import type { RecipeListItem } from '../../types';
@@ -73,31 +74,27 @@ function HeroCard({ recipe }: { recipe: RecipeListItem }) {
 export default function HomeFeed() {
   const { language, t } = useLanguage();
   const { user } = useAuth();
-  const [recipes, setRecipes] = useState<RecipeListItem[]>([]);
-  const [trending, setTrending] = useState<RecipeListItem[]>([]);
-  const [following, setFollowing] = useState<RecipeListItem[]>([]);
-  const [isPersonalized, setIsPersonalized] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<'all' | 'following' | 'trending' | 'quick' | 'vegetarian'>('all');
 
-  useEffect(() => {
-    setLoading(true);
-    apiFetch(`/api/recipes/recommended?lang=${language}`)
-      .then(async (response) => {
-        if (!response.ok) throw new Error('Recommendations unavailable');
-        return response.json();
-      })
-      .then((data) => {
-        setRecipes(Array.isArray(data.personalized) ? data.personalized : []);
-        setTrending(Array.isArray(data.trending) ? data.trending : []);
-        setFollowing(Array.isArray(data.following) ? data.following : []);
-        setIsPersonalized(Boolean(data.personalizedForUser));
-      })
-      .catch(() => apiFetch(`/api/recipes?lang=${language}`)
-        .then((response) => response.json())
-        .then((data) => setRecipes(Array.isArray(data) ? data : [])))
-      .finally(() => setLoading(false));
-  }, [language, user?.id]);
+  const { data, isLoading: loading } = useQuery({
+    queryKey: ['feed', language, user?.id],
+    queryFn: () =>
+      apiFetch(`/api/recipes/recommended?lang=${language}`)
+        .then(async (r) => {
+          if (!r.ok) throw new Error('unavailable');
+          return r.json();
+        })
+        .catch(() =>
+          apiFetch(`/api/recipes?lang=${language}`)
+            .then((r) => r.json())
+            .then((d) => ({ personalized: Array.isArray(d) ? d : [], trending: [], following: [], personalizedForUser: false }))
+        ),
+  });
+
+  const recipes: RecipeListItem[] = data?.personalized ?? [];
+  const trending: RecipeListItem[] = data?.trending ?? [];
+  const following: RecipeListItem[] = data?.following ?? [];
+  const isPersonalized = Boolean(data?.personalizedForUser);
 
   const sourceRecipes = activeFilter === 'trending' ? trending : activeFilter === 'following' ? following : recipes;
   const filteredRecipes = sourceRecipes.filter((r) => {

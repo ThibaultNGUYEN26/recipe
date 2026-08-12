@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useUI } from '../../contexts/UIContext';
@@ -19,40 +20,50 @@ export default function SavedRecipes() {
   const { user } = useAuth();
   const { language } = useLanguage();
   const { showToast } = useUI();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'mine' | 'saved'>('mine');
-  const [myRecipes, setMyRecipes] = useState<RecipeListItem[]>([]);
-  const [savedRecipes, setSavedRecipes] = useState<RecipeListItem[]>([]);
-  const [savedCategories, setSavedCategories] = useState<SavedCategory[]>([]);
   const [activeSavedCategory, setActiveSavedCategory] = useState<'all' | 'favorites' | number>('all');
   const [newCategoryName, setNewCategoryName] = useState('');
   const [creatingCategory, setCreatingCategory] = useState(false);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!user) return;
-    setLoading(true);
-    Promise.all([
-      apiFetch(`/api/users/me/recipes?lang=${language}`).then((r) => r.json()),
-      apiFetch(`/api/users/me/saved?lang=${language}`).then((r) => r.json()),
-      apiFetch('/api/users/me/saved-categories').then((r) => r.json()),
-    ])
-      .then(([mine, saved, categories]) => {
-        setMyRecipes(Array.isArray(mine) ? mine : []);
-        setSavedRecipes(Array.isArray(saved) ? saved : []);
-        setSavedCategories(Array.isArray(categories) ? categories : []);
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [user, language]);
+  const { data: myRecipes = [], isLoading: loadingMine } = useQuery<RecipeListItem[]>({
+    queryKey: ['myRecipes', language],
+    queryFn: () => apiFetch(`/api/users/me/recipes?lang=${language}`).then((r) => r.json()),
+    enabled: Boolean(user),
+    select: (d) => (Array.isArray(d) ? d : []),
+  });
+
+  const { data: savedRecipes = [], isLoading: loadingSaved } = useQuery<RecipeListItem[]>({
+    queryKey: ['saved', language],
+    queryFn: () => apiFetch(`/api/users/me/saved?lang=${language}`).then((r) => r.json()),
+    enabled: Boolean(user),
+    select: (d) => (Array.isArray(d) ? d : []),
+  });
+
+  const { data: savedCategories = [] } = useQuery<SavedCategory[]>({
+    queryKey: ['savedCategories'],
+    queryFn: () => apiFetch('/api/users/me/saved-categories').then((r) => r.json()),
+    enabled: Boolean(user),
+    select: (d) => (Array.isArray(d) ? d : []),
+  });
+
+  const loading = loadingMine || loadingSaved;
 
   async function deleteRecipe(slug: string) {
     const res = await apiFetch(`/api/recipes/${slug}`, { method: 'DELETE' });
-    if (res.ok) { setMyRecipes((p) => p.filter((r) => r.slug !== slug)); showToast('Recipe deleted'); }
+    if (res.ok) {
+      queryClient.invalidateQueries({ queryKey: ['myRecipes'] });
+      queryClient.invalidateQueries({ queryKey: ['feed'] });
+      showToast('Recipe deleted');
+    }
   }
 
   async function unsaveRecipe(slug: string) {
     const res = await apiFetch(`/api/recipes/${slug}/save`, { method: 'DELETE' });
-    if (res.ok) { setSavedRecipes((p) => p.filter((r) => r.slug !== slug)); showToast('Removed from saved'); }
+    if (res.ok) {
+      queryClient.invalidateQueries({ queryKey: ['saved'] });
+      showToast('Removed from saved');
+    }
   }
 
   async function createSavedCategory() {
@@ -66,7 +77,7 @@ export default function SavedRecipes() {
       });
       const data = await res.json();
       if (!res.ok) { showToast(data.error ?? 'Failed to create category', undefined, 'error'); return; }
-      setSavedCategories((previous) => [...previous, data].sort((a, b) => a.name.localeCompare(b.name)));
+      queryClient.invalidateQueries({ queryKey: ['savedCategories'] });
       setActiveSavedCategory(data.id);
       setNewCategoryName('');
       showToast('Category created');
@@ -83,10 +94,8 @@ export default function SavedRecipes() {
       body: JSON.stringify({ savedCategoryId }),
     });
     if (!res.ok) { showToast('Failed to move recipe', undefined, 'error'); return; }
+    queryClient.invalidateQueries({ queryKey: ['saved'] });
     const category = savedCategories.find((item) => item.id === savedCategoryId) ?? null;
-    setSavedRecipes((previous) => previous.map((recipe) => recipe.slug === slug
-      ? { ...recipe, savedCategory: category }
-      : recipe));
     showToast(category ? `Moved to ${category.name}` : 'Moved to Favorites');
   }
 

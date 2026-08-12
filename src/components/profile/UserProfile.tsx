@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUI } from '../../contexts/UIContext';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -29,13 +30,10 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
   const { showToast, openShare } = useUI();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const queryClient = useQueryClient();
 
-  const [profile, setProfile] = useState<UserProfileType | null>(null);
-  const [recipes, setRecipes] = useState<RecipeListItem[]>([]);
-  const [savedRecipes, setSavedRecipes] = useState<RecipeListItem[]>([]);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'recipes' | 'saved'>('recipes');
 
   // Edit modal
@@ -54,48 +52,63 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
 
   const isOwnProfile = me && userId && parseInt(userId) === me.id;
 
+  const { data: profile, isLoading: loading } = useQuery({
+    queryKey: ['profile', userId],
+    queryFn: async () => {
+      const r = await apiFetch(`/api/users/${userId}`);
+      const data = await r.json();
+      if (data.error) throw new Error(data.error);
+      return data as UserProfileType;
+    },
+    enabled: Boolean(userId),
+  });
+
+  const { data: recipes = [] } = useQuery<RecipeListItem[]>({
+    queryKey: ['userRecipes', userId, language],
+    queryFn: () => apiFetch(`/api/users/${userId}/recipes?lang=${language}`).then((r) => r.json()),
+    enabled: Boolean(userId),
+    select: (d) => (Array.isArray(d) ? d : []),
+  });
+
+  const { data: savedRecipes = [] } = useQuery<RecipeListItem[]>({
+    queryKey: ['saved', language],
+    queryFn: () => apiFetch(`/api/users/me/saved?lang=${language}`).then((r) => r.json()),
+    enabled: Boolean(isOwnProfile),
+    select: (d) => (Array.isArray(d) ? d : []),
+  });
+
   useEffect(() => {
-    if (isOwnProfile && me?.avatarUrl) {
-      setProfile((current) => current ? { ...current, avatarUrl: me.avatarUrl } : current);
+    if (profile) {
+      setEditName(profile.name ?? '');
+      setEditUsername(profile.username ?? '');
+      setEditBio(profile.bio ?? '');
+    }
+  }, [profile?.id]);
+
+  useEffect(() => {
+    if (isOwnProfile && me?.avatarUrl && profile) {
+      queryClient.setQueryData(['profile', userId], (old: UserProfileType) =>
+        old ? { ...old, avatarUrl: me.avatarUrl } : old
+      );
     }
   }, [isOwnProfile, me?.avatarUrl]);
+
+  useEffect(() => {
+    if (!profile || !me || !userId) return;
+    apiFetch(`/api/users/${userId}/followers`)
+      .then((r) => r.json())
+      .then((followers) => {
+        if (Array.isArray(followers)) setIsFollowing(followers.some((f: { id: number }) => f.id === me.id));
+      })
+      .catch(() => {});
+  }, [userId, me?.id]);
 
   useEffect(() => {
     if (!profile) return;
     const previousTitle = document.title;
     document.title = `${profile.name ?? (profile.username ? `@${profile.username}` : 'Creator')} — Savor`;
     return () => { document.title = previousTitle; };
-  }, [profile]);
-
-  useEffect(() => {
-    if (!userId) return;
-    setLoading(true);
-    const promises: Promise<unknown>[] = [
-      apiFetch(`/api/users/${userId}`).then((r) => r.json()),
-      apiFetch(`/api/users/${userId}/recipes?lang=${language}`).then((r) => r.json()),
-    ];
-    if (me) promises.push(apiFetch(`/api/users/${userId}/followers`).then((r) => r.json()));
-    if (isOwnProfile) promises.push(apiFetch(`/api/users/me/saved?lang=${language}`).then((r) => r.json()));
-
-    Promise.all(promises)
-      .then(([p, r, ...rest]) => {
-        const profileData = p as UserProfileType & { error?: string };
-        if (profileData.error) { navigate('/'); return; }
-        setProfile(profileData);
-        setEditName(profileData.name ?? '');
-        setEditUsername(profileData.username ?? '');
-        setEditBio(profileData.bio ?? '');
-        setRecipes(Array.isArray(r) ? r as RecipeListItem[] : []);
-        if (me && Array.isArray(rest[0])) {
-          setIsFollowing((rest[0] as { id: number }[]).some((f) => f.id === me.id));
-        }
-        if (isOwnProfile && rest[1] && Array.isArray(rest[1])) {
-          setSavedRecipes(rest[1] as RecipeListItem[]);
-        }
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, [userId, language, me?.id]);
+  }, [profile?.id]);
 
   async function toggleFollow() {
     if (!me) { navigate('/login'); return; }
@@ -109,7 +122,10 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
       });
       if (res.ok) {
         setIsFollowing(!isFollowing);
-        setProfile((p) => p ? { ...p, followerCount: p.followerCount + (isFollowing ? -1 : 1) } : p);
+        queryClient.setQueryData(['profile', userId], (old: UserProfileType) =>
+          old ? { ...old, followerCount: old.followerCount + (isFollowing ? -1 : 1) } : old
+        );
+        queryClient.invalidateQueries({ queryKey: ['feed'] });
         showToast(isFollowing ? 'Unfollowed' : 'Following!');
       }
     } finally {
@@ -129,7 +145,10 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
       const res = await apiFetch('/api/users/me', { method: 'PATCH', body: fd });
       if (res.ok) {
         const d = await res.json();
-        setProfile((p) => p ? { ...p, username: d.user.username, name: d.user.name, bio: d.user.bio, avatarUrl: d.user.avatarUrl } : p);
+        queryClient.setQueryData(['profile', userId], (old: UserProfileType) =>
+          old ? { ...old, username: d.user.username, name: d.user.name, bio: d.user.bio, avatarUrl: d.user.avatarUrl } : old
+        );
+        queryClient.invalidateQueries({ queryKey: ['userRecipes', userId] });
         updateUser({
           username: d.user.username,
           name: d.user.name,
@@ -216,7 +235,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
     </div>
   );
 
-  if (!profile) return null;
+  if (!profile) { navigate('/'); return null; }
 
   const tabContent = activeTab === 'recipes' ? recipes : savedRecipes;
 

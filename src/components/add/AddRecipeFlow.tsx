@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';import { Link, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUI } from '../../contexts/UIContext';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -89,6 +90,7 @@ function parseReferenceTags(value: string) {
 
 export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const { showToast } = useUI();
   const { language } = useLanguage();
   const navigate = useNavigate();
@@ -429,6 +431,11 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
       const res = await apiFetch(endpoint, { method, body: fd });
       if (res.ok) {
         const d = await res.json();
+        queryClient.invalidateQueries({ queryKey: ['feed'] });
+        queryClient.invalidateQueries({ queryKey: ['myRecipes'] });
+        queryClient.invalidateQueries({ queryKey: ['userRecipes', user?.id] });
+        queryClient.invalidateQueries({ queryKey: ['discover'] });
+        if (editSlug) queryClient.invalidateQueries({ queryKey: ['recipe', editSlug] });
         showToast(editSlug ? 'Recipe updated!' : 'Recipe published!', undefined, 'success');
         navigate(`/recipe/${d.slug}`);
       } else {

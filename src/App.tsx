@@ -1,5 +1,5 @@
 import { Routes, Route, useParams } from 'react-router-dom';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useRef } from 'react';
 import Header from './components/layout/Header';
 import BottomNav from './components/layout/BottomNav';
 import Toast from './components/overlays/Toast';
@@ -8,6 +8,7 @@ import ShareModal from './components/overlays/ShareModal';
 import ReportModal from './components/overlays/ReportModal';
 import CollectionModal from './components/overlays/CollectionModal';
 import NotificationDrawer from './components/overlays/NotificationDrawer';
+import { usePullToRefresh } from './hooks/usePullToRefresh';
 
 const HomeFeed = lazy(() => import('./components/home/HomeFeed'));
 const RecipeDetail = lazy(() => import('./components/detail/RecipeDetail'));
@@ -40,10 +41,21 @@ function EditRecipeWrapper() {
 }
 
 export default function App() {
+  const mainRef = useRef<HTMLElement>(null);
+  const { pulling, pullDistance } = usePullToRefresh(mainRef);
+
   return (
     <div className="flex flex-col h-dvh overflow-hidden" style={{ backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}>
       <Header />
-      <main className="flex-1 overflow-y-auto flex flex-col" style={{ overflowX: 'clip' }}>
+      <main ref={mainRef} className="flex-1 overflow-y-auto flex flex-col" style={{ overflowX: 'clip' }}>
+        {/* Pull-to-refresh indicator */}
+        <div
+          className="flex items-center justify-center transition-all duration-200 overflow-hidden"
+          style={{ height: pullDistance > 0 ? pullDistance : 0 }}
+        >
+          <div className={`w-6 h-6 rounded-full border-2 border-amber-800 border-t-transparent ${pulling ? 'animate-spin' : ''}`}
+            style={{ opacity: pullDistance > 10 ? Math.min(pullDistance / 72, 1) : 0 }} />
+        </div>
         <Suspense fallback={<LoadingFallback />}>
           <Routes>
             <Route path="/" element={<HomeFeed />} />
