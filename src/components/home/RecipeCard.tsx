@@ -1,8 +1,11 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, MessageCircle, Bookmark, Star, Clock, ChefHat, Share2, UserPlus, Sparkles } from 'lucide-react';
+import { Heart, MessageCircle, Bookmark, BookmarkCheck, Star, Clock, ChefHat, Share2, UserPlus, Sparkles } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import type { RecipeListItem } from '../../types';
 import { useUI } from '../../contexts/UIContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { apiFetch } from '../../lib/apiFetch';
 import VerifiedBadge from '../profile/VerifiedBadge';
 
 const API = import.meta.env.VITE_API_URL;
@@ -17,13 +20,38 @@ function imgSrc(url: string | null | undefined) {
 export default function RecipeCard({ recipe, hideAuthor = false }: Props) {
   const { openSaveModal, openShare, showToast } = useUI();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const info = recipe.info as Record<string, string> | null | undefined;
 
-  function handleSave(e: React.MouseEvent) {
+  const [isSaved, setIsSaved] = useState(() => {
+    // Check saved cache for initial state
+    const saved = queryClient.getQueriesData<RecipeListItem[]>({ queryKey: ['saved'] });
+    return saved.some(([, data]) => Array.isArray(data) && data.some((r) => r.slug === recipe.slug));
+  });
+
+  // Listen for save event from the modal
+  useEffect(() => {
+    function handleSaved(e: Event) {
+      const { slug } = (e as CustomEvent<{ slug: string }>).detail;
+      if (slug === recipe.slug) setIsSaved(true);
+    }
+    window.addEventListener('recipe-saved', handleSaved);
+    return () => window.removeEventListener('recipe-saved', handleSaved);
+  }, [recipe.slug]);
+
+  async function handleSave(e: React.MouseEvent) {
     e.preventDefault(); e.stopPropagation();
     if (!user) { showToast('Sign in to save recipes', undefined, 'info'); return; }
-    openSaveModal(recipe.slug);
+    if (isSaved) {
+      setIsSaved(false);
+      await apiFetch(`/api/recipes/${recipe.slug}/save`, { method: 'DELETE' });
+      queryClient.invalidateQueries({ queryKey: ['saved'] });
+      showToast('Removed from saved');
+    } else {
+      openSaveModal(recipe.slug);
+    }
   }
+
   function handleShare(e: React.MouseEvent) {
     e.preventDefault(); e.stopPropagation();
     openShare({
@@ -147,9 +175,10 @@ export default function RecipeCard({ recipe, hideAuthor = false }: Props) {
               <Share2 className="w-4 h-4" />
             </button>
           </div>
-          <button onClick={handleSave}
-            className="recipe-card__action recipe-card__save p-2 rounded-full transition-all">
-            <Bookmark className="w-5 h-5 stroke-[1.8]" />
+          <button onClick={handleSave} className="recipe-card__action recipe-card__save p-2 rounded-full transition-all">
+            {isSaved
+              ? <BookmarkCheck className="w-5 h-5 fill-amber-800 text-amber-800" />
+              : <Bookmark className="w-5 h-5 stroke-[1.8]" />}
           </button>
         </div>
       </div>
