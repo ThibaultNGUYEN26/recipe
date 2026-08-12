@@ -20,7 +20,7 @@ export async function moderateMedia({ buffer, mimeType, kind = "avatar" }) {
 
   const form = new FormData();
   form.append("media", new Blob([buffer], { type: mimeType }), "upload");
-  form.append("models", "nudity-2.1,weapon,recreational_drug,gore-2.0,hate_symbol");
+  form.append("models", "nudity-2.1,weapon,recreational_drug,gore-2.0,hate-symbol");
   form.append("api_user", apiUser);
   form.append("api_secret", apiSecret);
 
