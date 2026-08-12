@@ -42,7 +42,7 @@ interface TranslationFields {
   description: string;
   ingredients: IngSection[];
   steps: StepRow[];
-  tips: string;
+  tips: string[];
 }
 
 interface TikTokImportSource {
@@ -77,7 +77,7 @@ function emptyTranslation(): TranslationFields {
     description: '',
     ingredients: [{ id: '1', section: '', rows: [{ id: '1', name: '', amount: '', unit: '' }] }],
     steps: [{ id: '1', stepNumber: 1, instruction: '', timerMinutes: '' }],
-    tips: '',
+    tips: [],
   };
 }
 
@@ -237,7 +237,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
             description: recipe.description || '',
             ingredients: sections.length ? sections : emptyTranslation().ingredients,
             steps: steps.length ? steps : emptyTranslation().steps,
-            tips: Array.isArray(recipe.tips) ? recipe.tips.map((t) => `• ${t}`).join('\n') : (recipe.tips || ''),
+            tips: Array.isArray(recipe.tips) ? [...recipe.tips] : [],
           },
         }));
       })
@@ -291,7 +291,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
           description: payload.draft.description || previous[editLang].description,
           ingredients: ingredientSections || previous[editLang].ingredients,
           steps: steps || previous[editLang].steps,
-          tips: payload.draft.tips.length ? payload.draft.tips.map((t) => `• ${t}`).join('\n') : previous[editLang].tips,
+          tips: payload.draft.tips.length ? [...payload.draft.tips] : previous[editLang].tips,
         },
       }));
       setSlug((current) => current || slugify(payload.draft.title));
@@ -447,7 +447,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
               text: s.instruction.trim(),
               timerMinutes: s.timerMinutes ? parseInt(s.timerMinutes) : undefined,
             })),
-            tips: t.tips ? t.tips.split('\n').map((l) => l.replace(/^•\s*/, '').trim()).filter(Boolean) : undefined,
+            tips: t.tips.length ? t.tips.filter(Boolean) : undefined,
           };
         });
 
@@ -529,10 +529,18 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
           <h1 className="font-serif text-2xl font-bold" style={{ color: 'var(--color-text)' }}>{editSlug ? 'Edit Recipe' : 'Publish New Recipe'}</h1>
           <p className="text-xs mt-0.5" style={{ color: 'var(--color-muted)' }}>{editSlug ? 'Update your recipe details' : 'Share your culinary masterpiece with the world'}</p>
         </div>
-        <button onClick={() => setShowPreview(true)}
-          className="add-recipe-accent-soft flex items-center gap-1.5 text-xs font-bold border px-3 py-2 rounded-2xl transition-colors">
-          <Eye className="w-4 h-4" /> Preview
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setShowPreview(true)}
+            className="add-recipe-accent-soft flex items-center gap-1.5 text-xs font-bold border px-3 py-2 rounded-2xl transition-colors">
+            <Eye className="w-4 h-4" /> Preview
+          </button>
+          {editSlug && (
+            <button onClick={publish} disabled={submitting}
+              className="add-recipe-primary flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-2xl transition-colors shadow-md disabled:opacity-60">
+              {submitting ? 'Saving…' : 'Save'}
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Stepper */}
@@ -944,26 +952,35 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
 
           {/* Tips */}
           <div className="space-y-2">
-            <label className={labelCls}>Tips — one per line</label>
+            <label className={labelCls}>Tips</label>
             <p className="text-xs" style={{ color: 'var(--color-muted)' }}>
               Add substitutions, technique notes, or serving advice.
             </p>
-            <textarea rows={4} value={tr.tips}
-              placeholder={'• Reserve pasta water before draining\n• Substitute with lemon juice'}
-              onChange={(e) => setTr({ tips: e.target.value })}
-              onFocus={(e) => { if (!e.target.value) setTr({ tips: '• ' }); }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  const el = e.currentTarget;
-                  const pos = el.selectionStart;
-                  const val = el.value;
-                  const newVal = val.slice(0, pos) + '\n• ' + val.slice(el.selectionEnd);
-                  setTr({ tips: newVal });
-                  requestAnimationFrame(() => { el.selectionStart = el.selectionEnd = pos + 3; });
-                }
-              }}
-              className="w-full bg-stone-50 border border-stone-200 text-stone-900 text-xs rounded-xl p-3 focus:outline-none resize-none font-medium" />
+            <div className="space-y-2">
+              {tr.tips.map((tip, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <span className="text-xs font-mono text-stone-400 w-5 text-center shrink-0">{idx + 1}.</span>
+                  <input
+                    type="text"
+                    value={tip}
+                    onChange={(e) => setTr({ tips: tr.tips.map((t, i) => i === idx ? e.target.value : t) })}
+                    placeholder="e.g. Reserve pasta water before draining"
+                    className="flex-1 min-w-0 bg-stone-50 border border-stone-200 text-stone-900 text-xs rounded-xl px-3 py-2 font-medium focus:outline-none"
+                  />
+                  <button type="button" onClick={() => setTr({ tips: tr.tips.filter((_, i) => i !== idx) })}
+                    disabled={tr.tips.length === 1}
+                    className="p-1.5 text-stone-400 hover:text-rose-600 rounded-lg hover:bg-stone-200 transition-colors disabled:opacity-30 shrink-0">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end">
+              <button type="button" onClick={() => setTr({ tips: [...tr.tips, ''] })}
+                className="flex items-center gap-1 text-xs font-semibold text-stone-500 hover:text-amber-800 transition-colors">
+                <Plus className="w-3.5 h-3.5" /> Add tip
+              </button>
+            </div>
           </div>
 
           <div className="flex items-center justify-between pt-4 border-t border-stone-100">
@@ -1112,11 +1129,11 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                 </ol>
               </div>
             )}
-            {translations[originalLanguage].tips.split('\n').some((tip) => tip.trim()) && (
+            {translations[originalLanguage].tips.some((tip) => tip.trim()) && (
               <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200">
                 <p className="text-xs font-bold text-stone-900 mb-2">Tips</p>
                 <ul className="list-disc list-inside text-xs text-stone-700 space-y-1">
-                  {translations[originalLanguage].tips.split('\n').filter((tip) => tip.trim()).map((tip, index) => (
+                  {translations[originalLanguage].tips.filter((tip) => tip.trim()).map((tip, index) => (
                     <li key={`${tip}-${index}`}>{tip.trim()}</li>
                   ))}
                 </ul>

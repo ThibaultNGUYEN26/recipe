@@ -283,6 +283,20 @@ export default function RecipeDetail() {
     }
   }
 
+  async function deleteRecipe() {
+    if (!window.confirm('Delete this recipe? This cannot be undone.')) return;
+    const res = await apiFetch(`/api/recipes/${slug}`, { method: 'DELETE' });
+    if (res.ok) {
+      queryClient.invalidateQueries({ queryKey: ['feed'] });
+      queryClient.invalidateQueries({ queryKey: ['myRecipes'] });
+      queryClient.invalidateQueries({ queryKey: ['discover'] });
+      showToast('Recipe deleted');
+      navigate('/');
+    } else {
+      showToast('Failed to delete recipe', undefined, 'error');
+    }
+  }
+
   function deleteComment(id: number) {
     apiFetch(`/api/recipes/${slug}/comments/${id}`, { method: 'DELETE' })
       .then(() => {
@@ -343,9 +357,15 @@ export default function RecipeDetail() {
           </button>
           <div className="flex items-center gap-2">
             {user?.id === recipe.authorId && (
-              <Link to={`/edit-recipe/${recipe.slug}`} aria-label="Edit recipe" style={{ color: 'var(--color-muted)' }}>
-                <Pencil size={18} />
-              </Link>
+              <>
+                <Link to={`/edit-recipe/${recipe.slug}`} aria-label="Edit recipe" style={{ color: 'var(--color-muted)' }}>
+                  <Pencil size={18} />
+                </Link>
+                <button onClick={deleteRecipe} aria-label="Delete recipe" style={{ color: 'var(--color-muted)' }}
+                  className="hover:text-rose-600 transition-colors">
+                  <Trash2 size={18} />
+                </button>
+              </>
             )}
             <button onClick={() => openShare({
               type: 'recipe',
