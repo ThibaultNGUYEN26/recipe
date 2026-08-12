@@ -166,6 +166,7 @@ router.patch("/me", authenticate, uploadRateLimit, handleAvatarUpload, async (re
     res.status(avatarResult?.status === "approved" || !avatarResult ? 200 : 202).json({
       user: { ...user, avatarUrl: user.avatarUrl || DEFAULT_AVATAR_URL },
       avatarStatus: avatarResult?.status ?? null,
+      avatarRejectionCategory: avatarResult?.rejectionCategory ?? null,
     });
   } catch (err) {
     if (err.code === "P2002") return res.status(409).json({ error: "Username already taken", code: "USERNAME_TAKEN" });

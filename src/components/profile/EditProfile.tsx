@@ -52,7 +52,17 @@ export default function EditProfile() {
           avatarPending: d.avatarStatus === 'pending' || d.avatarStatus === 'review_required',
         });
         if (d.avatarStatus === 'approved') showToast('Profile updated!', 'Your new photo is approved.', 'success');
-        else if (d.avatarStatus === 'rejected') showToast('Photo not accepted', 'Your previous profile picture remains visible.', 'error');
+        else if (d.avatarStatus === 'rejected') {
+          const reasons: Record<string, string> = {
+            nudity: 'Your photo contains nudity or explicit content.',
+            gore: 'Your photo contains violent or graphic content.',
+            weapon: 'Your photo contains weapons.',
+            drug: 'Your photo contains drug-related content.',
+            hate: 'Your photo contains hate symbols.',
+          };
+          const reason = d.avatarRejectionCategory ? (reasons[d.avatarRejectionCategory] ?? 'Your photo violates our content policy.') : 'Your photo violates our content policy.';
+          showToast('Photo rejected', reason, 'error');
+        }
         else if (d.avatarStatus) showToast('Profile updated', 'Your new photo is private while it is reviewed.', 'info');
         else showToast('Profile updated!');
         navigate(`/profile/${user.id}`);

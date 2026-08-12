@@ -184,7 +184,7 @@ export async function submitAvatar({ ownerId, actorId = ownerId, file, db = pris
 
   if (moderation.decision === "rejected") {
     await rejectAvatarAsset({ asset: { ...asset, variants: privateVariants }, audit, db, storage });
-    return { status: "rejected", avatarUrl: owner.avatarUrl || DEFAULT_AVATAR_URL };
+    return { status: "rejected", rejectionCategory: moderation.rejectionCategory || null, avatarUrl: owner.avatarUrl || DEFAULT_AVATAR_URL };
   }
 
   const approvedUser = await approveAvatarAsset({ asset: { ...asset, variants: privateVariants }, audit, db, storage });
