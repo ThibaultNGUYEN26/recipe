@@ -560,10 +560,10 @@ export default function RecipeDetail() {
 
           {/* Tips */}
           {recipe.tips && (recipe.tips as string[]).length > 0 && (
-            <div className="rounded-2xl p-4 space-y-2" style={{ backgroundColor: '#fffbeb', border: '1px solid #fde68a' }}>
-              <h3 className="text-sm font-semibold text-amber-800">💡 Tips</h3>
+            <div className="rounded-2xl p-4 space-y-2" style={{ backgroundColor: 'var(--color-accent-soft)', border: '1px solid var(--color-accent-soft-border)' }}>
+              <h3 className="text-sm font-semibold" style={{ color: 'var(--color-accent)' }}>💡 Tips</h3>
               {(recipe.tips as string[]).map((tip, i) => (
-                <p key={i} className="text-sm text-amber-900 leading-relaxed">• {tip}</p>
+                <p key={i} className="text-sm leading-relaxed" style={{ color: 'var(--color-accent)' }}>• {tip}</p>
               ))}
             </div>
           )}
