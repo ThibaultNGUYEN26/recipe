@@ -647,11 +647,30 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                 )}
               </div>
               {!creatingCategory ? (
-                <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}
-                  className="w-full bg-stone-50 border border-stone-200 text-stone-900 text-xs font-bold rounded-xl px-3 py-2.5 focus:outline-none">
-                  <option value="">Select…</option>
-                  {categories.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
-                </select>
+                <div className="max-h-40 overflow-y-auto space-y-1 rounded-xl border p-1" style={{ borderColor: 'var(--color-border)' }}>
+                  {categories.length === 0 && (
+                    <p className="text-xs px-2 py-1.5" style={{ color: 'var(--color-muted)' }}>No categories yet — create one</p>
+                  )}
+                  {categories.map((c) => (
+                    <div key={c.id} className={`flex items-center gap-1 rounded-lg px-2 py-1.5 cursor-pointer transition-colors ${String(c.id) === categoryId ? 'bg-amber-100' : 'hover:bg-stone-100'}`}
+                      style={String(c.id) === categoryId ? { backgroundColor: 'var(--color-accent-soft)' } : {}}
+                      onClick={() => setCategoryId(String(c.id) === categoryId ? '' : String(c.id))}>
+                      <span className="flex-1 text-xs font-bold truncate" style={{ color: 'var(--color-text)' }}>{c.label}</span>
+                      <button type="button"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          const res = await apiFetch(`/api/categories/${c.id}`, { method: 'DELETE' });
+                          const data = await res.json();
+                          if (!res.ok) { showToast(data.error, undefined, 'error'); return; }
+                          setCategories((prev) => prev.filter((x) => x.id !== c.id));
+                          if (String(c.id) === categoryId) setCategoryId('');
+                        }}
+                        className="p-1 rounded-md text-stone-400 hover:text-rose-600 hover:bg-stone-200 transition-colors shrink-0">
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
               ) : (
                 <div className="space-y-2">
                   <input

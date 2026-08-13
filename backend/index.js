@@ -74,7 +74,23 @@ app.post("/api/categories", async (req, res) => {
     }
   });
 });
-// Legacy alias kept for backward-compat
+app.delete("/api/categories/:id", async (req, res) => {
+  const { prisma } = await import("./lib/prisma.js");
+  const { authenticate } = await import("./middleware/authenticate.js");
+  authenticate(req, res, async () => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ error: "Invalid id" });
+    try {
+      const count = await prisma.recipe.count({ where: { categoryId: id } });
+      if (count > 0) return res.status(409).json({ error: `Cannot delete — ${count} recipe${count > 1 ? 's' : ''} use this category` });
+      await prisma.category.delete({ where: { id } });
+      res.json({ ok: true });
+    } catch (err) {
+      res.status(500).json({ error: err.message || "Failed to delete category" });
+    }
+  });
+});
+
 app.use("/api/my-recipes", async (req, res) => {
   const { prisma } = await import("./lib/prisma.js");
   const { authenticate } = await import("./middleware/authenticate.js");
