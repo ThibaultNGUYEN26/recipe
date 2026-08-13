@@ -60,7 +60,7 @@ export default function Header() {
                   aria-label={t('header.openAccount')}
                   aria-expanded={menuOpen}
                 >
-                  <div className="w-8 h-8 rounded-full bg-amber-800 text-white flex items-center justify-center text-xs font-bold ring-2 ring-amber-700 dark:ring-amber-300 overflow-hidden">
+                  <div className="w-8 h-8 rounded-full bg-amber-800 text-white flex items-center justify-center text-xs font-bold ring-2 ring-amber-700 avatar-ring overflow-hidden">
                     {user.avatarUrl
                       ? <img src={user.avatarUrl.startsWith('/') ? `${API}${user.avatarUrl}` : user.avatarUrl} alt="" className="w-full h-full object-cover" />
                       : user.name?.[0]?.toUpperCase() ?? user.email[0].toUpperCase()}

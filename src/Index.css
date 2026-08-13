@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+.avatar-ring { --tw-ring-color: #92400e; }
+[data-theme="dark"] .avatar-ring { --tw-ring-color: #fcd34d; }
+
 :root {
   --color-bg: #FAF8F5;
   --color-text: #1C1917;

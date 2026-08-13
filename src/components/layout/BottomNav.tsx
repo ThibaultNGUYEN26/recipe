@@ -22,7 +22,7 @@ export default function BottomNav() {
     const cls = size === 'sm' ? 'w-5 h-5' : 'w-4 h-4';
     if (id === 'profile' && user) {
       return (
-        <div className={`rounded-full overflow-hidden bg-amber-800 text-white flex items-center justify-center font-bold shrink-0 ${size === 'sm' ? 'w-5 h-5 text-[10px]' : 'w-4 h-4 text-[9px]'} ring-2 ring-amber-700 dark:ring-amber-300`}>
+        <div className={`rounded-full overflow-hidden bg-amber-800 text-white flex items-center justify-center font-bold shrink-0 ${size === 'sm' ? 'w-5 h-5 text-[10px]' : 'w-4 h-4 text-[9px]'} ring-2 ring-amber-700 avatar-ring`}>
           {user.avatarUrl
             ? <img src={user.avatarUrl.startsWith('/') ? `${API}${user.avatarUrl}` : user.avatarUrl} alt="" className="w-full h-full object-cover" />
             : user.name?.[0]?.toUpperCase() ?? user.email[0].toUpperCase()}
