@@ -255,7 +255,7 @@ export default function SearchDiscover() {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5">
             {(hasSearch ? searchResults : discoveryRecipes).map((r) => (
-              <Link key={r.slug} to={`/recipe/${r.slug}`}
+              <Link key={r.slug} to={r.authorUsername ? `/${r.authorUsername}/${r.slug}` : `/recipe/${r.slug}`}
                 className="recipe-card__image-placeholder group relative aspect-square rounded-2xl overflow-hidden shadow-sm border"
                 style={{ borderColor: 'var(--color-border)' }}>
                 {r.image ? (

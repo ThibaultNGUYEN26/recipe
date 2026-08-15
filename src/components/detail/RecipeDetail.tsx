@@ -157,7 +157,8 @@ function CommentItem({ comment, recipeSlug, onDelete, onLike }: {
 }
 
 export default function RecipeDetail() {
-  const { slug } = useParams<{ slug: string }>();
+  const { slug: slugParam, recipeSlug } = useParams<{ slug?: string; recipeSlug?: string }>();
+  const slug = slugParam ?? recipeSlug;
   const { language } = useLanguage();
   const { user } = useAuth();
   const { openShare, openSaveModal, openReport, startTimer, showToast } = useUI();
@@ -369,7 +370,7 @@ export default function RecipeDetail() {
             )}
             <button onClick={() => openShare({
               type: 'recipe',
-              path: `/recipe/${encodeURIComponent(recipe.slug)}`,
+              path: recipe.authorUsername ? `/${recipe.authorUsername}/${recipe.slug}` : `/recipe/${recipe.slug}`,
               title: recipe.title,
               text: recipe.description,
             })} aria-label="Share recipe" style={{ color: 'var(--color-muted)' }}><Share2 size={18} /></button>

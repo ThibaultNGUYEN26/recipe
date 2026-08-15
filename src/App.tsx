@@ -62,6 +62,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<HomeFeed />} />
             <Route path="/recipe/:slug" element={<RecipeDetail />} />
+            <Route path="/:username/:recipeSlug" element={<RecipeDetail />} />
             <Route path="/search" element={<SearchDiscover />} />
             <Route path="/add-recipe" element={<AddRecipeFlow />} />
             <Route path="/edit-recipe/:slug" element={<EditRecipeWrapper />} />

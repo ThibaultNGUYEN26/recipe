@@ -489,7 +489,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
         if (editSlug) queryClient.invalidateQueries({ queryKey: ['recipe', editSlug] });
         showToast(editSlug ? 'Recipe updated!' : 'Recipe published!', undefined, 'success');
         if (!editSlug) localStorage.removeItem(DRAFT_KEY);
-        navigate(`/recipe/${d.slug}`);
+        navigate(user?.username ? `/${user.username}/${d.slug}` : `/recipe/${d.slug}`);
       } else {
         const d = await res.json();
         showToast(d.error ?? 'Failed to publish', undefined, 'error');
@@ -808,22 +808,22 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                       <div key={row.id} className="bg-stone-50 p-3 rounded-2xl border border-stone-200/80 space-y-2">
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-mono text-stone-400 w-5 text-center shrink-0">{idx + 1}.</span>
-                          <input type="text" value={row.amount} onChange={(e) => updateIngredient(sec.id, row.id, 'amount', e.target.value)}
-                            placeholder="Amount"
-                            className="bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 font-bold text-center focus:outline-none w-20 shrink-0" />
-                          <input type="text" placeholder="Unit (g, tbsp…)" value={row.unit}
-                            onChange={(e) => updateIngredient(sec.id, row.id, 'unit', e.target.value)}
-                            className="bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 focus:outline-none w-24 shrink-0" />
+                          <input type="text" placeholder="Ingredient name…" value={row.name}
+                            onChange={(e) => updateIngredient(sec.id, row.id, 'name', e.target.value)}
+                            className="flex-1 min-w-0 bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 font-medium focus:outline-none" />
                           <button type="button" onClick={() => removeIngredient(sec.id, row.id)}
                             disabled={sec.rows.length === 1}
                             className="p-1.5 text-stone-400 hover:text-rose-600 rounded-lg hover:bg-stone-200 transition-colors disabled:opacity-30 shrink-0">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
-                        <div className="pl-7">
-                          <input type="text" placeholder="Ingredient name…" value={row.name}
-                            onChange={(e) => updateIngredient(sec.id, row.id, 'name', e.target.value)}
-                            className="w-full bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 font-medium focus:outline-none" />
+                        <div className="pl-7 flex items-center gap-2">
+                          <input type="text" value={row.amount} onChange={(e) => updateIngredient(sec.id, row.id, 'amount', e.target.value)}
+                            placeholder="Amount"
+                            className="bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 font-bold text-center focus:outline-none w-20 shrink-0" />
+                          <input type="text" placeholder="Unit (g, tbsp…)" value={row.unit}
+                            onChange={(e) => updateIngredient(sec.id, row.id, 'unit', e.target.value)}
+                            className="bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 focus:outline-none w-24 shrink-0" />
                         </div>
                       </div>
                     ))}

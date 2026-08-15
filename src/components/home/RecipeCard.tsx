@@ -3,6 +3,10 @@ import { Link } from 'react-router-dom';
 import { Heart, MessageCircle, Bookmark, BookmarkCheck, Star, Clock, ChefHat, Share2, UserPlus, Sparkles } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { RecipeListItem } from '../../types';
+
+function recipeUrl(slug: string, authorUsername?: string | null) {
+  return authorUsername ? `/${authorUsername}/${slug}` : `/recipe/${slug}`;
+}
 import { useUI } from '../../contexts/UIContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiFetch } from '../../lib/apiFetch';
@@ -56,7 +60,7 @@ export default function RecipeCard({ recipe, hideAuthor = false }: Props) {
     e.preventDefault(); e.stopPropagation();
     openShare({
       type: 'recipe',
-      path: `/recipe/${encodeURIComponent(recipe.slug)}`,
+      path: recipeUrl(recipe.slug, recipe.authorUsername),
       title: recipe.title,
       text: recipe.description,
     });
@@ -92,7 +96,7 @@ export default function RecipeCard({ recipe, hideAuthor = false }: Props) {
       )}
 
       {/* Square image */}
-      <Link to={`/recipe/${recipe.slug}`}
+      <Link to={recipeUrl(recipe.slug, recipe.authorUsername)}
         className="recipe-card__image-placeholder relative aspect-square block overflow-hidden cursor-pointer">
         {recipe.image ? (
           <img src={imgSrc(recipe.image)!} alt={recipe.title ?? ''}
@@ -130,7 +134,7 @@ export default function RecipeCard({ recipe, hideAuthor = false }: Props) {
             <Sparkles className="w-3 h-3" /> {recipe.recommendationReason}
           </p>
         )}
-        <Link to={`/recipe/${recipe.slug}`}>
+        <Link to={recipeUrl(recipe.slug, recipe.authorUsername)}>
           <h3 className="recipe-card__primary recipe-card__title font-serif text-lg sm:text-xl font-bold transition-colors leading-snug truncate">
             {recipe.title}
           </h3>
@@ -166,7 +170,7 @@ export default function RecipeCard({ recipe, hideAuthor = false }: Props) {
               <Heart className="w-5 h-5 stroke-[1.8]" />
               <span>{recipe.ratingCount ?? 0}</span>
             </button>
-            <Link to={`/recipe/${recipe.slug}`}
+            <Link to={recipeUrl(recipe.slug, recipe.authorUsername)}
               className="recipe-card__action flex items-center gap-1.5 text-xs font-bold transition-colors">
               <MessageCircle className="w-5 h-5 stroke-[1.8]" />
               <span>{recipe.commentCount ?? 0}</span>

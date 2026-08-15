@@ -27,7 +27,7 @@ function HeroCard({ recipe }: { recipe: RecipeListItem }) {
   const { t } = useLanguage();
   const info = recipe.info as Record<string, string> | null | undefined;
   return (
-    <Link to={`/recipe/${recipe.slug}`}
+    <Link to={recipe.authorUsername ? `/${recipe.authorUsername}/${recipe.slug}` : `/recipe/${recipe.slug}`}
       className="relative rounded-3xl overflow-hidden bg-stone-900 text-white cursor-pointer shadow-xl group border border-stone-800 block">
       <div className="relative aspect-[16/9] sm:aspect-[21/9] w-full">
         {recipe.image ? (

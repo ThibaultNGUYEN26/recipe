@@ -212,7 +212,7 @@ export default function SavedRecipes() {
                 className="saved-card rounded-3xl overflow-hidden border shadow-sm hover:shadow-md transition-all duration-200 group flex flex-col">
 
                 {/* Image */}
-                <Link to={`/recipe/${recipe.slug}`} className="recipe-card__image-placeholder relative aspect-[16/10] block overflow-hidden">
+                <Link to={recipe.authorUsername ? `/${recipe.authorUsername}/${recipe.slug}` : `/recipe/${recipe.slug}`} className="recipe-card__image-placeholder relative aspect-[16/10] block overflow-hidden">
                   {recipe.image ? (
                     <img src={imgSrc(recipe.image)!} alt={recipe.title ?? ''}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -233,7 +233,7 @@ export default function SavedRecipes() {
                 {/* Body */}
                 <div className="p-4 flex-1 flex flex-col justify-between">
                   <div>
-                    <Link to={`/recipe/${recipe.slug}`}>
+                    <Link to={recipe.authorUsername ? `/${recipe.authorUsername}/${recipe.slug}` : `/recipe/${recipe.slug}`}>
                       <h3 className="saved-card__title font-serif text-base font-bold transition-colors line-clamp-1">
                         {recipe.title}
                       </h3>

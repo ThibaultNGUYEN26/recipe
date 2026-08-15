@@ -111,7 +111,7 @@ app.use("/api/my-recipes", async (req, res) => {
       res.json(recipes.map((r) => {
         const selected = selectRecipeTranslation(r, lang);
         const t = selected.translation;
-        return { slug: r.slug, title: t?.title, description: t?.description, image: r.images[0]?.url || null, category: { slug: r.category.slug, label: r.category.label }, isPublic: r.isPublic, createdAt: r.createdAt, contentLanguage: selected.contentLanguage, originalLanguage: selected.originalLanguage, availableLanguages: selected.availableLanguages, isTranslated: selected.isTranslated };
+        return { slug: r.slug, title: t?.title, description: t?.description, image: r.images[0]?.url || null, category: { slug: r.category.slug, label: r.category.label }, isPublic: r.isPublic, createdAt: r.createdAt, authorUsername: req.user.username, contentLanguage: selected.contentLanguage, originalLanguage: selected.originalLanguage, availableLanguages: selected.availableLanguages, isTranslated: selected.isTranslated };
       }));
     } catch (err) {
       console.error(err);
