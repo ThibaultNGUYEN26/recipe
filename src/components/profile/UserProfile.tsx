@@ -91,7 +91,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
         old ? { ...old, avatarUrl: me.avatarUrl } : old
       );
     }
-  }, [isOwnProfile, me?.avatarUrl]);
+  }, [isOwnProfile, me?.avatarUrl, profile?.id]);
 
   useEffect(() => {
     if (!profile || !me || !userId) return;

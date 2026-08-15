@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Link, Navigate, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Check, ChevronRight, Languages, Moon, Sun, UserRound } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -39,8 +39,6 @@ export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
 
-  if (!user) return <Navigate to="/login" replace />;
-
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-5 pb-24">
       <div className="mb-7 flex items-center gap-3">
@@ -54,6 +52,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
+      {user && (
       <section className="mb-7">
         <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-muted)' }}>{t('settings.account')}</h2>
         <div className="overflow-hidden rounded-2xl border" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
@@ -67,6 +66,7 @@ export default function SettingsPage() {
           </Link>
         </div>
       </section>
+      )}
 
       <section className="mb-7">
         <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-muted)' }}>{t('settings.preferences')}</h2>

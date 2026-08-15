@@ -118,9 +118,14 @@ export default function Header() {
               </div>
             </>
           ) : (
-            <Link to="/login" className="savor-header__sign-in text-xs font-semibold px-3 py-1.5 rounded-full transition-colors">
-              {t('header.signIn')}
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link to="/settings" className="savor-header__icon-button p-1.5 rounded-full transition-colors" aria-label="Settings">
+                <Settings className="savor-header__muted w-5 h-5" />
+              </Link>
+              <Link to="/login" className="savor-header__sign-in text-xs font-semibold px-3 py-1.5 rounded-full transition-colors">
+                {t('header.signIn')}
+              </Link>
+            </div>
           )}
         </div>
       </div>
