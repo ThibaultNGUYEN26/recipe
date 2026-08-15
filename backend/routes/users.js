@@ -387,7 +387,7 @@ router.get("/by-username/:username", async (req, res) => {
       prisma.follow.count({ where: { followerId: user.id } }),
       prisma.recipe.count({ where: { authorId: user.id, isPublic: true } }),
     ]);
-    res.json({ ...user, followerCount, followingCount, recipeCount });
+    res.json({ ...user, avatarUrl: user.avatarUrl || DEFAULT_AVATAR_URL, followerCount, followingCount, recipeCount });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message || "Failed to fetch user" });
@@ -412,7 +412,7 @@ router.get("/:id", async (req, res) => {
       prisma.recipe.count({ where: { authorId: userId, isPublic: true } }),
     ]);
 
-    res.json({ ...user, followerCount, followingCount, recipeCount });
+    res.json({ ...user, avatarUrl: user.avatarUrl || DEFAULT_AVATAR_URL, followerCount, followingCount, recipeCount });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message || "Failed to fetch user" });
