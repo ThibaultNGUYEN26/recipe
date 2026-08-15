@@ -97,6 +97,8 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
   const { language } = useLanguage();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
+  const lastStepIdRef = useRef<string | null>(null);
+  const lastTipIdxRef = useRef<number | null>(null);
 
   const [stepPage, setStepPage] = useState<1 | 2 | 3>(1);
   const initialRecipeLanguage: RecipeLanguage = RECIPE_LANGUAGES.includes(language) ? language : 'en';
@@ -337,8 +339,10 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
 
   // Step helpers
   function addStep() {
+    const id = Date.now().toString();
+    lastStepIdRef.current = id;
     const next = tr.steps.length + 1;
-    setTr({ steps: [...tr.steps, { id: Date.now().toString(), stepNumber: next, instruction: '', timerMinutes: '' }] });
+    setTr({ steps: [...tr.steps, { id, stepNumber: next, instruction: '', timerMinutes: '' }] });
   }
   function removeStep(id: string) {
     setTr({ steps: tr.steps.filter((s) => s.id !== id).map((s, i) => ({ ...s, stepNumber: i + 1 })) });
@@ -864,6 +868,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                   </div>
                   <textarea rows={3} placeholder="Describe what to do in this step…" value={st.instruction}
                     onChange={(e) => updateStep(st.id, 'instruction', e.target.value)}
+                    ref={(el) => { if (el && lastStepIdRef.current === st.id) { el.focus(); lastStepIdRef.current = null; } }}
                     className="w-full bg-white text-xs border border-stone-200 rounded-xl p-3 focus:outline-none resize-none" />
                 </div>
               ))}
@@ -877,7 +882,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
           </section>
 
           <div className="flex items-center justify-between pt-2">
-            <button onClick={() => setStepPage(1)}
+            <button onClick={() => navigate(-1)}
               className="add-recipe-secondary flex items-center gap-1.5 font-bold text-xs px-5 py-3 rounded-2xl transition-colors">
               <ArrowLeft className="w-4 h-4" /> Back
             </button>
@@ -983,6 +988,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                     type="text"
                     value={tip}
                     onChange={(e) => setTr({ tips: tr.tips.map((t, i) => i === idx ? e.target.value : t) })}
+                    ref={(el) => { if (el && lastTipIdxRef.current === idx) { el.focus(); lastTipIdxRef.current = null; } }}
                     placeholder="e.g. Reserve pasta water before draining"
                     className="flex-1 min-w-0 bg-stone-50 border border-stone-200 text-stone-900 text-xs rounded-xl px-3 py-2 font-medium focus:outline-none"
                   />
@@ -995,7 +1001,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
               ))}
             </div>
             <div className="flex justify-end">
-              <button type="button" onClick={() => setTr({ tips: [...tr.tips, ''] })}
+              <button type="button" onClick={() => { lastTipIdxRef.current = tr.tips.length; setTr({ tips: [...tr.tips, ''] }); }}
                 className="flex items-center gap-1 text-xs font-semibold text-stone-500 hover:text-amber-800 transition-colors">
                 <Plus className="w-3.5 h-3.5" /> Add tip
               </button>
@@ -1003,7 +1009,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
           </div>
 
           <div className="flex items-center justify-between pt-4 border-t border-stone-100">
-            <button type="button" onClick={() => setStepPage(2)}
+            <button type="button" onClick={() => navigate(-1)}
               className="add-recipe-secondary flex items-center gap-1.5 font-bold text-xs px-5 py-3 rounded-2xl transition-colors">
               <ArrowLeft className="w-4 h-4" /> Back
             </button>
@@ -1020,7 +1026,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
       {cropSrc && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/70 backdrop-blur-sm"
           onClick={() => setCropSrc(null)}>
-          <div className="add-recipe-modal w-full max-w-lg rounded-3xl p-6 shadow-2xl border space-y-4"
+          <div className="add-recipe-modal w-full max-w-2xl rounded-3xl p-6 shadow-2xl border space-y-4"
             onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-stone-100 pb-3">
               <div className="flex items-center gap-2">
@@ -1032,7 +1038,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
               </button>
             </div>
             <p className="text-xs text-stone-500">Drag the selection to choose your cover area. The crop is always square.</p>
-            <div className="flex justify-center max-h-[55vh] overflow-auto rounded-2xl bg-stone-100">
+            <div className="flex justify-center max-h-[70vh] overflow-auto rounded-2xl bg-stone-100">
               <ReactCrop
                 crop={crop}
                 onChange={(c) => setCrop(c)}
@@ -1045,7 +1051,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                   ref={cropImgRef}
                   src={cropSrc}
                   onLoad={onCropImageLoad}
-                  className="max-w-full max-h-[50vh] object-contain"
+                  className="max-w-full max-h-[65vh] object-contain"
                   alt="Crop source"
                 />
               </ReactCrop>

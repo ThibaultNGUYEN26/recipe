@@ -1,4 +1,5 @@
 import "dotenv/config";
+import http from "node:http";
 import process from "node:process";
 import express from "express";
 import cors from "cors";
@@ -17,6 +18,7 @@ import { uploadsDir } from "./lib/upload.js";
 import { startMediaCleanup } from "./lib/media/cleanup.js";
 import { cleanupUnreferencedLegacyUploads } from "./lib/media/legacyCleanup.js";
 import { assertMediaInfrastructureReady } from "./lib/media/preflight.js";
+import { createWsServer } from "./lib/ws.js";
 import { selectRecipeTranslation } from "./lib/translations.js";
 
 export const app = express();
@@ -122,6 +124,8 @@ if (process.env.NODE_ENV !== "test") {
   const PORT = process.env.PORT || 4000;
   await assertMediaInfrastructureReady();
   await cleanupUnreferencedLegacyUploads().catch((error) => console.error("Legacy upload cleanup failed", error));
-  app.listen(PORT, () => console.log(`🚀 API running on port ${PORT}`));
+  const server = http.createServer(app);
+  createWsServer(server);
+  server.listen(PORT, () => console.log(`🚀 API running on port ${PORT}`));
   startMediaCleanup();
 }

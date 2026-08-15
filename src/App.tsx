@@ -9,6 +9,7 @@ import ReportModal from './components/overlays/ReportModal';
 import CollectionModal from './components/overlays/CollectionModal';
 import NotificationDrawer from './components/overlays/NotificationDrawer';
 import { usePullToRefresh } from './hooks/usePullToRefresh';
+import { useRecipeSocket } from './hooks/useRecipeSocket';
 
 const HomeFeed = lazy(() => import('./components/home/HomeFeed'));
 const RecipeDetail = lazy(() => import('./components/detail/RecipeDetail'));
@@ -43,6 +44,7 @@ function EditRecipeWrapper() {
 export default function App() {
   const mainRef = useRef<HTMLElement>(null);
   const { pulling, pullDistance } = usePullToRefresh(mainRef);
+  useRecipeSocket();
 
   return (
     <div className="flex flex-col h-dvh overflow-hidden" style={{ backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}>

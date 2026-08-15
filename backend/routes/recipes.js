@@ -9,6 +9,7 @@ import { createNotification } from "../lib/notify.js";
 import { diversifyRecommendations, scoreRecommendation } from "../lib/recommendations.js";
 import { normalizeLanguage, selectRecipeTranslation } from "../lib/translations.js";
 import { fetchTikTokImport, validateTikTokUrl } from "../lib/tiktokImport.js";
+import { broadcastRecipeEvent } from "../lib/ws.js";
 
 const router = Router();
 const uploadRecipeMedia = recipeUpload.fields([
@@ -385,6 +386,7 @@ router.post("/", authenticate, handleRecipeMedia, async (req, res) => {
     });
 
     res.status(201).json({ slug: recipe.slug, id: recipe.id });
+    broadcastRecipeEvent('recipe:created', recipe.slug);
   } catch (err) {
     removeUploadedFiles();
     console.error(err);
@@ -401,6 +403,7 @@ router.delete("/:slug", authenticate, async (req, res) => {
     if (recipe.authorId !== req.user.id) return res.status(403).json({ error: "Not your recipe" });
     await prisma.recipe.delete({ where: { slug: req.params.slug } });
     res.json({ ok: true });
+    broadcastRecipeEvent('recipe:deleted', req.params.slug);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message || "Failed to delete recipe" });
@@ -490,6 +493,7 @@ router.put("/:slug", authenticate, handleRecipeMedia, async (req, res) => {
     });
 
     res.json({ slug });
+    broadcastRecipeEvent('recipe:updated', slug);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message || "Failed to update recipe" });

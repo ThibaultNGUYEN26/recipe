@@ -131,7 +131,7 @@ export default function RecipeCard({ recipe, hideAuthor = false }: Props) {
           </p>
         )}
         <Link to={`/recipe/${recipe.slug}`}>
-          <h3 className="recipe-card__primary recipe-card__title font-serif text-lg sm:text-xl font-bold transition-colors leading-snug">
+          <h3 className="recipe-card__primary recipe-card__title font-serif text-lg sm:text-xl font-bold transition-colors leading-snug truncate">
             {recipe.title}
           </h3>
           {recipe.description && (
