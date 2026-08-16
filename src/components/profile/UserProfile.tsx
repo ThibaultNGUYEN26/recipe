@@ -1,3 +1,4 @@
+import { LoadingPan } from '../ui/LoadingPan';
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -231,7 +232,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="w-8 h-8 rounded-full border-2 border-amber-800 border-t-transparent animate-spin" />
+      <LoadingPan />
     </div>
   );
 

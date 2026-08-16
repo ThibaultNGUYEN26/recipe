@@ -1,3 +1,4 @@
+import { LoadingPan } from '../ui/LoadingPan';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BadgeCheck, Check, ExternalLink, ShieldX, X } from 'lucide-react';
@@ -45,7 +46,7 @@ export default function VerificationReview() {
     showToast(decision === 'VERIFIED' ? 'Creator verified' : 'Request rejected');
   }
 
-  if (loading) return <div className="min-h-[60vh] flex items-center justify-center"><div className="w-8 h-8 rounded-full border-2 border-amber-800 border-t-transparent animate-spin" /></div>;
+  if (loading) return <div className="min-h-[60vh] flex items-center justify-center"><LoadingPan /></div>;
   if (!user?.isAdmin) return <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3"><ShieldX className="w-10 h-10 text-rose-500" /><p>Administrator access required.</p><Link to="/" className="text-amber-800 underline">Go home</Link></div>;
 
   return (
