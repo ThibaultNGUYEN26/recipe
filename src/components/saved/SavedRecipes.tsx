@@ -18,7 +18,7 @@ function imgSrc(url: string | null | undefined) {
 
 export default function SavedRecipes() {
   const { user } = useAuth();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const { showToast } = useUI();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'mine' | 'saved'>('mine');
@@ -54,7 +54,7 @@ export default function SavedRecipes() {
     if (res.ok) {
       queryClient.invalidateQueries({ queryKey: ['myRecipes'] });
       queryClient.invalidateQueries({ queryKey: ['feed'] });
-      showToast('Recipe deleted');
+      showToast(t('saved.deleted'));
     }
   }
 
@@ -62,7 +62,7 @@ export default function SavedRecipes() {
     const res = await apiFetch(`/api/recipes/${slug}/save`, { method: 'DELETE' });
     if (res.ok) {
       queryClient.invalidateQueries({ queryKey: ['saved'] });
-      showToast('Removed from saved', undefined, 'success', 6000);
+      showToast(t('saved.removed'), undefined, 'success', 6000);
     }
   }
 
@@ -76,13 +76,13 @@ export default function SavedRecipes() {
         body: JSON.stringify({ name }),
       });
       const data = await res.json();
-      if (!res.ok) { showToast(data.error ?? 'Failed to create category', undefined, 'error'); return; }
+      if (!res.ok) { showToast(data.error ?? t('saved.failedCreate'), undefined, 'error'); return; }
       queryClient.invalidateQueries({ queryKey: ['savedCategories'] });
       setActiveSavedCategory(data.id);
       setNewCategoryName('');
-      showToast('Category created');
+      showToast(t('saved.categoryCreated'));
     } catch {
-      showToast('Failed to create category', undefined, 'error');
+      showToast(t('saved.failedCreate'), undefined, 'error');
     } finally {
       setCreatingCategory(false);
     }
@@ -93,18 +93,18 @@ export default function SavedRecipes() {
       method: 'PATCH',
       body: JSON.stringify({ savedCategoryId }),
     });
-    if (!res.ok) { showToast('Failed to move recipe', undefined, 'error'); return; }
+    if (!res.ok) { showToast(t('saved.failedMove'), undefined, 'error'); return; }
     queryClient.invalidateQueries({ queryKey: ['saved'] });
     const category = savedCategories.find((item) => item.id === savedCategoryId) ?? null;
-    showToast(category ? `Moved to ${category.name}` : 'Moved to Favorites');
+    showToast(category ? t('saved.movedTo', { name: category.name }) : t('saved.movedToFavorites'));
   }
 
   if (!user) {
     return (
       <div className="saved-page flex flex-col items-center justify-center min-h-[60vh] gap-4 px-6">
         <Bookmark className="w-12 h-12" style={{ color: 'var(--color-border)' }} />
-        <p className="text-center text-sm" style={{ color: 'var(--color-muted)' }}>Sign in to see your recipes and saved collection</p>
-        <Link to="/login" className="saved-primary px-6 py-3 rounded-2xl text-sm font-medium transition-colors">Sign in</Link>
+        <p className="text-center text-sm" style={{ color: 'var(--color-muted)' }}>{t('saved.signInMessage')}</p>
+        <Link to="/login" className="saved-primary px-6 py-3 rounded-2xl text-sm font-medium transition-colors">{t('saved.signIn')}</Link>
       </div>
     );
   }
@@ -124,11 +124,11 @@ export default function SavedRecipes() {
         style={{ backgroundColor: 'var(--color-surface)' }}>
         <h1 className="font-serif text-base sm:text-lg font-bold flex items-center gap-2 min-w-0" style={{ color: 'var(--color-text)' }}>
           <Bookmark className="saved-accent w-5 h-5 shrink-0" />
-          Saved Collections
+          {t('saved.title')}
         </h1>
         <Link to="/add-recipe"
           className="saved-primary shrink-0 flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-2xl transition-colors shadow-sm">
-          <Plus className="w-4 h-4" /> New Recipe
+          <Plus className="w-4 h-4" /> {t('saved.newRecipe')}
         </Link>
       </div>
 
@@ -137,12 +137,12 @@ export default function SavedRecipes() {
         <button onClick={() => setActiveTab('mine')}
           className={`saved-tab flex items-center gap-2 px-4 py-2.5 rounded-2xl border text-xs font-bold transition-all shrink-0 ${activeTab === 'mine' ? 'saved-tab--active' : ''}`}>
           <ChefHat className="w-4 h-4" />
-          My Recipes ({myRecipes.length})
+          {t('saved.myRecipes', { count: myRecipes.length })}
         </button>
         <button onClick={() => setActiveTab('saved')}
           className={`saved-tab flex items-center gap-2 px-4 py-2.5 rounded-2xl border text-xs font-bold transition-all shrink-0 ${activeTab === 'saved' ? 'saved-tab--active' : ''}`}>
           <Bookmark className="w-4 h-4" />
-          Saved ({savedRecipes.length})
+          {t('saved.savedTab', { count: savedRecipes.length })}
         </button>
       </div>
 
@@ -151,11 +151,11 @@ export default function SavedRecipes() {
           <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
             <button onClick={() => setActiveSavedCategory('all')}
               className={`saved-tab shrink-0 px-3 py-2 rounded-xl text-xs font-semibold border transition-colors ${activeSavedCategory === 'all' ? 'saved-tab--active' : ''}`}>
-              All ({savedRecipes.length})
+              {t('saved.all', { count: savedRecipes.length })}
             </button>
             <button onClick={() => setActiveSavedCategory('favorites')}
               className={`saved-tab shrink-0 px-3 py-2 rounded-xl text-xs font-semibold border transition-colors ${activeSavedCategory === 'favorites' ? 'saved-tab--active' : ''}`}>
-              Favorites ({savedRecipes.filter((recipe) => !recipe.savedCategory).length})
+              {t('saved.favorites', { count: savedRecipes.filter((recipe) => !recipe.savedCategory).length })}
             </button>
             {savedCategories.map((category) => (
               <button key={category.id} onClick={() => setActiveSavedCategory(category.id)}
@@ -168,12 +168,12 @@ export default function SavedRecipes() {
           <div className="flex gap-2 max-w-sm">
             <input value={newCategoryName} onChange={(event) => setNewCategoryName(event.target.value)}
               onKeyDown={(event) => event.key === 'Enter' && createSavedCategory()}
-              maxLength={40} placeholder="Create a saved category"
+              maxLength={40} placeholder={t('saved.createPlaceholder')}
               className="saved-input min-w-0 flex-1 px-3 py-2 rounded-xl text-xs outline-none"
               style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
             <button onClick={createSavedCategory} disabled={creatingCategory || !newCategoryName.trim()}
               className="saved-primary flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors disabled:opacity-50">
-              <Plus className="w-3.5 h-3.5" /> {creatingCategory ? 'Creating…' : 'Create'}
+              <Plus className="w-3.5 h-3.5" /> {creatingCategory ? t('saved.creating') : t('saved.create')}
             </button>
           </div>
         </div>
@@ -190,16 +190,16 @@ export default function SavedRecipes() {
         <div className="rounded-3xl p-12 text-center border" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
           <Bookmark className="w-12 h-12 mx-auto mb-3" style={{ color: 'var(--color-border)' }} />
           <h3 className="font-serif text-lg font-bold" style={{ color: 'var(--color-text)' }}>
-            {activeTab === 'mine' ? 'No recipes yet' : 'No saved recipes yet'}
+            {activeTab === 'mine' ? t('saved.emptyMineTitle') : t('saved.emptySavedTitle')}
           </h3>
           <p className="text-xs mt-1 max-w-xs mx-auto" style={{ color: 'var(--color-muted)' }}>
             {activeTab === 'mine'
-              ? 'Share your first recipe with the community.'
-              : 'Browse the feed and tap the bookmark icon to save recipes.'}
+              ? t('saved.emptyMineHint')
+              : t('saved.emptySavedHint')}
           </p>
           {activeTab === 'mine' && (
             <Link to="/add-recipe" className="saved-accent mt-4 inline-block text-xs font-semibold underline">
-              Add your first recipe
+              {t('saved.addFirst')}
             </Link>
           )}
         </div>
@@ -239,7 +239,7 @@ export default function SavedRecipes() {
                       </h3>
                     </Link>
                     {recipe.authorName && (
-                      <p className="saved-card__muted text-xs mt-0.5">by {recipe.authorName}</p>
+                      <p className="saved-card__muted text-xs mt-0.5">{t('saved.by', { name: recipe.authorName })}</p>
                     )}
                   </div>
 
@@ -254,7 +254,7 @@ export default function SavedRecipes() {
                       onClick={() => activeTab === 'mine' ? deleteRecipe(recipe.slug) : unsaveRecipe(recipe.slug)}
                       className="saved-danger flex items-center gap-1 text-[11px] font-semibold transition-colors">
                       <Trash2 className="w-3.5 h-3.5" />
-                      {activeTab === 'mine' ? 'Delete' : 'Remove'}
+                      {activeTab === 'mine' ? t('saved.delete') : t('saved.remove')}
                     </button>
                   </div>
                   {activeTab === 'saved' && (
@@ -267,7 +267,7 @@ export default function SavedRecipes() {
                         style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
                         aria-label={`Category for ${recipe.title}`}
                       >
-                        <option value="">Favorites</option>
+                        <option value="">{t('saved.favoritesOption')}</option>
                         {savedCategories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
                       </select>
                     </label>
