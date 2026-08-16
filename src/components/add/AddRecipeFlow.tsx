@@ -94,7 +94,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { showToast } = useUI();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
   const lastStepIdRef = useRef<string | null>(null);
@@ -186,8 +186,8 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
   useEffect(() => {
     if (editSlug) return;
     const hasContent = slug || Object.values(translations).some(
-      (t) => t.title || t.steps.some((s) => s.instruction) ||
-             t.ingredients.some((sec) => sec.rows.some((r) => r.name)),
+      (tl) => tl.title || tl.steps.some((s) => s.instruction) ||
+             tl.ingredients.some((sec) => sec.rows.some((r) => r.name)),
     );
     if (!hasContent) return;
     const timer = setTimeout(() => {
@@ -217,8 +217,8 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
         if (typeof info.servings === 'number') setServings(String(info.servings));
         if (info.difficulty) setDifficulty(String(info.difficulty));
         const allTags = (recipe.tags as string[]) || [];
-        setDietaryTags(allTags.filter((t) => DIETARY_LIST.includes(t)));
-        setReferenceTagsInput(allTags.filter((t) => !DIETARY_LIST.includes(t)).map((t) => `#${t}`).join(' '));
+        setDietaryTags(allTags.filter((tag) => DIETARY_LIST.includes(tag)));
+        setReferenceTagsInput(allTags.filter((tag) => !DIETARY_LIST.includes(tag)).map((tag) => `#${tag}`).join(' '));
         if (recipe.category?.label) setPendingCategoryLabel(recipe.category.label);
         const lang: RecipeLanguage = (recipe.originalLanguage as RecipeLanguage) || editLang;
         const sections = ((recipe.ingredients as { section: string; items: string[] }[]) || []).map((sec, si) => ({
@@ -249,8 +249,8 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
   if (!user) {
     return (
       <div className="add-recipe-page flex flex-col items-center justify-center min-h-[60vh] gap-4 px-6">
-        <p className="text-center text-sm" style={{ color: 'var(--color-muted)' }}>Sign in to add recipes</p>
-        <Link to="/login" className="add-recipe-primary px-6 py-3 rounded-2xl text-sm font-medium transition-colors">Sign in</Link>
+        <p className="text-center text-sm" style={{ color: 'var(--color-muted)' }}>{t('add.signInPrompt')}</p>
+        <Link to="/login" className="add-recipe-primary px-6 py-3 rounded-2xl text-sm font-medium transition-colors">{t('add.signInButton')}</Link>
       </div>
     );
   }
@@ -307,9 +307,9 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
         setCoverImage(payload.source.thumbnailUrl);
         setImageFile(null);
       }
-      showToast('TikTok draft imported', payload.draft.warnings.length ? 'Review the highlighted missing details before publishing.' : 'Ingredients and steps are ready for review.', 'success');
+      showToast(t('add.toast.tiktokImported'), payload.draft.warnings.length ? t('add.toast.tiktokImportedWithWarnings') : t('add.toast.tiktokImportedClean'), 'success');
     } catch (error) {
-      showToast('Could not import TikTok', error instanceof Error ? error.message : 'Try another public TikTok URL.', 'error');
+      showToast(t('add.toast.tiktokImportError'), error instanceof Error ? error.message : t('add.toast.tiktokImportErrorFallback'), 'error');
     } finally {
       setImportingTikTok(false);
     }
@@ -359,7 +359,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
   }
 
   function toggleDietary(tag: string) {
-    setDietaryTags((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]);
+    setDietaryTags((prev) => prev.includes(tag) ? prev.filter((dt) => dt !== tag) : [...prev, tag]);
   }
 
   function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -407,17 +407,17 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
       setCoverImage(URL.createObjectURL(blob));
       setCoverImageEdited(true);
       setCropSrc(null);
-      showToast('Cover photo set!', undefined, 'success');
+      showToast(t('add.toast.coverPhotoSet'), undefined, 'success');
     }, 'image/jpeg', 0.92);
   }
 
   async function publish() {
     const originalTranslation = translations[originalLanguage];
-    if (!originalTranslation.title.trim()) { showToast('Title required', 'Please fill in the recipe title', 'error'); return; }
-    if (!slug) { showToast('Slug required', 'A URL slug is needed', 'error'); return; }
-    if (!categoryId) { showToast('Category required', undefined, 'error'); return; }
+    if (!originalTranslation.title.trim()) { showToast(t('add.toast.titleRequired'), t('add.toast.titleRequiredBody'), 'error'); return; }
+    if (!slug) { showToast(t('add.toast.slugRequired'), t('add.toast.slugRequiredBody'), 'error'); return; }
+    if (!categoryId) { showToast(t('add.toast.categoryRequired'), undefined, 'error'); return; }
     if (tr.ingredients.length > 1 && tr.ingredients.some((s) => !s.section.trim())) {
-      showToast('Section names required', 'Please name all ingredient sections', 'error'); return;
+      showToast(t('add.toast.sectionNamesRequired'), t('add.toast.sectionNamesRequiredBody'), 'error'); return;
     }
 
     setSubmitting(true);
@@ -437,21 +437,21 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
       const translationRows = [originalLanguage]
         .filter((l) => translations[l].title.trim())
         .map((l) => {
-          const t = translations[l];
+          const tl = translations[l];
           return {
             language: l,
-            title: t.title.trim(),
-            description: t.description.trim() || undefined,
-            ingredients: t.ingredients.map((s) => ({
+            title: tl.title.trim(),
+            description: tl.description.trim() || undefined,
+            ingredients: tl.ingredients.map((s) => ({
               section: s.section || 'main',
               items: s.rows.filter((r) => r.name.trim()).map((r) => `${r.amount} ${r.unit} ${r.name}`.trim()),
             })).filter((s) => s.items.length > 0),
-            instructions: t.steps.filter((s) => s.instruction.trim()).map((s) => ({
+            instructions: tl.steps.filter((s) => s.instruction.trim()).map((s) => ({
               step: s.stepNumber,
               text: s.instruction.trim(),
               timerMinutes: s.timerMinutes ? parseInt(s.timerMinutes) : undefined,
             })),
-            tips: t.tips.length ? t.tips.filter(Boolean) : undefined,
+            tips: tl.tips.length ? tl.tips.filter(Boolean) : undefined,
           };
         });
 
@@ -487,12 +487,12 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
         queryClient.invalidateQueries({ queryKey: ['userRecipes', user?.id] });
         queryClient.invalidateQueries({ queryKey: ['discover'] });
         if (editSlug) queryClient.invalidateQueries({ queryKey: ['recipe', editSlug] });
-        showToast(editSlug ? 'Recipe updated!' : 'Recipe published!', undefined, 'success');
+        showToast(editSlug ? t('add.toast.recipeUpdated') : t('add.toast.recipePublished'), undefined, 'success');
         if (!editSlug) localStorage.removeItem(DRAFT_KEY);
         navigate(user?.username ? `/${user.username}/${d.slug}` : `/recipe/${d.slug}`);
       } else {
         const d = await res.json();
-        showToast(d.error ?? 'Failed to publish', undefined, 'error');
+        showToast(d.error ?? t('add.toast.failedToPublish'), undefined, 'error');
       }
     } finally {
       setSubmitting(false);
@@ -518,10 +518,10 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
       {/* Draft restored banner */}
       {draftRestored && (
         <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200">
-          <span className="text-xs font-semibold text-amber-800">📝 Draft restored — pick up where you left off</span>
+          <span className="text-xs font-semibold text-amber-800">{t('add.draftRestoredBanner')}</span>
           <button onClick={discardDraft}
             className="text-xs font-bold text-rose-600 hover:text-rose-800 transition-colors shrink-0">
-            Discard
+            {t('add.draftDiscardButton')}
           </button>
         </div>
       )}
@@ -530,18 +530,18 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
       <div className="p-5 rounded-3xl border border-stone-200/80 shadow-sm flex items-center justify-between"
         style={{ backgroundColor: 'var(--color-surface)' }}>
         <div>
-          <h1 className="font-serif text-2xl font-bold" style={{ color: 'var(--color-text)' }}>{editSlug ? 'Edit Recipe' : 'Publish New Recipe'}</h1>
-          <p className="text-xs mt-0.5" style={{ color: 'var(--color-muted)' }}>{editSlug ? 'Update your recipe details' : 'Share your culinary masterpiece with the world'}</p>
+          <h1 className="font-serif text-2xl font-bold" style={{ color: 'var(--color-text)' }}>{editSlug ? t('add.headerTitleEdit') : t('add.headerTitleNew')}</h1>
+          <p className="text-xs mt-0.5" style={{ color: 'var(--color-muted)' }}>{editSlug ? t('add.headerSubtitleEdit') : t('add.headerSubtitleNew')}</p>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => setShowPreview(true)}
             className="add-recipe-accent-soft flex items-center gap-1.5 text-xs font-bold border px-3 py-2 rounded-2xl transition-colors">
-            <Eye className="w-4 h-4" /> Preview
+            <Eye className="w-4 h-4" /> {t('add.previewButton')}
           </button>
           {editSlug && (
             <button onClick={publish} disabled={submitting}
               className="add-recipe-primary flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-2xl transition-colors shadow-md disabled:opacity-60">
-              {submitting ? 'Saving…' : 'Save'}
+              {submitting ? t('add.savingEllipsis') : t('add.saveButton')}
             </button>
           )}
         </div>
@@ -552,7 +552,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
         {([1, 2, 3] as const).map((n) => (
           <button key={n} onClick={() => setStepPage(n)}
             className={`add-recipe-tab py-2 text-xs font-bold rounded-xl transition-all ${stepPage === n ? 'add-recipe-tab--active' : ''}`}>
-            {n === 1 ? 'Basic Info' : n === 2 ? 'Ingredients & Steps' : 'Tags & Publish'}
+            {n === 1 ? t('add.stepBasicInfo') : n === 2 ? t('add.stepIngredientsSteps') : t('add.stepTagsPublish')}
           </button>
         ))}
       </div>
@@ -566,21 +566,21 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
             <div className="flex items-start gap-3">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-stone-900 text-white"><Link2 size={17} /></span>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-bold" style={{ color: 'var(--color-text)' }}>Import from TikTok</p>
-                <p className="text-[11px]" style={{ color: 'var(--color-muted)' }}>Paste a public TikTok URL to auto-fill ingredients, steps and tags.</p>
+                <p className="text-sm font-bold" style={{ color: 'var(--color-text)' }}>{t('add.tiktokImportHeading')}</p>
+                <p className="text-[11px]" style={{ color: 'var(--color-muted)' }}>{t('add.tiktokImportDescription')}</p>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-2">
               <input type="url" value={tiktokUrl} onChange={(event) => setTikTokUrl(event.target.value)}
-                placeholder="https://www.tiktok.com/@chef/video/..." className={`${inputCls} flex-1`} />
+                placeholder={t('add.tiktokUrlPlaceholder')} className={`${inputCls} flex-1`} />
               <button type="button" onClick={importFromTikTok} disabled={importingTikTok || !tiktokUrl.trim()}
                 className="add-recipe-primary shrink-0 rounded-xl px-4 py-3 text-xs font-bold disabled:opacity-50">
-                {importingTikTok ? 'Importing…' : 'Create draft'}
+                {importingTikTok ? t('add.tiktokImportingEllipsis') : t('add.tiktokCreateDraftButton')}
               </button>
             </div>
             {importedSource && (
               <div className="flex items-center justify-between gap-3 rounded-xl border px-3 py-2" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-surface)' }}>
-                <div className="min-w-0"><p className="truncate text-xs font-bold">TikTok connected{importedSource.author ? ` · ${importedSource.author}` : ''}</p><p className="text-[10px]" style={{ color: 'var(--color-muted)' }}>This source will be credited on the published recipe.</p></div>
+                <div className="min-w-0"><p className="truncate text-xs font-bold">{t('add.tiktokConnectedLabel')}{importedSource.author ? ` · ${importedSource.author}` : ''}</p><p className="text-[10px]" style={{ color: 'var(--color-muted)' }}>{t('add.tiktokSourceCredit')}</p></div>
                 <a href={importedSource.url} target="_blank" rel="noreferrer" aria-label="Open source TikTok"><ExternalLink size={15} /></a>
               </div>
             )}
@@ -594,22 +594,22 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
           {/* Cover image */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className={labelCls}>Cover Photo</label>
+              <label className={labelCls}>{t('add.coverPhotoLabel')}</label>
               <button type="button" onClick={() => setShowImagePicker(true)}
                 className="add-recipe-accent hover:underline text-xs font-semibold">
-                Choose preset
+                {t('add.choosePresetButton')}
               </button>
             </div>
             <div className="relative aspect-[16/9] w-full rounded-2xl overflow-hidden bg-stone-100 border border-stone-200 group">
               <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-stone-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
                 <label className="bg-white text-stone-900 text-xs font-bold px-4 py-2 rounded-xl cursor-pointer hover:bg-stone-100 shadow-md">
-                  Upload File
+                  {t('add.uploadFileButton')}
                   <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
                 </label>
                 <button type="button" onClick={() => setShowImagePicker(true)}
                   className="bg-stone-900 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-amber-800 shadow-md">
-                  Presets
+                  {t('add.presetsButton')}
                 </button>
               </div>
             </div>
@@ -618,16 +618,16 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
           {/* Title & description */}
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <label className={labelCls}>Recipe Title *</label>
+              <label className={labelCls}>{t('add.recipeTitleLabel')}</label>
               <input type="text" value={tr.title}
                 onChange={(e) => { setTr({ title: e.target.value }); if (!slug) setSlug(slugify(e.target.value)); }}
-                placeholder="e.g. Truffle & Wild Mushroom Tagliatelle"
+                placeholder={t('add.recipeTitlePlaceholder')}
                 className={inputCls} />
             </div>
             <div className="space-y-1.5">
-              <label className={labelCls}>Short Description</label>
+              <label className={labelCls}>{t('add.shortDescriptionLabel')}</label>
               <textarea rows={3} value={tr.description} onChange={(e) => setTr({ description: e.target.value })}
-                placeholder="Describe the flavor, texture, and story…"
+                placeholder={t('add.shortDescriptionPlaceholder')}
                 className="w-full bg-stone-50 border border-stone-200 text-stone-900 text-xs rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-amber-800/30 resize-none font-medium" />
             </div>
           </div>
@@ -635,25 +635,25 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
           {/* Slug & category */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className={labelCls}>URL Slug *</label>
+              <label className={labelCls}>{t('add.urlSlugLabel')}</label>
               <input type="text" value={slug} onChange={(e) => setSlug(slugify(e.target.value))}
-                placeholder="my-recipe-slug"
+                placeholder={t('add.urlSlugPlaceholder')}
                 className="w-full bg-stone-50 border border-stone-200 text-stone-900 text-xs font-mono rounded-xl px-3 py-2.5 focus:outline-none" />
             </div>
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label className={labelCls}>Category *</label>
+                <label className={labelCls}>{t('add.categoryLabel')}</label>
                 {!creatingCategory && (
                   <button type="button" onClick={() => setCreatingCategory(true)}
                     className="add-recipe-accent text-xs font-semibold hover:underline">
-                    + New
+                    {t('add.newCategoryButton')}
                   </button>
                 )}
               </div>
               {!creatingCategory ? (
                 <div className="max-h-40 overflow-y-auto space-y-1 rounded-xl border p-1" style={{ borderColor: 'var(--color-border)' }}>
                   {categories.length === 0 && (
-                    <p className="text-xs px-2 py-1.5" style={{ color: 'var(--color-muted)' }}>No categories yet — create one</p>
+                    <p className="text-xs px-2 py-1.5" style={{ color: 'var(--color-muted)' }}>{t('add.noCategoriesEmpty')}</p>
                   )}
                   {categories.map((c) => (
                     <div key={c.id} className={`flex items-center gap-1 rounded-lg px-2 py-1.5 cursor-pointer transition-colors ${String(c.id) === categoryId ? 'bg-amber-100' : 'hover:bg-stone-100'}`}
@@ -681,7 +681,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                     type="text"
                     value={newCategoryName}
                     onChange={(e) => setNewCategoryName(e.target.value)}
-                    placeholder="Category name…"
+                    placeholder={t('add.categoryNamePlaceholder')}
                     autoFocus
                     className="w-full bg-stone-50 border border-stone-200 text-stone-900 text-xs font-bold rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-amber-800/30"
                   />
@@ -691,7 +691,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                       onClick={() => { setCreatingCategory(false); setNewCategoryName(''); }}
                       className="add-recipe-secondary flex-1 text-xs font-bold py-2 rounded-xl transition-colors"
                     >
-                      Cancel
+                      {t('add.cancelButton')}
                     </button>
                     <button
                       type="button"
@@ -710,12 +710,12 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                           setCreatingCategory(false);
                           setNewCategoryName('');
                         } catch (err: unknown) {
-                          showToast('Failed to create category', err instanceof Error ? err.message : '', 'error');
+                          showToast(t('add.toast.failedToCreateCategory'), err instanceof Error ? err.message : '', 'error');
                         }
                       }}
                       className="add-recipe-primary flex-1 text-xs font-bold py-2 rounded-xl disabled:opacity-40 transition-colors"
                     >
-                      Create
+                      {t('add.createButton')}
                     </button>
                   </div>
                 </div>
@@ -726,8 +726,8 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
           {/* Metrics */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { label: 'Prep (min)', value: prepTime, onChange: setPrepTime, placeholder: '15' },
-              { label: 'Cook (min)', value: cookTime, onChange: setCookTime, placeholder: '30' },
+              { label: t('add.prepTimeLabel'), value: prepTime, onChange: setPrepTime, placeholder: '15' },
+              { label: t('add.cookTimeLabel'), value: cookTime, onChange: setCookTime, placeholder: '30' },
             ].map(({ label, value, onChange, placeholder }) => (
               <div key={label} className="space-y-1">
                 <label className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">{label}</label>
@@ -736,14 +736,14 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
               </div>
             ))}
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">Servings</label>
+              <label className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">{t('add.servingsLabel')}</label>
               <input type="text" inputMode="numeric" value={servings}
                 onChange={(e) => setServings(e.target.value.replace(/[^0-9]/g, ''))}
                 onBlur={() => { if (!servings || parseInt(servings) < 1) setServings('1'); }}
                 className="w-full bg-stone-50 border border-stone-200 text-stone-900 text-xs font-bold rounded-xl px-3 py-2 focus:outline-none text-center" />
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">Difficulty</label>
+              <label className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">{t('add.difficultyLabel')}</label>
               <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)}
                 className="w-full bg-stone-50 border border-stone-200 text-stone-900 text-xs font-bold rounded-xl px-2 py-2 focus:outline-none">
                 {DIFFICULTY_LIST.map((d) => <option key={d} value={d}>{d}</option>)}
@@ -754,7 +754,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
           <div className="flex justify-end pt-3">
             <button onClick={() => setStepPage(2)}
               className="add-recipe-primary flex items-center gap-2 font-bold text-xs px-6 py-3 rounded-2xl transition-colors shadow-md">
-              Next: Ingredients & Steps <ArrowRight className="w-4 h-4" />
+              {t('add.nextIngredientsStepsButton')} <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         </section>
@@ -768,12 +768,12 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
             style={{ backgroundColor: 'var(--color-surface)' }}>
             <div className="flex items-center justify-between border-b border-stone-100 pb-3">
               <div>
-                <h2 className="font-serif text-lg font-bold" style={{ color: 'var(--color-text)' }}>Ingredients List</h2>
-                <p className="text-xs" style={{ color: 'var(--color-muted)' }}>Group by section (e.g. Brownie, Cookie)</p>
+                <h2 className="font-serif text-lg font-bold" style={{ color: 'var(--color-text)' }}>{t('add.ingredientsListHeading')}</h2>
+                <p className="text-xs" style={{ color: 'var(--color-muted)' }}>{t('add.ingredientsSectionHint')}</p>
               </div>
               <button type="button" onClick={addSection}
                 className="add-recipe-accent-soft flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-xl transition-colors shrink-0">
-                <Plus className="w-3.5 h-3.5" /> Add Section
+                <Plus className="w-3.5 h-3.5" /> {t('add.addSectionButton')}
               </button>
             </div>
 
@@ -785,7 +785,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                     <div className="flex items-center gap-2">
                       <input
                         type="text"
-                        placeholder="Section name (e.g. Brownie batter) *"
+                        placeholder={t('add.sectionNamePlaceholder')}
                         value={sec.section}
                         onChange={(e) => updateSection(sec.id, e.target.value)}
                         required
@@ -808,7 +808,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                       <div key={row.id} className="bg-stone-50 p-3 rounded-2xl border border-stone-200/80 space-y-2">
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-mono text-stone-400 w-5 text-center shrink-0">{idx + 1}.</span>
-                          <input type="text" placeholder="Ingredient name…" value={row.name}
+                          <input type="text" placeholder={t('add.ingredientNamePlaceholder')} value={row.name}
                             onChange={(e) => updateIngredient(sec.id, row.id, 'name', e.target.value)}
                             className="flex-1 min-w-0 bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 font-medium focus:outline-none" />
                           <button type="button" onClick={() => removeIngredient(sec.id, row.id)}
@@ -819,9 +819,9 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                         </div>
                         <div className="pl-7 flex items-center gap-2">
                           <input type="text" value={row.amount} onChange={(e) => updateIngredient(sec.id, row.id, 'amount', e.target.value)}
-                            placeholder="Amount"
+                            placeholder={t('add.ingredientAmountPlaceholder')}
                             className="bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 font-bold text-center focus:outline-none w-20 shrink-0" />
-                          <input type="text" placeholder="Unit (g, tbsp…)" value={row.unit}
+                          <input type="text" placeholder={t('add.ingredientUnitPlaceholder')} value={row.unit}
                             onChange={(e) => updateIngredient(sec.id, row.id, 'unit', e.target.value)}
                             className="bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 focus:outline-none w-24 shrink-0" />
                         </div>
@@ -829,7 +829,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                     ))}
                     <button type="button" onClick={() => addIngredient(sec.id)}
                       className="flex items-center gap-1 text-xs font-semibold text-stone-500 hover:text-amber-800 transition-colors ml-1">
-                      <Plus className="w-3.5 h-3.5" /> Add ingredient
+                      <Plus className="w-3.5 h-3.5" /> {t('add.addIngredientButton')}
                     </button>
                   </div>
                 </div>
@@ -842,15 +842,15 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
             style={{ backgroundColor: 'var(--color-surface)' }}>
             <div className="flex items-center justify-between border-b border-stone-100 pb-3">
               <div>
-                <h2 className="font-serif text-lg font-bold" style={{ color: 'var(--color-text)' }}>Preparation Steps</h2>
-                <p className="text-xs" style={{ color: 'var(--color-muted)' }}>Order steps logically</p>
+                <h2 className="font-serif text-lg font-bold" style={{ color: 'var(--color-text)' }}>{t('add.preparationStepsHeading')}</h2>
+                <p className="text-xs" style={{ color: 'var(--color-muted)' }}>{t('add.stepsOrderHint')}</p>
               </div>
             </div>
             <div className="space-y-3">
               {tr.steps.map((st, idx) => (
                 <div key={st.id} className="bg-stone-50 p-3 sm:p-4 rounded-2xl border border-stone-200 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="add-recipe-accent-soft text-xs font-bold px-2.5 py-1 rounded-full shrink-0">Step {st.stepNumber}</span>
+                    <span className="add-recipe-accent-soft text-xs font-bold px-2.5 py-1 rounded-full shrink-0">{t('add.stepBadge', { number: st.stepNumber })}</span>
                     <div className="flex items-center gap-1">
                       <button type="button" onClick={() => moveStep(idx, 'up')} disabled={idx === 0}
                         className="p-1.5 text-stone-500 hover:text-stone-900 disabled:opacity-30 rounded-lg hover:bg-stone-200 transition-colors">
@@ -866,7 +866,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                       </button>
                     </div>
                   </div>
-                  <textarea rows={3} placeholder="Describe what to do in this step…" value={st.instruction}
+                  <textarea rows={3} placeholder={t('add.stepInstructionPlaceholder')} value={st.instruction}
                     onChange={(e) => updateStep(st.id, 'instruction', e.target.value)}
                     ref={(el) => { if (el && lastStepIdRef.current === st.id) { el.focus(); lastStepIdRef.current = null; } }}
                     className="w-full bg-white text-xs border border-stone-200 rounded-xl p-3 focus:outline-none resize-none" />
@@ -876,7 +876,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
             <div className="flex justify-end">
               <button type="button" onClick={addStep}
                 className="add-recipe-accent-soft flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-xl transition-colors">
-                <Plus className="w-3.5 h-3.5" /> Add Step
+                <Plus className="w-3.5 h-3.5" /> {t('add.addStepButton')}
               </button>
             </div>
           </section>
@@ -884,11 +884,11 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
           <div className="flex items-center justify-between pt-2">
             <button onClick={() => navigate(-1)}
               className="add-recipe-secondary flex items-center gap-1.5 font-bold text-xs px-5 py-3 rounded-2xl transition-colors">
-              <ArrowLeft className="w-4 h-4" /> Back
+              <ArrowLeft className="w-4 h-4" /> {t('add.backButton')}
             </button>
             <button onClick={() => setStepPage(3)}
               className="add-recipe-primary flex items-center gap-2 font-bold text-xs px-6 py-3 rounded-2xl transition-colors shadow-md">
-              Next: Tags & Publish <ArrowRight className="w-4 h-4" />
+              {t('add.nextTagsPublishButton')} <ArrowRight className="w-4 h-4" />
             </button>
           </div>
         </div>
@@ -901,7 +901,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
 
           {/* Dietary tags */}
           <div className="space-y-2">
-            <label className={labelCls}>Dietary Tags</label>
+            <label className={labelCls}>{t('add.dietaryTagsLabel')}</label>
             <div className="flex flex-wrap gap-2">
               {DIETARY_LIST.map((tag) => (
                 <button type="button" key={tag} onClick={() => toggleDietary(tag)}
@@ -914,15 +914,15 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
 
           {/* Search and reference tags */}
           <div className="space-y-2">
-            <label className={labelCls}>Search Tags</label>
+            <label className={labelCls}>{t('add.searchTagsLabel')}</label>
             <p className="text-xs" style={{ color: 'var(--color-muted)' }}>
-              Help people find this recipe. Separate tags with spaces or commas.
+              {t('add.searchTagsHint')}
             </p>
             <input
               type="text"
               value={referenceTagsInput}
               onChange={(event) => setReferenceTagsInput(event.target.value)}
-              placeholder="#creamypasta #weeknight #comfortfood"
+              placeholder={t('add.searchTagsPlaceholder')}
               className="w-full bg-stone-50 border border-stone-200 text-stone-900 text-xs rounded-xl px-3 py-3 focus:outline-none font-medium"
             />
             {parseReferenceTags(referenceTagsInput).length > 0 && (
@@ -938,17 +938,17 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
 
           {/* Cooking video */}
           <div className="space-y-2">
-            <label className={labelCls}>Cooking Video (optional)</label>
+            <label className={labelCls}>{t('add.cookingVideoLabel')}</label>
             <label className="flex items-center gap-3 rounded-2xl border border-dashed border-stone-300 bg-stone-50 p-4 cursor-pointer hover:border-amber-700 transition-colors">
               <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
                 <Video className="w-5 h-5" />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-stone-800 truncate">
-                  {videoFile ? videoFile.name : 'Add a video of you cooking'}
+                  {videoFile ? videoFile.name : t('add.videoUploadPrompt')}
                 </p>
                 <p className="text-xs text-stone-500">
-                  {videoFile ? `${(videoFile.size / 1024 / 1024).toFixed(1)} MB` : 'MP4 or WebM, up to 100 MB'}
+                  {videoFile ? `${(videoFile.size / 1024 / 1024).toFixed(1)} MB` : t('add.videoUploadHint')}
                 </p>
               </div>
               <Upload className="w-5 h-5 text-stone-500" />
@@ -959,7 +959,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                 onChange={(e) => {
                   const file = e.target.files?.[0] ?? null;
                   if (file && file.size > 100 * 1024 * 1024) {
-                    showToast('Video is too large', 'Choose a video under 100 MB', 'error');
+                    showToast(t('add.toast.videoTooLarge'), t('add.toast.videoTooLargeBody'), 'error');
                     e.target.value = '';
                     return;
                   }
@@ -969,16 +969,16 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
             </label>
             {videoFile && (
               <button type="button" onClick={() => setVideoFile(null)} className="flex items-center gap-1 text-xs font-medium text-rose-700">
-                <X className="w-3.5 h-3.5" /> Remove video
+                <X className="w-3.5 h-3.5" /> {t('add.removeVideoButton')}
               </button>
             )}
           </div>
 
           {/* Tips */}
           <div className="space-y-2">
-            <label className={labelCls}>Tips</label>
+            <label className={labelCls}>{t('add.tipsLabel')}</label>
             <p className="text-xs" style={{ color: 'var(--color-muted)' }}>
-              Add substitutions, technique notes, or serving advice.
+              {t('add.tipsHint')}
             </p>
             <div className="space-y-2">
               {tr.tips.map((tip, idx) => (
@@ -987,9 +987,9 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                   <input
                     type="text"
                     value={tip}
-                    onChange={(e) => setTr({ tips: tr.tips.map((t, i) => i === idx ? e.target.value : t) })}
+                    onChange={(e) => setTr({ tips: tr.tips.map((tipVal, i) => i === idx ? e.target.value : tipVal) })}
                     ref={(el) => { if (el && lastTipIdxRef.current === idx) { el.focus(); lastTipIdxRef.current = null; } }}
-                    placeholder="e.g. Reserve pasta water before draining"
+                    placeholder={t('add.tipPlaceholder')}
                     className="flex-1 min-w-0 bg-stone-50 border border-stone-200 text-stone-900 text-xs rounded-xl px-3 py-2 font-medium focus:outline-none"
                   />
                   <button type="button" onClick={() => setTr({ tips: tr.tips.filter((_, i) => i !== idx) })}
@@ -1003,7 +1003,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
             <div className="flex justify-end">
               <button type="button" onClick={() => { lastTipIdxRef.current = tr.tips.length; setTr({ tips: [...tr.tips, ''] }); }}
                 className="flex items-center gap-1 text-xs font-semibold text-stone-500 hover:text-amber-800 transition-colors">
-                <Plus className="w-3.5 h-3.5" /> Add tip
+                <Plus className="w-3.5 h-3.5" /> {t('add.addTipButton')}
               </button>
             </div>
           </div>
@@ -1011,12 +1011,12 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
           <div className="flex items-center justify-between pt-4 border-t border-stone-100">
             <button type="button" onClick={() => navigate(-1)}
               className="add-recipe-secondary flex items-center gap-1.5 font-bold text-xs px-5 py-3 rounded-2xl transition-colors">
-              <ArrowLeft className="w-4 h-4" /> Back
+              <ArrowLeft className="w-4 h-4" /> {t('add.backButton')}
             </button>
             <button type="button" onClick={publish} disabled={submitting}
               className="add-recipe-primary flex items-center gap-2 font-bold text-xs px-8 py-3.5 rounded-2xl transition-colors shadow-lg disabled:opacity-50">
               <Sparkles className="w-4 h-4" />
-              {submitting ? (editSlug ? 'Saving…' : 'Publishing…') : (editSlug ? 'Save Changes' : 'Publish Recipe Now')}
+              {submitting ? (editSlug ? t('add.savingEllipsis') : t('add.publishingEllipsis')) : (editSlug ? t('add.saveChangesButton') : t('add.publishRecipeNowButton'))}
             </button>
           </div>
         </section>
@@ -1031,13 +1031,13 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
             <div className="flex items-center justify-between border-b border-stone-100 pb-3">
               <div className="flex items-center gap-2">
                 <CropIcon className="w-5 h-5 text-amber-800" />
-                <h3 className="font-serif text-lg font-bold text-stone-900">Crop Cover Photo</h3>
+                <h3 className="font-serif text-lg font-bold text-stone-900">{t('add.cropModalHeading')}</h3>
               </div>
               <button onClick={() => setCropSrc(null)} className="p-1 text-stone-400 hover:text-stone-800">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <p className="text-xs text-stone-500">Drag the selection to choose your cover area. The crop is always square.</p>
+            <p className="text-xs text-stone-500">{t('add.cropInstruction')}</p>
             <div className="flex justify-center overflow-hidden rounded-2xl bg-stone-100">
               <ReactCrop
                 crop={crop}
@@ -1059,11 +1059,11 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
             <div className="flex gap-3 pt-1">
               <button onClick={() => setCropSrc(null)}
                 className="add-recipe-secondary flex-1 py-3 text-xs font-semibold rounded-xl transition-colors">
-                Cancel
+                {t('add.cancelButton')}
               </button>
               <button onClick={applyCrop} disabled={!completedCrop}
                 className="add-recipe-primary flex-1 py-3 text-xs font-semibold rounded-xl transition-colors disabled:opacity-40 flex items-center justify-center gap-1.5">
-                <CropIcon className="w-3.5 h-3.5" /> Apply Crop
+                <CropIcon className="w-3.5 h-3.5" /> {t('add.applyCropButton')}
               </button>
             </div>
           </div>
@@ -1077,7 +1077,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
           <div className="add-recipe-modal w-full max-w-lg rounded-3xl p-6 shadow-2xl border max-h-[85vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between pb-3 border-b border-stone-100 mb-4">
-              <h3 className="font-serif text-lg font-bold text-stone-900">Select Food Photography</h3>
+              <h3 className="font-serif text-lg font-bold text-stone-900">{t('add.imagePickerHeading')}</h3>
               <button onClick={() => setShowImagePicker(false)} className="p-1 text-stone-400 hover:text-stone-800">
                 <X className="w-5 h-5" />
               </button>
@@ -1104,7 +1104,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
           <div className="add-recipe-modal w-full max-w-2xl rounded-3xl p-6 shadow-2xl border max-h-[90vh] overflow-y-auto space-y-4"
             onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-stone-200 pb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-amber-800">Recipe Preview</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-amber-800">{t('add.previewModalLabel')}</span>
               <button onClick={() => setShowPreview(false)} className="p-1 text-stone-500 hover:text-stone-900">
                 <X className="w-5 h-5" />
               </button>
@@ -1112,8 +1112,8 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
             <div className="aspect-[16/9] rounded-2xl overflow-hidden bg-stone-200">
               <img src={coverImage} alt="Preview" className="w-full h-full object-cover" />
             </div>
-            <h2 className="font-serif text-2xl font-bold text-stone-900">{translations[originalLanguage].title || 'Untitled Recipe'}</h2>
-            <p className="text-xs text-stone-600">{translations[originalLanguage].description || 'No description.'}</p>
+            <h2 className="font-serif text-2xl font-bold text-stone-900">{translations[originalLanguage].title || t('add.previewUntitledFallback')}</h2>
+            <p className="text-xs text-stone-600">{translations[originalLanguage].description || t('add.previewNoDescriptionFallback')}</p>
             {[...new Set([...dietaryTags, ...parseReferenceTags(referenceTagsInput)])].length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {[...new Set([...dietaryTags, ...parseReferenceTags(referenceTagsInput)])].map((tag) => (
@@ -1125,7 +1125,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
             )}
             {translations[originalLanguage].ingredients.some((s) => s.rows.some((r) => r.name)) && (
               <div className="bg-white p-4 rounded-2xl border border-stone-200">
-                <p className="text-xs font-bold text-stone-900 mb-2">Ingredients</p>
+                <p className="text-xs font-bold text-stone-900 mb-2">{t('add.previewIngredientsHeading')}</p>
                 {translations[originalLanguage].ingredients.map((sec) => (
                   <div key={sec.id} className="mb-2">
                     {sec.section && <p className="text-[11px] font-bold text-amber-800 uppercase tracking-wide mb-1">{sec.section}</p>}
@@ -1140,14 +1140,14 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
             )}
             {translations[originalLanguage].steps.some((step) => step.instruction.trim()) && (
               <div className="bg-white p-4 rounded-2xl border border-stone-200">
-                <p className="text-xs font-bold text-stone-900 mb-3">Preparation Steps</p>
+                <p className="text-xs font-bold text-stone-900 mb-3">{t('add.previewPreparationStepsHeading')}</p>
                 <ol className="space-y-3">
                   {translations[originalLanguage].steps.filter((step) => step.instruction.trim()).map((step, index) => (
                     <li key={step.id} className="flex gap-3">
                       <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-800 text-[10px] font-bold text-white">{index + 1}</span>
                       <div className="min-w-0 flex-1">
                         <p className="text-xs leading-relaxed text-stone-700">{step.instruction}</p>
-                        {step.timerMinutes && <p className="mt-1 text-[10px] font-bold text-amber-800">Timer: {step.timerMinutes} min</p>}
+                        {step.timerMinutes && <p className="mt-1 text-[10px] font-bold text-amber-800">{t('add.previewStepTimer', { value: step.timerMinutes })}</p>}
                       </div>
                     </li>
                   ))}
@@ -1156,7 +1156,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
             )}
             {translations[originalLanguage].tips.some((tip) => tip.trim()) && (
               <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200">
-                <p className="text-xs font-bold text-stone-900 mb-2">Tips</p>
+                <p className="text-xs font-bold text-stone-900 mb-2">{t('add.previewTipsHeading')}</p>
                 <ul className="list-disc list-inside text-xs text-stone-700 space-y-1">
                   {translations[originalLanguage].tips.filter((tip) => tip.trim()).map((tip, index) => (
                     <li key={`${tip}-${index}`}>{tip.trim()}</li>
