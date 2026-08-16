@@ -13,15 +13,21 @@ import { apiFetch } from '../../lib/apiFetch';
 const API = import.meta.env.VITE_API_URL;
 
 const CATEGORIES = [
-  { name: 'Desserts & Baking', image: 'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=400&q=80', tag: 'cake' },
-  { name: 'Main Dishes', image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80', tag: 'main-dishes' },
-  { name: 'Breakfast & Brunch', image: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=400&q=80', tag: 'breakfast' },
-  { name: 'Quick & Easy', image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&q=80', tag: 'quick' },
-  { name: 'Vegetarian', image: 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=400&q=80', tag: 'vegetarian' },
-  { name: 'Street Food', image: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=400&q=80', tag: 'snacks' },
+  { labelKey: 'discover.cat.desserts', image: 'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=400&q=80', tag: 'cake' },
+  { labelKey: 'discover.cat.main', image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&q=80', tag: 'main-dishes' },
+  { labelKey: 'discover.cat.breakfast', image: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?w=400&q=80', tag: 'breakfast' },
+  { labelKey: 'discover.cat.quick', image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&q=80', tag: 'quick' },
+  { labelKey: 'discover.cat.vegetarian', image: 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=400&q=80', tag: 'vegetarian' },
+  { labelKey: 'discover.cat.street', image: 'https://images.unsplash.com/photo-1565299585323-38d6b0865b47?w=400&q=80', tag: 'snacks' },
 ];
 
-const DIFFICULTY_OPTS = ['All', 'Facile', 'Moyen', 'Difficile'];
+const DIFFICULTY_OPTS = ['All', 'Facile', 'Moyen', 'Difficile'] as const;
+const DIFFICULTY_LABEL_KEYS: Record<string, string> = {
+  All: 'discover.diff.all',
+  Facile: 'discover.diff.easy',
+  Moyen: 'discover.diff.medium',
+  Difficile: 'discover.diff.hard',
+};
 const TIME_OPTS = [15, 30, 60, 'Any'] as const;
 
 interface UserResult { id: number; username: string | null; name: string | null; avatarUrl: string | null; isVerified: boolean }
@@ -32,7 +38,7 @@ function imgSrc(url: string | null | undefined) {
 }
 
 export default function SearchDiscover() {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -123,7 +129,7 @@ export default function SearchDiscover() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search recipes, ingredients, creators…"
+            placeholder={t('discover.searchPlaceholder')}
             className="discover-input w-full text-sm rounded-2xl pl-11 pr-10 py-3 border shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-600/40 font-medium"
           />
           {query && (
@@ -137,7 +143,7 @@ export default function SearchDiscover() {
           onClick={() => setShowFilterModal(true)}
           className={`discover-filter-trigger flex items-center gap-1.5 px-4 py-3 rounded-2xl border text-xs font-bold transition-all shadow-sm ${activeFilterCount > 0 ? 'discover-filter-trigger--active' : ''}`}>
           <SlidersHorizontal className="w-4 h-4" />
-          <span className="hidden sm:inline">Filters</span>
+          <span className="hidden sm:inline">{t('discover.filters')}</span>
           {activeFilterCount > 0 && (
             <span className="discover-filter-count w-4 h-4 rounded-full text-[10px] font-extrabold flex items-center justify-center">
               {activeFilterCount}
@@ -170,7 +176,7 @@ export default function SearchDiscover() {
             </span>
           )}
           <button onClick={clearAll} className="discover-danger text-xs font-semibold hover:underline px-2">
-            Clear all
+            {t('discover.clearAll')}
           </button>
         </div>
       )}
@@ -179,7 +185,7 @@ export default function SearchDiscover() {
       {!hasSearch && (
         <section className="space-y-3">
           <h3 className="font-serif text-lg font-bold flex items-center gap-1.5" style={{ color: 'var(--color-text)' }}>
-            <Sparkles className="discover-accent w-4 h-4" /> Discover Categories
+            <Sparkles className="discover-accent w-4 h-4" /> {t('discover.categories')}
           </h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             {CATEGORIES.map((cat) => (
@@ -188,7 +194,7 @@ export default function SearchDiscover() {
                 <img src={cat.image} alt={cat.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 <div className="absolute inset-0 bg-gradient-to-t from-stone-950/80 via-stone-950/20 to-transparent flex items-end p-3">
-                  <span className="text-xs font-bold text-white leading-tight drop-shadow-sm">{cat.name}</span>
+                <span className="text-xs font-bold text-white leading-tight drop-shadow-sm">{t(cat.labelKey)}</span>
                 </div>
               </button>
             ))}
@@ -200,7 +206,7 @@ export default function SearchDiscover() {
       {!hasSearch && users.length === 0 && (
         <section className="space-y-3 pt-2">
           <h3 className="font-serif text-lg font-bold flex items-center gap-1.5" style={{ color: 'var(--color-text)' }}>
-            <Flame className="discover-accent w-4 h-4" /> Trending Creators
+            <Flame className="discover-accent w-4 h-4" /> {t('discover.trendingCreators')}
           </h3>
           <TrendingCreators lang={language} />
         </section>
@@ -209,7 +215,7 @@ export default function SearchDiscover() {
       {/* Creator results */}
       {users.length > 0 && (
         <section className="space-y-3">
-          <h3 className="font-serif text-lg font-bold" style={{ color: 'var(--color-text)' }}>Creators</h3>
+          <h3 className="font-serif text-lg font-bold" style={{ color: 'var(--color-text)' }}>{t('discover.creators')}</h3>
           <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
             {users.map((u) => (
               <div key={u.id} className="discover-creator-card rounded-2xl p-3.5 border shadow-sm flex flex-col items-center text-center min-w-[140px] shrink-0">
@@ -223,7 +229,7 @@ export default function SearchDiscover() {
                 {u.username && <p className="discover-muted text-[10px] truncate w-full">@{u.username}</p>}
                 <button onClick={() => navigate(u.username ? `/u/${encodeURIComponent(u.username)}` : `/profile/${u.id}`)}
                   className="discover-follow-button w-full mt-2.5 py-1.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 transition-colors">
-                  <UserPlus className="w-3 h-3" /> Follow
+                  <UserPlus className="w-3 h-3" /> {t('discover.follow')}
                 </button>
               </div>
             ))}
@@ -235,7 +241,7 @@ export default function SearchDiscover() {
       <section className="space-y-3 pt-2">
         <div className="flex items-center justify-between">
           <h3 className="font-serif text-lg font-bold" style={{ color: 'var(--color-text)' }}>
-            {hasSearch ? `Results (${searchResults.length})` : 'Popular Recipes'}
+            {hasSearch ? t('discover.results', { count: searchResults.length }) : t('discover.popularRecipes')}
           </h3>
         </div>
 
@@ -248,9 +254,9 @@ export default function SearchDiscover() {
         ) : searchResults.length === 0 && hasSearch ? (
           <div className="rounded-3xl p-10 text-center border" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
             <Search className="w-10 h-10 mx-auto mb-2" style={{ color: 'var(--color-border)' }} />
-            <h4 className="font-serif text-base font-bold" style={{ color: 'var(--color-text)' }}>No matching recipes</h4>
-            <p className="text-xs mt-1" style={{ color: 'var(--color-muted)' }}>Try a different search or clear filters.</p>
-            <button onClick={clearAll} className="discover-accent mt-3 text-xs font-semibold underline">Reset</button>
+            <h4 className="font-serif text-base font-bold" style={{ color: 'var(--color-text)' }}>{t('discover.noResults')}</h4>
+            <p className="text-xs mt-1" style={{ color: 'var(--color-muted)' }}>{t('discover.noResultsHint')}</p>
+            <button onClick={clearAll} className="discover-accent mt-3 text-xs font-semibold underline">{t('discover.reset')}</button>
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5">
@@ -297,7 +303,7 @@ export default function SearchDiscover() {
             <div className="discover-divider flex items-center justify-between pb-3 border-b">
               <div className="flex items-center gap-2">
                 <SlidersHorizontal className="discover-accent w-5 h-5" />
-                <h3 className="font-serif text-lg font-bold">Filter Recipes</h3>
+                <h3 className="font-serif text-lg font-bold">{t('discover.filterTitle')}</h3>
               </div>
               <button onClick={() => setShowFilterModal(false)} className="discover-icon-button p-1.5 rounded-full transition-colors">
                 <X className="w-5 h-5" />
@@ -305,11 +311,11 @@ export default function SearchDiscover() {
             </div>
 
             <div className="space-y-2">
-              <label className="discover-muted text-xs font-semibold uppercase tracking-wider">Dietary Preferences</label>
+              <label className="discover-muted text-xs font-semibold uppercase tracking-wider">{t('discover.dietary')}</label>
               <div className="flex flex-wrap gap-1.5">
                 <button onClick={() => setDietary(null)}
                   className={`discover-option px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${!dietary ? 'discover-option--active' : ''}`}>
-                  All
+                  {t('discover.all')}
                 </button>
                 {['vegetarian', 'vegan', 'gluten-free', 'dairy-free', 'low-carb', 'nut-free', 'keto'].map((d) => (
                   <button key={d} onClick={() => setDietary(dietary === d ? null : d)}
@@ -321,12 +327,12 @@ export default function SearchDiscover() {
             </div>
 
             <div className="space-y-2">
-              <label className="discover-muted text-xs font-semibold uppercase tracking-wider">Difficulty</label>
+              <label className="discover-muted text-xs font-semibold uppercase tracking-wider">{t('discover.difficulty')}</label>
               <div className="flex flex-wrap gap-1.5">
                 {DIFFICULTY_OPTS.map((d) => (
                   <button key={d} onClick={() => setDifficulty(d)}
                     className={`discover-option px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${difficulty === d ? 'discover-option--active' : ''}`}>
-                    {d}
+                    {t(DIFFICULTY_LABEL_KEYS[d])}
                   </button>
                 ))}
               </div>
@@ -334,20 +340,20 @@ export default function SearchDiscover() {
 
             <div className="space-y-2">
               <label className="discover-muted text-xs font-semibold uppercase tracking-wider">
-                Max Total Time: {maxTime === 'Any' ? 'Any' : `${maxTime} mins`}
+                {t('discover.maxTime', { value: maxTime === 'Any' ? t('discover.maxTimeAny') : `${maxTime} mins` })}
               </label>
               <div className="flex gap-2">
-                {TIME_OPTS.map((t) => (
-                  <button key={t} onClick={() => setMaxTime(t as number | 'Any')}
-                    className={`discover-option flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${maxTime === t ? 'discover-option--active' : ''}`}>
-                    {t === 'Any' ? 'Any' : `<${t}m`}
+                {TIME_OPTS.map((opt) => (
+                  <button key={opt} onClick={() => setMaxTime(opt as number | 'Any')}
+                    className={`discover-option flex-1 py-2 rounded-xl text-xs font-semibold transition-all ${maxTime === opt ? 'discover-option--active' : ''}`}>
+                    {opt === 'Any' ? t('discover.maxTimeAny') : `<${opt}m`}
                   </button>
                 ))}
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="discover-muted text-xs font-semibold uppercase tracking-wider">Min Rating</label>
+              <label className="discover-muted text-xs font-semibold uppercase tracking-wider">{t('discover.minRating')}</label>
               <div className="flex gap-1">
                 {[1, 2, 3, 4, 5].map((n) => (
                   <button key={n} onClick={() => setMinRating(minRating === n ? 'Any' : n)}>
@@ -360,11 +366,11 @@ export default function SearchDiscover() {
             <div className="discover-divider flex items-center gap-3 pt-3 border-t">
               <button onClick={clearAll}
                 className="discover-reset-button flex-1 py-3 text-xs font-semibold rounded-xl transition-colors">
-                Reset
+                {t('discover.reset')}
               </button>
               <button onClick={() => setShowFilterModal(false)}
                 className="discover-primary-button flex-1 py-3 text-xs font-semibold rounded-xl transition-colors shadow-sm">
-                Show Results
+                {t('discover.showResults')}
               </button>
             </div>
           </div>
@@ -377,6 +383,7 @@ export default function SearchDiscover() {
 function TrendingCreators({ lang }: { lang: string }) {
   const [creators, setCreators] = useState<(UserResult & { recipeCount: number })[]>([]);
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   useEffect(() => {
     apiFetch('/api/users')
@@ -410,7 +417,7 @@ function TrendingCreators({ lang }: { lang: string }) {
             {u.isVerified && <VerifiedBadge className="w-3.5 h-3.5" />}
           </div>
           {u.username && <p className="discover-muted text-[10px] truncate w-full">@{u.username}</p>}
-          <p className="discover-accent text-[10px] font-medium mt-0.5">{u.recipeCount} recipes</p>
+          <p className="discover-accent text-[10px] font-medium mt-0.5">{t('discover.recipeCount', { count: u.recipeCount })}</p>
           <button onClick={() => navigate(u.username ? `/u/${encodeURIComponent(u.username)}` : `/profile/${u.id}`)}
             className="discover-follow-button w-full mt-2.5 py-1.5 px-3 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1">
             <UserPlus className="w-3 h-3" /> Follow
