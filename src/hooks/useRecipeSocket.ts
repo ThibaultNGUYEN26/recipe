@@ -31,6 +31,8 @@ export function useRecipeSocket() {
             if (msg.slug) queryClient.invalidateQueries({ queryKey: ['recipe', msg.slug] });
           } else if (msg.type === 'notification:new' && msg.notification) {
             window.dispatchEvent(new CustomEvent('ws:notification', { detail: msg.notification }));
+          } else if (msg.type === 'user:follow') {
+            window.dispatchEvent(new CustomEvent('ws:user-follow', { detail: msg }));
           }
         } catch {}
       };

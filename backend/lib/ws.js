@@ -44,3 +44,11 @@ export function pushNotificationToUser(userId, payload) {
     if (ws.readyState === 1) { try { ws.send(msg); } catch {} }
   }
 }
+
+export function broadcastFollowEvent(followingId, followerId, delta) {
+  if (!wss) return;
+  const msg = JSON.stringify({ type: 'user:follow', followingId, followerId, delta });
+  for (const client of wss.clients) {
+    if (client.readyState === 1) { try { client.send(msg); } catch {} }
+  }
+}

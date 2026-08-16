@@ -2,6 +2,7 @@ import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { authenticate } from "../middleware/authenticate.js";
 import { createNotification } from "../lib/notify.js";
+import { broadcastFollowEvent } from "../lib/ws.js";
 import { submitAvatar, deleteOwnAvatar } from "../lib/media/avatarService.js";
 import { handleAvatarUpload } from "../lib/media/upload.js";
 import { DEFAULT_AVATAR_URL } from "../lib/media/config.js";
@@ -482,6 +483,7 @@ router.post("/:id/follow", authenticate, async (req, res) => {
     }
     await prisma.follow.create({ data: { followerId: req.user.id, followingId, sourceRecipeId } });
     createNotification({ userId: followingId, actorId: req.user.id, type: "follow" });
+    broadcastFollowEvent(followingId, req.user.id, 1);
     res.status(201).json({ ok: true });
   } catch (err) {
     if (err.code === "P2002") return res.status(409).json({ error: "Already following" });
@@ -495,6 +497,7 @@ router.delete("/:id/follow", authenticate, async (req, res) => {
   const followingId = parseInt(req.params.id);
   try {
     await prisma.follow.deleteMany({ where: { followerId: req.user.id, followingId } });
+    broadcastFollowEvent(followingId, req.user.id, -1);
     res.json({ ok: true });
   } catch (err) {
     console.error(err);
