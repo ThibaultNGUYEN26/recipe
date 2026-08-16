@@ -1038,7 +1038,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
               </button>
             </div>
             <p className="text-xs text-stone-500">Drag the selection to choose your cover area. The crop is always square.</p>
-            <div className="flex justify-center min-h-0 flex-1 overflow-auto rounded-2xl bg-stone-100">
+            <div className="flex justify-center overflow-hidden rounded-2xl bg-stone-100">
               <ReactCrop
                 crop={crop}
                 onChange={(c) => setCrop(c)}
@@ -1051,7 +1051,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                   ref={cropImgRef}
                   src={cropSrc}
                   onLoad={onCropImageLoad}
-                  className="max-w-full max-h-full object-contain"
+                  className="max-w-full max-h-[55vh] object-contain block"
                   alt="Crop source"
                 />
               </ReactCrop>
