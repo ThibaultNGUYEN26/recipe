@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useUI } from '../../contexts/UIContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { X, Bell, Heart, MessageSquare, UserPlus, Star, CheckCheck } from 'lucide-react';
 import { apiFetch } from '../../lib/apiFetch';
 
@@ -18,6 +19,8 @@ interface Notification {
   recipeTitle: string | null;
 }
 
+type TFn = (key: string, values?: Record<string, string>) => string;
+
 const TYPE_ICON: Record<string, React.ReactNode> = {
   follow: <UserPlus className="w-3.5 h-3.5 text-amber-700" />,
   comment: <MessageSquare className="w-3.5 h-3.5 text-sky-500" />,
@@ -25,24 +28,24 @@ const TYPE_ICON: Record<string, React.ReactNode> = {
   like: <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />,
 };
 
-function TYPE_MESSAGE(type: string, actorName: string | null, recipeTitle: string | null) {
-  const name = actorName ?? 'Someone';
+function TYPE_MESSAGE(t: TFn, type: string, actorName: string | null, recipeTitle: string | null) {
+  const name = actorName ?? t('notif.someone');
   switch (type) {
-    case 'follow': return `${name} started following you`;
-    case 'comment': return `${name} commented on${recipeTitle ? ` "${recipeTitle}"` : ' your recipe'}`;
-    case 'rating': return `${name} rated${recipeTitle ? ` "${recipeTitle}"` : ' your recipe'}`;
-    default: return `${name} interacted with${recipeTitle ? ` "${recipeTitle}"` : ' your recipe'}`;
+    case 'follow': return t('notif.follow', { name });
+    case 'comment': return recipeTitle ? t('notif.comment', { name, title: recipeTitle }) : t('notif.commentNoRecipe', { name });
+    case 'rating': return recipeTitle ? t('notif.rating', { name, title: recipeTitle }) : t('notif.ratingNoRecipe', { name });
+    default: return recipeTitle ? t('notif.other', { name, title: recipeTitle }) : t('notif.otherNoRecipe', { name });
   }
 }
 
-function timeAgo(dateStr: string) {
+function timeAgo(dateStr: string, t: TFn) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const m = Math.floor(diff / 60000);
-  if (m < 1) return 'just now';
-  if (m < 60) return `${m}m ago`;
+  if (m < 1) return t('notif.timeJustNow');
+  if (m < 60) return t('notif.timeMinutes', { m: String(m) });
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  return `${Math.floor(h / 24)}d ago`;
+  if (h < 24) return t('notif.timeHours', { h: String(h) });
+  return t('notif.timeDays', { d: String(Math.floor(h / 24)) });
 }
 
 function imgSrc(url: string | null | undefined) {
@@ -53,6 +56,7 @@ function imgSrc(url: string | null | undefined) {
 export default function NotificationDrawer() {
   const { notifDrawerOpen, closeNotifDrawer, unreadNotifCount, setUnreadNotifCount } = useUI();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -106,7 +110,7 @@ export default function NotificationDrawer() {
           style={{ borderBottom: '1px solid rgba(214,211,209,0.8)', backgroundColor: '#FAF8F5' }}>
           <div className="flex items-center gap-2">
             <Bell className="w-5 h-5 text-amber-700" />
-            <h2 className="font-serif text-lg font-bold text-stone-900">Notifications</h2>
+            <h2 className="font-serif text-lg font-bold text-stone-900">{t('notif.title')}</h2>
             {unreadCount > 0 && (
               <span className="bg-amber-600 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
                 {unreadCount}
@@ -117,7 +121,7 @@ export default function NotificationDrawer() {
             {unreadCount > 0 && (
               <button onClick={markAllRead}
                 className="text-xs font-semibold text-amber-800 hover:text-amber-900 flex items-center gap-1 hover:bg-amber-50 px-2.5 py-1 rounded-xl transition-colors">
-                <CheckCheck className="w-3.5 h-3.5" /> Mark all read
+                <CheckCheck className="w-3.5 h-3.5" /> {t('notif.markAllRead')}
               </button>
             )}
             <button onClick={closeNotifDrawer}
@@ -144,8 +148,8 @@ export default function NotificationDrawer() {
           ) : notifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-center p-6">
               <Bell className="w-10 h-10 stroke-1 mb-2 text-stone-300" />
-              <p className="text-sm font-bold text-stone-600">No notifications yet</p>
-              <p className="text-xs text-stone-400 mt-1">Interactions with your recipes will show up here.</p>
+              <p className="text-sm font-bold text-stone-600">{t('notif.emptyTitle')}</p>
+              <p className="text-xs text-stone-400 mt-1">{t('notif.emptyHint')}</p>
             </div>
           ) : (
             notifications.map((n) => (
@@ -179,9 +183,9 @@ export default function NotificationDrawer() {
                 {/* Content */}
                 <div className="min-w-0 flex-1">
                   <p className="text-xs text-stone-800 leading-snug">
-                    {n.message || TYPE_MESSAGE(n.type, n.actor.name, n.recipeTitle)}
+                    {n.message || TYPE_MESSAGE(t, n.type, n.actor.name, n.recipeTitle)}
                   </p>
-                  <p className="text-[10px] text-stone-400 font-medium mt-1">{timeAgo(n.createdAt)}</p>
+                  <p className="text-[10px] text-stone-400 font-medium mt-1">{timeAgo(n.createdAt, t)}</p>
                 </div>
 
                 {!n.read && <span className="w-2 h-2 rounded-full bg-amber-600 shrink-0 mt-1" />}
