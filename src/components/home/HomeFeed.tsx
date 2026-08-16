@@ -113,7 +113,7 @@ export default function HomeFeed() {
   const gridRecipes = filteredRecipes.slice(1);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-4 space-y-6 pb-12 w-full">
+    <div className="max-w-4xl mx-auto px-4 py-4 space-y-6 pb-24 w-full">
       {/* Featured hero */}
       {featuredRecipe && activeFilter === 'all' && !loading && (
         <HeroCard recipe={featuredRecipe} />

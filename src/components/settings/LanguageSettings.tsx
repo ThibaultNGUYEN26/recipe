@@ -40,7 +40,7 @@ export default function LanguageSettings() {
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-5 pb-24">
       <div className="mb-7 flex items-center gap-3">
-        <button type="button" onClick={() => navigate('/settings')}
+        <button type="button" onClick={() => navigate(-1)}
           className="rounded-full p-2 transition-colors hover:bg-[var(--color-hover)]" aria-label={t('language.back')}>
           <ArrowLeft size={20} />
         </button>
