@@ -108,6 +108,22 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
   }, [userId, me?.id]);
 
   useEffect(() => {
+    if (!userId) return;
+    const handler = (e: Event) => {
+      const { followingId, followerId, delta } = (e as CustomEvent).detail as { followingId: number; followerId: number; delta: number };
+      queryClient.setQueryData(['profile', userId], (old: UserProfileType) => {
+        if (!old) return old;
+        const patch: Partial<UserProfileType> = {};
+        if (followingId === +userId) patch.followerCount = old.followerCount + delta;
+        if (followerId === +userId) patch.followingCount = old.followingCount + delta;
+        return Object.keys(patch).length ? { ...old, ...patch } : old;
+      });
+    };
+    window.addEventListener('ws:user-follow', handler);
+    return () => window.removeEventListener('ws:user-follow', handler);
+  }, [userId, queryClient]);
+
+  useEffect(() => {
     if (!profile) return;
     const previousTitle = document.title;
     document.title = `${profile.name ?? (profile.username ? `@${profile.username}` : 'Creator')} — Savor`;
