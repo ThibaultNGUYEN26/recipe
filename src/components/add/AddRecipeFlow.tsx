@@ -1051,7 +1051,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                   ref={cropImgRef}
                   src={cropSrc}
                   onLoad={onCropImageLoad}
-                  className="max-w-full max-h-[55vh] object-contain block"
+                  style={{ maxHeight: '55vh', maxWidth: '100%', display: 'block' }}
                   alt="Crop source"
                 />
               </ReactCrop>
