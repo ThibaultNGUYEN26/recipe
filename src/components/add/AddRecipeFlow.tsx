@@ -567,7 +567,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-stone-900 text-white"><Link2 size={17} /></span>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-bold" style={{ color: 'var(--color-text)' }}>Import from TikTok</p>
-                <p className="text-[11px]" style={{ color: 'var(--color-muted)' }}>Paste your public video link. Savor creates an editable draft for your recipe book.</p>
+                <p className="text-[11px]" style={{ color: 'var(--color-muted)' }}>Paste a public TikTok URL to auto-fill ingredients, steps and tags.</p>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-2">
