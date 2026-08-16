@@ -1,4 +1,5 @@
 import { LoadingPan } from '../ui/LoadingPan';
+import { useMinLoading } from '../../hooks/useMinLoading';
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -53,7 +54,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
 
   const isOwnProfile = me && userId && parseInt(userId) === me.id;
 
-  const { data: profile, isLoading: loading } = useQuery({
+  const { data: profile, isLoading: queryLoading } = useQuery({
     queryKey: ['profile', userId],
     queryFn: async () => {
       const r = await apiFetch(`/api/users/${userId}`);
@@ -62,7 +63,9 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
       return data as UserProfileType;
     },
     enabled: Boolean(userId),
+    staleTime: 30_000,
   });
+  const loading = useMinLoading(queryLoading);
 
   const { data: recipes = [] } = useQuery<RecipeListItem[]>({
     queryKey: ['userRecipes', userId, language],
