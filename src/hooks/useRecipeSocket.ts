@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import { getStoredToken } from '../contexts/AuthContext';
 
 const WS_URL = (import.meta.env.VITE_API_URL as string | undefined)
   ? (import.meta.env.VITE_API_URL as string).replace(/^http/, 'ws')
@@ -15,14 +16,21 @@ export function useRecipeSocket() {
     function connect() {
       ws = new WebSocket(WS_URL);
 
+      ws.onopen = () => {
+        const token = getStoredToken();
+        if (token) ws.send(JSON.stringify({ type: 'auth', token }));
+      };
+
       ws.onmessage = (e) => {
         try {
-          const { type, slug } = JSON.parse(e.data) as { type: string; slug: string };
-          if (type === 'recipe:created' || type === 'recipe:updated' || type === 'recipe:deleted') {
+          const msg = JSON.parse(e.data) as { type: string; slug?: string; notification?: unknown };
+          if (msg.type === 'recipe:created' || msg.type === 'recipe:updated' || msg.type === 'recipe:deleted') {
             queryClient.invalidateQueries({ queryKey: ['feed'] });
             queryClient.invalidateQueries({ queryKey: ['discover'] });
             queryClient.invalidateQueries({ queryKey: ['myRecipes'] });
-            if (slug) queryClient.invalidateQueries({ queryKey: ['recipe', slug] });
+            if (msg.slug) queryClient.invalidateQueries({ queryKey: ['recipe', msg.slug] });
+          } else if (msg.type === 'notification:new' && msg.notification) {
+            window.dispatchEvent(new CustomEvent('ws:notification', { detail: msg.notification }));
           }
         } catch {}
       };

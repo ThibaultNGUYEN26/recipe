@@ -1,5 +1,5 @@
 import { prisma } from "./prisma.js";
-import { pushNotification } from "./sse.js";
+import { pushNotificationToUser } from "./ws.js";
 
 export async function createNotification({ userId, actorId, type, recipeId = null, message = null }) {
   if (userId === actorId) return; // never notify yourself
@@ -23,7 +23,7 @@ export async function createNotification({ userId, actorId, type, recipeId = nul
       data: { userId, actorId, type, recipeId, message },
     });
 
-    pushNotification(userId, {
+    pushNotificationToUser(userId, {
       id: notification.id,
       type,
       read: false,

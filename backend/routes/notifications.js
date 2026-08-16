@@ -1,30 +1,8 @@
 import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { authenticate } from "../middleware/authenticate.js";
-import { addClient, removeClient } from "../lib/sse.js";
 
 const router = Router();
-
-// GET /api/notifications/stream  — SSE endpoint
-router.get("/stream", authenticate, (req, res) => {
-  res.setHeader("Content-Type", "text/event-stream");
-  res.setHeader("Cache-Control", "no-cache");
-  res.setHeader("Connection", "keep-alive");
-  res.setHeader("X-Accel-Buffering", "no"); // disable nginx buffering
-  res.flushHeaders();
-
-  // Keep-alive ping every 25s
-  const ping = setInterval(() => {
-    try { res.write(": ping\n\n"); } catch { clearInterval(ping); }
-  }, 25000);
-
-  addClient(req.user.id, res);
-
-  req.on("close", () => {
-    clearInterval(ping);
-    removeClient(req.user.id, res);
-  });
-});
 
 // GET /api/notifications
 router.get("/", authenticate, async (req, res) => {
