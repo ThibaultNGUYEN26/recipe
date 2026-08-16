@@ -1,0 +1,1 @@
+import{j as r,n as a}from"./index-yzGE8tHA.js";function s({className:e="w-4 h-4"}){return r.jsx(a,{className:`${e} shrink-0 text-blue-500 fill-blue-50`,"aria-label":"Verified creator",role:"img"})}export{s as V};
