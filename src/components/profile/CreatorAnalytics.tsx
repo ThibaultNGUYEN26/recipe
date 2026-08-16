@@ -1,3 +1,4 @@
+import { LoadingPan } from '../ui/LoadingPan';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Bookmark, Eye, MessageCircle, Star, TrendingDown, TrendingUp, Users } from 'lucide-react';
@@ -126,7 +127,7 @@ export default function CreatorAnalytics() {
     return `${top.title} is bringing in the most views. A stronger cover or call to save could convert more visitors.`;
   }, [data]);
 
-  if (authLoading || (loading && !data)) return <div className="min-h-[60vh] flex items-center justify-center"><div className="w-8 h-8 rounded-full border-2 border-amber-800 border-t-transparent animate-spin" /></div>;
+  if (authLoading || (loading && !data)) return <div className="min-h-[60vh] flex items-center justify-center"><LoadingPan /></div>;
   if (!user) return null;
 
   return (

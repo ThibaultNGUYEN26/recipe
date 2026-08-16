@@ -1,3 +1,4 @@
+import { LoadingPan } from '../ui/LoadingPan';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BadgeCheck, CheckCircle2, Clock3, Copy, ExternalLink, ShieldCheck } from 'lucide-react';
@@ -73,7 +74,7 @@ export default function CreatorVerification() {
     </div>
   );
 
-  if (loading) return <div className="min-h-[60vh] flex items-center justify-center"><div className="w-8 h-8 rounded-full border-2 border-amber-800 border-t-transparent animate-spin" /></div>;
+  if (loading) return <div className="min-h-[60vh] flex items-center justify-center"><LoadingPan /></div>;
 
   return (
     <div className="w-full max-w-xl mx-auto px-4 py-8 pb-24 space-y-5">

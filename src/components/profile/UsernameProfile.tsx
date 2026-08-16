@@ -1,3 +1,4 @@
+import { LoadingPan } from '../ui/LoadingPan';
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import UserProfile from './UserProfile';
@@ -32,7 +33,7 @@ export default function UsernameProfile() {
 
   if (!userId) return (
     <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="w-8 h-8 rounded-full border-2 border-amber-800 border-t-transparent animate-spin" />
+      <LoadingPan />
     </div>
   );
 

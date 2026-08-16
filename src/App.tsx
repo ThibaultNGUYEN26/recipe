@@ -9,6 +9,7 @@ import ReportModal from './components/overlays/ReportModal';
 import CollectionModal from './components/overlays/CollectionModal';
 import NotificationDrawer from './components/overlays/NotificationDrawer';
 import { usePullToRefresh } from './hooks/usePullToRefresh';
+import { LoadingPan } from './components/ui/LoadingPan';
 import { useRecipeSocket } from './hooks/useRecipeSocket';
 
 const HomeFeed = lazy(() => import('./components/home/HomeFeed'));
@@ -31,7 +32,7 @@ const CreatorAnalytics = lazy(() => import('./components/profile/CreatorAnalytic
 function LoadingFallback() {
   return (
     <div className="flex items-center justify-center min-h-[60vh]">
-      <div className="w-8 h-8 rounded-full border-2 border-amber-800 border-t-transparent animate-spin" />
+      <LoadingPan />
     </div>
   );
 }
