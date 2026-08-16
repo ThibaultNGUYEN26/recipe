@@ -38,6 +38,7 @@ export interface RecipeListItem {
   commentCount?: number;
   savedCategory?: SavedCategory | null;
   recommendationReason?: string;
+  recommendationReasonValue?: string;
   contentLanguage?: string;
   originalLanguage?: string;
   availableLanguages?: string[];
