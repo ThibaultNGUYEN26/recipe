@@ -71,18 +71,16 @@ export default function NotificationDrawer() {
       .finally(() => setLoading(false));
   }, [notifDrawerOpen, user]);
 
-  // SSE stream — connect when logged in, prepend new notifications in real time
+  // WS — listen for new notifications dispatched by useRecipeSocket
   useEffect(() => {
     if (!user) return;
-    const es = new EventSource(`${API}/api/notifications/stream`, { withCredentials: true });
-    es.onmessage = (e) => {
-      try {
-        const n: Notification = JSON.parse(e.data);
-        setNotifications((prev) => [n, ...prev]);
-        setUnreadNotifCount((c) => c + 1);
-      } catch { /* ping */ }
+    const handler = (e: Event) => {
+      const n = (e as CustomEvent).detail as Notification;
+      setNotifications((prev) => [n, ...prev]);
+      setUnreadNotifCount((c) => c + 1);
     };
-    return () => es.close();
+    window.addEventListener('ws:notification', handler);
+    return () => window.removeEventListener('ws:notification', handler);
   }, [user?.id]);
 
   async function markAllRead() {
