@@ -150,7 +150,8 @@ router.get("/recommended", async (req, res) => {
         avgRating: scores.length ? avgRating : null,
         ratingCount: scores.length,
         score: ranking.score,
-        recommendationReason: ranking.reason,
+        recommendationReason: ranking.reasonCode,
+        recommendationReasonValue: ranking.reasonValue,
         slug: recipe.slug,
         title: translation.title,
         description: translation.description,
@@ -170,8 +171,8 @@ router.get("/recommended", async (req, res) => {
     });
 
     const byScore = [...formatted].filter((recipe) => !savedIds.has(recipe.id)).sort((a, b) => b.score - a.score);
-    const trending = [...formatted].sort((a, b) => (b.recentViews * 0.7 + b.saveCount * 2 + b.ratingCount) - (a.recentViews * 0.7 + a.saveCount * 2 + a.ratingCount)).slice(0, 20).map((recipe) => ({ ...recipe, recommendationReason: "Trending with Savor cooks" }));
-    const following = formatted.filter((recipe) => preferences.following.has(recipe.authorId)).sort((a, b) => b.score - a.score).map((recipe) => ({ ...recipe, recommendationReason: "From a creator you follow" }));
+    const trending = [...formatted].sort((a, b) => (b.recentViews * 0.7 + b.saveCount * 2 + b.ratingCount) - (a.recentViews * 0.7 + a.saveCount * 2 + a.ratingCount)).slice(0, 20).map((recipe) => ({ ...recipe, recommendationReason: 'trending' }));
+    const following = formatted.filter((recipe) => preferences.following.has(recipe.authorId)).sort((a, b) => b.score - a.score).map((recipe) => ({ ...recipe, recommendationReason: 'follow' }));
     res.json({
       personalized: diversifyRecommendations(byScore, 20),
       trending,

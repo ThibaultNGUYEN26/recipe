@@ -14,14 +14,15 @@ export function scoreRecommendation(recipe, preferences = {}, now = new Date()) 
   const seenPenalty = preferences.viewed?.has(recipe.id) ? 1.5 : 0;
   const score = popularity + ratingQuality + freshness + categoryAffinity * 2 + tagAffinity + (followsAuthor ? 6 : 0) - seenPenalty;
 
-  let reason = "Popular with Savor cooks";
-  if (followsAuthor) reason = "From a creator you follow";
-  else if (categoryAffinity > 0) reason = `Because you enjoy ${recipe.categoryLabel}`;
-  else if (matchingTags.length) reason = `Because you like ${matchingTags[0]}`;
-  else if (ageDays <= 14) reason = "Fresh from the community";
-  else if (recipe.avgRating >= 4.5 && recipe.ratingCount >= 2) reason = "Highly rated by cooks";
+  let reasonCode = 'popular';
+  let reasonValue = undefined;
+  if (followsAuthor) reasonCode = 'follow';
+  else if (categoryAffinity > 0) { reasonCode = 'category'; reasonValue = recipe.categoryLabel; }
+  else if (matchingTags.length) { reasonCode = 'tag'; reasonValue = matchingTags[0]; }
+  else if (ageDays <= 14) reasonCode = 'fresh';
+  else if (recipe.avgRating >= 4.5 && recipe.ratingCount >= 2) reasonCode = 'rated';
 
-  return { score, reason };
+  return { score, reasonCode, reasonValue };
 }
 
 export function diversifyRecommendations(items, limit = 20) {

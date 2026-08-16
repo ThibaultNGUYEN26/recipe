@@ -10,6 +10,7 @@ function recipeUrl(slug: string, authorUsername?: string | null) {
 import { useUI } from '../../contexts/UIContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiFetch } from '../../lib/apiFetch';
+import { useLanguage } from '../../contexts/LanguageContext';
 import VerifiedBadge from '../profile/VerifiedBadge';
 
 const API = import.meta.env.VITE_API_URL;
@@ -24,6 +25,7 @@ function imgSrc(url: string | null | undefined) {
 export default function RecipeCard({ recipe, hideAuthor = false }: Props) {
   const { openSaveModal, openShare, showToast } = useUI();
   const { user } = useAuth();
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
   const info = recipe.info as Record<string, string> | null | undefined;
 
@@ -131,7 +133,7 @@ export default function RecipeCard({ recipe, hideAuthor = false }: Props) {
       <div className="p-4 sm:p-5">
         {recipe.recommendationReason && (
           <p className="recipe-card__accent flex items-center gap-1 text-[10px] font-bold mb-1.5">
-            <Sparkles className="w-3 h-3" /> {recipe.recommendationReason}
+            <Sparkles className="w-3 h-3" /> {t(`home.reason.${recipe.recommendationReason}`, recipe.recommendationReasonValue ? { value: recipe.recommendationReasonValue } : {})}
           </p>
         )}
         <Link to={recipeUrl(recipe.slug, recipe.authorUsername)}>
