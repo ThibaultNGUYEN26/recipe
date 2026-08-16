@@ -1,6 +1,5 @@
-import { Navigate, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Check, Languages } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 
 type LanguageChoiceProps = {
@@ -31,11 +30,8 @@ function LanguageChoice({ active, label, description, onClick }: LanguageChoiceP
 }
 
 export default function LanguageSettings() {
-  const { user } = useAuth();
   const { language, setPreferredLanguage, t } = useLanguage();
   const navigate = useNavigate();
-
-  if (!user) return <Navigate to="/login" replace />;
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-5 pb-24">
