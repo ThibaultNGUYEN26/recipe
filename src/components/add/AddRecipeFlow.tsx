@@ -99,6 +99,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
   const fileRef = useRef<HTMLInputElement>(null);
   const lastStepIdRef = useRef<string | null>(null);
   const lastTipIdxRef = useRef<number | null>(null);
+  const lastIngredientIdRef = useRef<string | null>(null);
 
   const [stepPage, setStepPage] = useState<1 | 2 | 3>(1);
   const initialRecipeLanguage: RecipeLanguage = RECIPE_LANGUAGES.includes(language) ? language : 'en';
@@ -328,7 +329,9 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
   }
   // Ingredient row helpers
   function addIngredient(sid: string) {
-    setTr({ ingredients: tr.ingredients.map((s) => s.id !== sid ? s : { ...s, rows: [...s.rows, { id: Date.now().toString(), name: '', amount: '', unit: '' }] }) });
+    const newId = Date.now().toString();
+    lastIngredientIdRef.current = newId;
+    setTr({ ingredients: tr.ingredients.map((s) => s.id !== sid ? s : { ...s, rows: [...s.rows, { id: newId, name: '', amount: '', unit: '' }] }) });
   }
   function removeIngredient(sid: string, rid: string) {
     setTr({ ingredients: tr.ingredients.map((s) => s.id !== sid ? s : { ...s, rows: s.rows.filter((r) => r.id !== rid) }) });
@@ -810,6 +813,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                           <span className="text-xs font-mono text-stone-400 w-5 text-center shrink-0">{idx + 1}.</span>
                           <input type="text" placeholder={t('add.ingredientNamePlaceholder')} value={row.name}
                             onChange={(e) => updateIngredient(sec.id, row.id, 'name', e.target.value)}
+                            ref={(el) => { if (el && lastIngredientIdRef.current === row.id) { el.focus(); lastIngredientIdRef.current = null; } }}
                             className="flex-1 min-w-0 bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 font-medium focus:outline-none" />
                           <button type="button" onClick={() => removeIngredient(sec.id, row.id)}
                             disabled={sec.rows.length === 1}

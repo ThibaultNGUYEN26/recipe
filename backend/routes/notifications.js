@@ -47,6 +47,22 @@ router.patch("/read", authenticate, async (req, res) => {
   }
 });
 
+// PATCH /api/notifications/:id/read  — mark one read
+router.patch("/:id/read", authenticate, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ error: "Invalid id" });
+    await prisma.notification.updateMany({
+      where: { id, userId: req.user.id },
+      data: { read: true },
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message || "Failed to mark notification read" });
+  }
+});
+
 // GET /api/notifications/unread-count
 router.get("/unread-count", authenticate, async (req, res) => {
   try {
