@@ -1,5 +1,25 @@
 # React + Vite
 
+## Google authentication
+
+Create an OAuth 2.0 **Web application** client in Google Cloud, then add each frontend URL (for example `http://localhost:5173`) as an authorized JavaScript origin.
+
+Use that same client ID in both environment files:
+
+```env
+# .env
+VITE_GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+
+# backend/.env
+GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+```
+
+Apply the database migration before starting the updated backend:
+
+```sh
+npm --prefix backend run db:migrate
+```
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

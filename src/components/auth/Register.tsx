@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUI } from '../../contexts/UIContext';
 import { UtensilsCrossed, Eye, EyeOff } from 'lucide-react';
+import GoogleSignIn from './GoogleSignIn';
 
 function getPasswordStrength(pw: string): { score: number; label: string; color: string } {
   if (!pw) return { score: 0, label: '', color: '' };
@@ -224,6 +225,13 @@ export default function Register() {
             {loading ? 'Creating account…' : 'Create account'}
           </button>
         </form>
+
+        <div className="flex items-center gap-3 my-3" aria-hidden="true">
+          <div className="h-px flex-1" style={{ backgroundColor: 'var(--color-border)' }} />
+          <span className="text-xs" style={{ color: 'var(--color-muted)' }}>or</span>
+          <div className="h-px flex-1" style={{ backgroundColor: 'var(--color-border)' }} />
+        </div>
+        <GoogleSignIn onError={setError} />
 
         <p className="text-center text-sm mt-4" style={{ color: 'var(--color-muted)' }}>
           Already have an account?{' '}

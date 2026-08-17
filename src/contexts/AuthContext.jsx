@@ -92,6 +92,20 @@ export function AuthProvider({ children }) {
     return data.user;
   }
 
+  async function loginWithGoogle(credential) {
+    const res = await fetch(`${API}/api/auth/google`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ credential }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Google sign-in failed");
+    if (data.token) localStorage.setItem(TOKEN_KEY, data.token);
+    setUser(data.user);
+    return data.user;
+  }
+
   async function logout() {
     await fetch(`${API}/api/auth/logout`, {
       method: "POST",
@@ -107,7 +121,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, updateUser, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithGoogle, register, logout, updateUser, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

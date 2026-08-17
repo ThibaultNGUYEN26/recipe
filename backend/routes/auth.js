@@ -7,6 +7,7 @@ import { authenticate } from "../middleware/authenticate.js";
 import { DEFAULT_AVATAR_URL } from "../lib/media/config.js";
 import { usernameSuggestionCandidates, validateUsername } from "../lib/username.js";
 import { buildLoginLookup } from "../lib/login.js";
+import { verifyGoogleCredential } from "../lib/googleAuth.js";
 
 const router = Router();
 
@@ -18,6 +19,52 @@ const COOKIE_OPTIONS = {
   sameSite: isProd ? "none" : "lax",
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
+
+function publicUser(user) {
+  return {
+    id: user.id,
+    email: user.email,
+    username: user.username,
+    name: user.name,
+    isAdmin: user.isAdmin,
+    isVerified: user.isVerified,
+    avatarUrl: user.avatarUrl || DEFAULT_AVATAR_URL,
+    avatarPending: Boolean(user.pendingAvatarId),
+    preferredLanguage: user.preferredLanguage,
+  };
+}
+
+function createSession(res, user, status = 200) {
+  const token = jwt.sign(
+    { id: user.id, email: user.email, username: user.username, name: user.name },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" },
+  );
+  res.cookie("token", token, COOKIE_OPTIONS);
+  return res.status(status).json({ token, user: publicUser(user) });
+}
+
+async function googleUsername(email) {
+  let base = email.split("@")[0]
+    .toLowerCase()
+    .replace(/[^a-z0-9._]+/g, ".")
+    .replace(/^[._]+|[._]+$/g, "")
+    .slice(0, 30);
+  if (base.length < 3) base = `user.${base || "google"}`.slice(0, 30);
+
+  const candidates = [base];
+  for (let suffix = 2; suffix <= 100; suffix += 1) {
+    const ending = `.${suffix}`;
+    candidates.push(`${base.slice(0, 30 - ending.length)}${ending}`);
+  }
+  const used = await prisma.user.findMany({
+    where: { username: { in: candidates } },
+    select: { username: true },
+  });
+  const usedNames = new Set(used.map((user) => user.username));
+  return candidates.find((candidate) => !usedNames.has(candidate))
+    ?? `google.${Date.now().toString(36)}`.slice(0, 30);
+}
 
 async function availableUsernameSuggestions(username) {
   const candidates = usernameSuggestionCandidates(username);
@@ -50,9 +97,7 @@ router.post("/register", async (req, res) => {
     const passwordHash = await bcrypt.hash(password, 12);
     const user = await prisma.user.create({ data: { email, username, passwordHash, name: name?.trim() || null } });
 
-    const token = jwt.sign({ id: user.id, email: user.email, username: user.username, name: user.name }, process.env.JWT_SECRET, { expiresIn: "7d" });
-    res.cookie("token", token, COOKIE_OPTIONS);
-    res.status(201).json({ token, user: { id: user.id, email: user.email, username: user.username, name: user.name, isAdmin: user.isAdmin, isVerified: user.isVerified, avatarUrl: user.avatarUrl || DEFAULT_AVATAR_URL, avatarPending: false, preferredLanguage: user.preferredLanguage } });
+    return createSession(res, user, 201);
   } catch (err) {
     if (err.code === "P2002") {
       const target = Array.isArray(err.meta?.target) ? err.meta.target.join(" ") : String(err.meta?.target ?? "");
@@ -101,16 +146,58 @@ router.post("/login", async (req, res) => {
 
   try {
     const user = await prisma.user.findFirst({ where: loginLookup });
-    if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+    if (!user || !user.passwordHash || !(await bcrypt.compare(password, user.passwordHash))) {
       return res.status(401).json({ error: "Invalid username, email, or password" });
     }
 
-    const token = jwt.sign({ id: user.id, email: user.email, username: user.username, name: user.name }, process.env.JWT_SECRET, { expiresIn: "7d" });
-    res.cookie("token", token, COOKIE_OPTIONS);
-    res.json({ token, user: { id: user.id, email: user.email, username: user.username, name: user.name, isAdmin: user.isAdmin, isVerified: user.isVerified, avatarUrl: user.avatarUrl || DEFAULT_AVATAR_URL, avatarPending: Boolean(user.pendingAvatarId), preferredLanguage: user.preferredLanguage } });
+    return createSession(res, user);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message || "Login failed" });
+  }
+});
+
+router.post("/google", async (req, res) => {
+  try {
+    const identity = await verifyGoogleCredential(req.body.credential, process.env.GOOGLE_CLIENT_ID);
+    let user = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { googleId: identity.subject },
+          { email: { equals: identity.email, mode: "insensitive" } },
+        ],
+      },
+    });
+
+    if (user?.googleId && user.googleId !== identity.subject) {
+      return res.status(409).json({ error: "This email is already linked to another Google account" });
+    }
+
+    if (user) {
+      if (!user.googleId) {
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: { googleId: identity.subject, name: user.name || identity.name || null },
+        });
+      }
+    } else {
+      user = await prisma.user.create({
+        data: {
+          email: identity.email,
+          googleId: identity.subject,
+          username: await googleUsername(identity.email),
+          name: identity.name || null,
+        },
+      });
+    }
+
+    return createSession(res, user);
+  } catch (err) {
+    console.error("Google authentication failed", err);
+    const configurationError = err.message === "Google authentication is not configured";
+    return res.status(configurationError ? 503 : 401).json({
+      error: configurationError ? err.message : "Google sign-in failed",
+    });
   }
 });
 

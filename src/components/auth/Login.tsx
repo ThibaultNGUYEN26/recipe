@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useUI } from '../../contexts/UIContext';
 import { UtensilsCrossed, Eye, EyeOff } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
+import GoogleSignIn from './GoogleSignIn';
 
 export default function Login() {
   const { login } = useAuth();
@@ -68,6 +69,12 @@ export default function Login() {
             {loading ? t('login.submitting') : t('login.submit')}
           </button>
         </form>
+        <div className="flex items-center gap-3 my-5" aria-hidden="true">
+          <div className="h-px flex-1" style={{ backgroundColor: 'var(--color-border)' }} />
+          <span className="text-xs" style={{ color: 'var(--color-muted)' }}>or</span>
+          <div className="h-px flex-1" style={{ backgroundColor: 'var(--color-border)' }} />
+        </div>
+        <GoogleSignIn onError={setError} />
         <p className="text-center text-sm mt-6" style={{ color: 'var(--color-muted)' }}>
           {t('login.noAccount')}{' '}
           <Link to="/register" className="font-medium text-amber-800">{t('login.signUp')}</Link>
