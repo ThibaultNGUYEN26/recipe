@@ -1,4 +1,5 @@
 import { LoadingPan } from '../ui/LoadingPan';
+import { useMinLoading } from '../../hooks/useMinLoading';
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate, Link } from 'react-router-dom';
@@ -197,6 +198,8 @@ export default function RecipeDetail() {
     enabled: Boolean(slug),
   });
 
+  const showLoader = useMinLoading(loading);
+
   const { data: fetchedComments } = useQuery<Comment[]>({
     queryKey: ['comments', slug],
     queryFn: () => apiFetch(`/api/recipes/${slug}/comments`).then((r) => r.json()),
@@ -331,7 +334,7 @@ export default function RecipeDetail() {
     });
   }
 
-  if (loading) return (
+  if (showLoader) return (
     <div className="flex items-center justify-center min-h-[60vh]">
       <LoadingPan />
     </div>

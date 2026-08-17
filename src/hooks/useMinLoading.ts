@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-export function useMinLoading(isLoading: boolean, minMs = 1500): boolean {
+export function useMinLoading(isLoading: boolean, minMs = 1450): boolean {
   const [showing, setShowing] = useState(isLoading);
   const startRef = useRef<number | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
