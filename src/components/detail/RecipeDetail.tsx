@@ -174,6 +174,7 @@ export default function RecipeDetail() {
   const [commentText, setCommentText] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
   const [contentLanguage, setContentLanguage] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     setContentLanguage(null);
@@ -289,7 +290,6 @@ export default function RecipeDetail() {
   }
 
   async function deleteRecipe() {
-    if (!window.confirm('Delete this recipe? This cannot be undone.')) return;
     const res = await apiFetch(`/api/recipes/${slug}`, { method: 'DELETE' });
     if (res.ok) {
       queryClient.invalidateQueries({ queryKey: ['feed'] });
@@ -366,11 +366,23 @@ export default function RecipeDetail() {
                 <Link to={`/edit-recipe/${recipe.slug}`} aria-label="Edit recipe" style={{ color: 'var(--color-muted)' }}>
                   <Pencil size={18} />
                 </Link>
-                <button onClick={deleteRecipe} aria-label="Delete recipe" style={{ color: 'var(--color-muted)' }}
-                  className="hover:text-rose-600 transition-colors">
-                  <Trash2 size={18} />
-                </button>
-              </>
+                {confirmDelete ? (
+                  <div className="flex items-center gap-1.5">
+                    <button onClick={() => { setConfirmDelete(false); deleteRecipe(); }}
+                      className="text-xs font-semibold text-white bg-rose-500 hover:bg-rose-600 px-2.5 py-1 rounded-lg transition-colors">
+                      Delete
+                    </button>
+                    <button onClick={() => setConfirmDelete(false)}
+                      className="text-xs font-semibold text-stone-600 hover:text-stone-900 bg-stone-100 hover:bg-stone-200 px-2.5 py-1 rounded-lg transition-colors">
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button onClick={() => setConfirmDelete(true)} aria-label="Delete recipe" style={{ color: 'var(--color-muted)' }}
+                    className="hover:text-rose-600 transition-colors">
+                    <Trash2 size={18} />
+                  </button>
+                )}</>
             )}
             <button onClick={() => openShare({
               type: 'recipe',

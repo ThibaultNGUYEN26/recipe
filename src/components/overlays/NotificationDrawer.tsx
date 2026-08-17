@@ -93,6 +93,12 @@ export default function NotificationDrawer() {
     setUnreadNotifCount(0);
   }
 
+  async function markOneRead(id: number) {
+    setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, read: true } : n));
+    setUnreadNotifCount((c) => Math.max(0, c - 1));
+    await apiFetch(`/api/notifications/${id}/read`, { method: 'PATCH' });
+  }
+
   if (!notifDrawerOpen) return null;
 
   const unreadCount = unreadNotifCount;
@@ -154,7 +160,8 @@ export default function NotificationDrawer() {
           ) : (
             notifications.map((n) => (
               <div key={n.id}
-                className={`flex items-start gap-3 p-3.5 rounded-2xl transition-colors ${!n.read ? 'bg-amber-50/50 hover:bg-amber-50/80' : 'hover:bg-stone-50'}`}>
+                onClick={() => { if (!n.read) markOneRead(n.id); }}
+                className={`flex items-start gap-3 p-3.5 rounded-2xl transition-colors cursor-pointer ${!n.read ? 'bg-amber-50/50 hover:bg-amber-50/80' : 'hover:bg-stone-50'}`}>
 
                 {/* Actor avatar + type icon badge */}
                 <div className="relative shrink-0">
