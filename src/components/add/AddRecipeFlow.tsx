@@ -139,6 +139,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
   const [creatingCategory, setCreatingCategory] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Set<string>>(new Set());
   const [coverImageEdited, setCoverImageEdited] = useState(false);
   const [pendingCategoryLabel, setPendingCategoryLabel] = useState<string | null>(null);
   const [tiktokUrl, setTikTokUrl] = useState('');
@@ -260,6 +261,29 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
 
   function setTr(updates: Partial<TranslationFields>) {
     setTranslations((prev) => ({ ...prev, [editLang]: { ...prev[editLang], ...updates } }));
+  }
+
+  function clearValidationError(key: string) {
+    setValidationErrors((current) => {
+      if (!current.has(key)) return current;
+      const next = new Set(current);
+      next.delete(key);
+      return next;
+    });
+  }
+
+  function showValidationErrors(errors: string[]) {
+    setValidationErrors(new Set(errors));
+    const firstError = errors[0];
+    const targetPage = ['title', 'slug', 'category'].includes(firstError) ? 1 : 2;
+    setStepPage(targetPage);
+    window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => {
+        const target = document.querySelector<HTMLElement>(`[data-validation-key="${firstError}"]`);
+        target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        target?.focus({ preventScroll: true });
+      });
+    });
   }
 
   function slugify(s: string) {
@@ -416,12 +440,25 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
 
   async function publish() {
     const originalTranslation = translations[originalLanguage];
-    if (!originalTranslation.title.trim()) { showToast(t('add.toast.titleRequired'), t('add.toast.titleRequiredBody'), 'error'); return; }
-    if (!slug) { showToast(t('add.toast.slugRequired'), t('add.toast.slugRequiredBody'), 'error'); return; }
-    if (!categoryId) { showToast(t('add.toast.categoryRequired'), undefined, 'error'); return; }
-    if (tr.ingredients.length > 1 && tr.ingredients.some((s) => !s.section.trim())) {
-      showToast(t('add.toast.sectionNamesRequired'), t('add.toast.sectionNamesRequiredBody'), 'error'); return;
+    const errors: string[] = [];
+    if (!originalTranslation.title.trim()) errors.push('title');
+    if (!slug.trim()) errors.push('slug');
+    if (!categoryId) errors.push('category');
+    if (tr.ingredients.length > 1) {
+      tr.ingredients.forEach((section) => {
+        if (!section.section.trim()) errors.push(`section:${section.id}`);
+      });
     }
+    if (!tr.ingredients.some((section) => section.rows.some((row) => row.name.trim()))) errors.push('ingredients');
+    if (!tr.steps.some((step) => step.instruction.trim())) errors.push('steps');
+
+    if (errors.length > 0) {
+      showValidationErrors(errors);
+      showToast(t('add.toast.missingRequiredFields'), t('add.toast.missingRequiredFieldsBody'), 'error');
+      return;
+    }
+
+    setValidationErrors(new Set());
 
     setSubmitting(true);
     try {
@@ -623,9 +660,20 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
             <div className="space-y-1.5">
               <label className={labelCls}>{t('add.recipeTitleLabel')}</label>
               <input type="text" value={tr.title}
-                onChange={(e) => { setTr({ title: e.target.value }); if (!slug) setSlug(slugify(e.target.value)); }}
+                onChange={(e) => {
+                  setTr({ title: e.target.value });
+                  if (e.target.value.trim()) clearValidationError('title');
+                  if (!slug) {
+                    const generatedSlug = slugify(e.target.value);
+                    setSlug(generatedSlug);
+                    if (generatedSlug) clearValidationError('slug');
+                  }
+                }}
                 placeholder={t('add.recipeTitlePlaceholder')}
-                className={inputCls} />
+                data-validation-key="title"
+                aria-invalid={validationErrors.has('title')}
+                className={`${inputCls} ${validationErrors.has('title') ? 'border-rose-500 ring-2 ring-rose-200' : ''}`} />
+              {validationErrors.has('title') && <p className="text-xs font-semibold text-rose-600">{t('add.requiredField')}</p>}
             </div>
             <div className="space-y-1.5">
               <label className={labelCls}>{t('add.shortDescriptionLabel')}</label>
@@ -639,9 +687,16 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <label className={labelCls}>{t('add.urlSlugLabel')}</label>
-              <input type="text" value={slug} onChange={(e) => setSlug(slugify(e.target.value))}
+              <input type="text" value={slug} onChange={(e) => {
+                const value = slugify(e.target.value);
+                setSlug(value);
+                if (value) clearValidationError('slug');
+              }}
                 placeholder={t('add.urlSlugPlaceholder')}
-                className="w-full bg-stone-50 border border-stone-200 text-stone-900 text-xs font-mono rounded-xl px-3 py-2.5 focus:outline-none" />
+                data-validation-key="slug"
+                aria-invalid={validationErrors.has('slug')}
+                className={`w-full bg-stone-50 border text-stone-900 text-xs font-mono rounded-xl px-3 py-2.5 focus:outline-none ${validationErrors.has('slug') ? 'border-rose-500 ring-2 ring-rose-200' : 'border-stone-200'}`} />
+              {validationErrors.has('slug') && <p className="text-xs font-semibold text-rose-600">{t('add.requiredField')}</p>}
             </div>
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
@@ -654,14 +709,20 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                 )}
               </div>
               {!creatingCategory ? (
-                <div className="max-h-40 overflow-y-auto space-y-1 rounded-xl border p-1" style={{ borderColor: 'var(--color-border)' }}>
+                <div data-validation-key="category" tabIndex={validationErrors.has('category') ? -1 : undefined}
+                  className={`max-h-40 overflow-y-auto space-y-1 rounded-xl border p-1 ${validationErrors.has('category') ? 'border-rose-500 ring-2 ring-rose-200' : ''}`}
+                  style={validationErrors.has('category') ? undefined : { borderColor: 'var(--color-border)' }}>
                   {categories.length === 0 && (
                     <p className="text-xs px-2 py-1.5" style={{ color: 'var(--color-muted)' }}>{t('add.noCategoriesEmpty')}</p>
                   )}
                   {categories.map((c) => (
                     <div key={c.id} className={`flex items-center gap-1 rounded-lg px-2 py-1.5 cursor-pointer transition-colors ${String(c.id) === categoryId ? 'bg-amber-100' : 'hover:bg-stone-100'}`}
                       style={String(c.id) === categoryId ? { backgroundColor: 'var(--color-accent-soft)' } : {}}
-                      onClick={() => setCategoryId(String(c.id) === categoryId ? '' : String(c.id))}>
+                      onClick={() => {
+                        const value = String(c.id) === categoryId ? '' : String(c.id);
+                        setCategoryId(value);
+                        if (value) clearValidationError('category');
+                      }}>
                       <span className="flex-1 text-xs font-bold truncate" style={{ color: 'var(--color-text)' }}>{c.label}</span>
                       <button type="button"
                         onClick={async (e) => {
@@ -710,6 +771,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                           if (!res.ok) throw new Error(data.error || 'Failed');
                           setCategories((prev) => [...prev, data]);
                           setCategoryId(String(data.id));
+                          clearValidationError('category');
                           setCreatingCategory(false);
                           setNewCategoryName('');
                         } catch (err: unknown) {
@@ -723,6 +785,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                   </div>
                 </div>
               )}
+              {validationErrors.has('category') && <p className="text-xs font-semibold text-rose-600">{t('add.requiredField')}</p>}
             </div>
           </div>
 
@@ -780,6 +843,10 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
               </button>
             </div>
 
+            {validationErrors.has('ingredients') && (
+              <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">{t('add.ingredientsRequired')}</p>
+            )}
+
             <div className="space-y-5">
               {tr.ingredients.map((sec) => (
                 <div key={sec.id} className="space-y-2">
@@ -790,11 +857,16 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                         type="text"
                         placeholder={t('add.sectionNamePlaceholder')}
                         value={sec.section}
-                        onChange={(e) => updateSection(sec.id, e.target.value)}
+                        onChange={(e) => {
+                          updateSection(sec.id, e.target.value);
+                          if (e.target.value.trim()) clearValidationError(`section:${sec.id}`);
+                        }}
                         required
+                        data-validation-key={`section:${sec.id}`}
+                        aria-invalid={validationErrors.has(`section:${sec.id}`)}
                         className="flex-1 bg-white text-xs font-bold rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-amber-800/30"
                         style={{
-                          border: `1px solid ${sec.section.trim() === '' ? '#fca5a5' : 'var(--color-border)'}`,
+                          border: `1px solid ${validationErrors.has(`section:${sec.id}`) ? '#f43f5e' : 'var(--color-border)'}`,
                           color: 'var(--color-text)',
                         }}
                       />
@@ -812,9 +884,14 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-mono text-stone-400 w-5 text-center shrink-0">{idx + 1}.</span>
                           <input type="text" placeholder={t('add.ingredientNamePlaceholder')} value={row.name}
-                            onChange={(e) => updateIngredient(sec.id, row.id, 'name', e.target.value)}
+                            onChange={(e) => {
+                              updateIngredient(sec.id, row.id, 'name', e.target.value);
+                              if (e.target.value.trim()) clearValidationError('ingredients');
+                            }}
                             ref={(el) => { if (el && lastIngredientIdRef.current === row.id) { el.focus(); lastIngredientIdRef.current = null; } }}
-                            className="flex-1 min-w-0 bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 font-medium focus:outline-none" />
+                            data-validation-key="ingredients"
+                            aria-invalid={validationErrors.has('ingredients')}
+                            className={`flex-1 min-w-0 bg-white text-xs border rounded-xl px-3 py-2 font-medium focus:outline-none ${validationErrors.has('ingredients') ? 'border-rose-500 ring-2 ring-rose-200' : 'border-stone-200'}`} />
                           <button type="button" onClick={() => removeIngredient(sec.id, row.id)}
                             disabled={sec.rows.length === 1}
                             className="p-1.5 text-stone-400 hover:text-rose-600 rounded-lg hover:bg-stone-200 transition-colors disabled:opacity-30 shrink-0">
@@ -850,6 +927,9 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                 <p className="text-xs" style={{ color: 'var(--color-muted)' }}>{t('add.stepsOrderHint')}</p>
               </div>
             </div>
+            {validationErrors.has('steps') && (
+              <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700">{t('add.stepsRequired')}</p>
+            )}
             <div className="space-y-3">
               {tr.steps.map((st, idx) => (
                 <div key={st.id} className="bg-stone-50 p-3 sm:p-4 rounded-2xl border border-stone-200 space-y-2">
@@ -871,9 +951,14 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                     </div>
                   </div>
                   <textarea rows={3} placeholder={t('add.stepInstructionPlaceholder')} value={st.instruction}
-                    onChange={(e) => updateStep(st.id, 'instruction', e.target.value)}
+                    onChange={(e) => {
+                      updateStep(st.id, 'instruction', e.target.value);
+                      if (e.target.value.trim()) clearValidationError('steps');
+                    }}
                     ref={(el) => { if (el && lastStepIdRef.current === st.id) { el.focus(); lastStepIdRef.current = null; } }}
-                    className="w-full bg-white text-xs border border-stone-200 rounded-xl p-3 focus:outline-none resize-none" />
+                    data-validation-key="steps"
+                    aria-invalid={validationErrors.has('steps')}
+                    className={`w-full bg-white text-xs border rounded-xl p-3 focus:outline-none resize-none ${validationErrors.has('steps') ? 'border-rose-500 ring-2 ring-rose-200' : 'border-stone-200'}`} />
                 </div>
               ))}
             </div>
