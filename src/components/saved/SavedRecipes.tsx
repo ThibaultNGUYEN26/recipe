@@ -8,6 +8,7 @@ import type { RecipeListItem, SavedCategory } from '../../types';
 import { Bookmark, Plus, Folder, Star, Clock, ChefHat, Trash2 } from 'lucide-react';
 import { apiFetch } from '../../lib/apiFetch';
 import { LoadingPan } from '../ui/LoadingPan';
+import { useMinLoading } from '../../hooks/useMinLoading';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -49,6 +50,7 @@ export default function SavedRecipes() {
   });
 
   const loading = loadingMine || loadingSaved;
+  const showLoader = useMinLoading(loading);
 
   async function deleteRecipe(slug: string) {
     const res = await apiFetch(`/api/recipes/${slug}`, { method: 'DELETE' });
@@ -181,7 +183,7 @@ export default function SavedRecipes() {
       )}
 
       {/* Grid */}
-      {loading ? (
+      {showLoader ? (
         <div className="flex items-center justify-center min-h-[40vh]">
           <LoadingPan />
         </div>

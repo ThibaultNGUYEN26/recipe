@@ -8,6 +8,7 @@ import { Sparkles, Flame, Clock, Leaf, UtensilsCrossed, Star } from 'lucide-reac
 import { useAuth } from '../../contexts/AuthContext';
 import { apiFetch } from '../../lib/apiFetch';
 import { LoadingPan } from '../ui/LoadingPan';
+import { useMinLoading } from '../../hooks/useMinLoading';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -92,6 +93,7 @@ export default function HomeFeed() {
         ),
   });
 
+  const showLoader = useMinLoading(loading);
   const recipes: RecipeListItem[] = data?.personalized ?? [];
   const trending: RecipeListItem[] = data?.trending ?? [];
   const following: RecipeListItem[] = data?.following ?? [];
@@ -116,11 +118,11 @@ export default function HomeFeed() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-4 space-y-6 pb-24 w-full">
       {/* Featured hero */}
-      {featuredRecipe && activeFilter === 'all' && !loading && (
+      {featuredRecipe && activeFilter === 'all' && !showLoader && (
         <HeroCard recipe={featuredRecipe} />
       )}
 
-      {activeFilter === 'all' && !loading && (
+      {activeFilter === 'all' && !showLoader && (
         <div className="flex items-center justify-between gap-3">
           <div>
             <h1 className="font-serif text-xl font-bold" style={{ color: 'var(--color-text)' }}>
@@ -150,7 +152,7 @@ export default function HomeFeed() {
       </div>
 
       {/* Recipe grid */}
-      {loading ? (
+      {showLoader ? (
         <div className="flex items-center justify-center min-h-[40vh]">
           <LoadingPan />
         </div>

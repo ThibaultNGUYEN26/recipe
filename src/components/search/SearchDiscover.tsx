@@ -10,6 +10,7 @@ import type { RecipeListItem } from '../../types';
 import VerifiedBadge from '../profile/VerifiedBadge';
 import { apiFetch } from '../../lib/apiFetch';
 import { LoadingPan } from '../ui/LoadingPan';
+import { useMinLoading } from '../../hooks/useMinLoading';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -65,6 +66,7 @@ export default function SearchDiscover() {
       })),
   });
 
+  const showLoader = useMinLoading(loading);
   const allRecipes: RecipeListItem[] = data?.allRecipes ?? [];
   const discoveryRecipes: RecipeListItem[] = data?.discoveryRecipes ?? [];
 
@@ -246,7 +248,7 @@ export default function SearchDiscover() {
           </h3>
         </div>
 
-        {loading ? (
+        {showLoader ? (
           <div className="flex items-center justify-center min-h-[40vh]">
             <LoadingPan />
           </div>
