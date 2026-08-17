@@ -23,5 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 
+.env
+
 .playwright-mcp/
 *.zip
