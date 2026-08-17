@@ -9,6 +9,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import type { RecipeListItem } from '../../types';
 import VerifiedBadge from '../profile/VerifiedBadge';
 import { apiFetch } from '../../lib/apiFetch';
+import { LoadingPan } from '../ui/LoadingPan';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -246,10 +247,8 @@ export default function SearchDiscover() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="rounded-2xl aspect-square animate-pulse" style={{ backgroundColor: 'var(--color-border)' }} />
-            ))}
+          <div className="flex items-center justify-center min-h-[40vh]">
+            <LoadingPan />
           </div>
         ) : searchResults.length === 0 && hasSearch ? (
           <div className="rounded-3xl p-10 text-center border" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
