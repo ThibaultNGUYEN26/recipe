@@ -7,6 +7,7 @@ import type { RecipeListItem } from '../../types';
 import { Sparkles, Flame, Clock, Leaf, UtensilsCrossed, Star } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiFetch } from '../../lib/apiFetch';
+import { LoadingPan } from '../ui/LoadingPan';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -150,10 +151,8 @@ export default function HomeFeed() {
 
       {/* Recipe grid */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="rounded-3xl h-96 animate-pulse" style={{ backgroundColor: 'var(--color-border)' }} />
-          ))}
+        <div className="flex items-center justify-center min-h-[40vh]">
+          <LoadingPan />
         </div>
       ) : filteredRecipes.length === 0 ? (
         <div className="rounded-3xl p-12 text-center border"
