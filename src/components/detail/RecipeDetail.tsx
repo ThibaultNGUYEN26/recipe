@@ -2,7 +2,7 @@ import { LoadingPan } from '../ui/LoadingPan';
 import { useMinLoading } from '../../hooks/useMinLoading';
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUI } from '../../contexts/UIContext';
@@ -165,6 +165,7 @@ export default function RecipeDetail() {
   const { user } = useAuth();
   const { openShare, openSaveModal, openReport, startTimer, showToast } = useUI();
   const navigate = useNavigate();
+  const location = useLocation();
   const queryClient = useQueryClient();
 
   const [servings, setServings] = useState(1);
@@ -218,6 +219,14 @@ export default function RecipeDetail() {
       setUserScore(recipe.myRating ?? 0);
     }
   }, [recipe?.slug]);
+
+  useEffect(() => {
+    if (!recipe || location.hash !== '#comments') return;
+    const frame = requestAnimationFrame(() => {
+      document.getElementById('comments')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [recipe, location.hash]);
 
   useEffect(() => {
     function handleRecipeSaved(event: Event) {
@@ -611,7 +620,7 @@ export default function RecipeDetail() {
         </div>
 
         {/* ── Comments (order 4 on mobile, left col row 3 on desktop) ── */}
-        <div className="order-4 lg:[grid-column:1] lg:[grid-row:3] pb-6">
+        <div id="comments" className="order-4 lg:[grid-column:1] lg:[grid-row:3] pb-6 scroll-mt-20">
           <h2 className="font-serif text-lg font-semibold mb-4" style={{ color: 'var(--color-text)' }}>
             Comments {comments.length > 0 && <span className="text-base font-normal" style={{ color: 'var(--color-muted)' }}>({comments.length})</span>}
           </h2>

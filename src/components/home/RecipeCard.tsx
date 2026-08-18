@@ -206,7 +206,8 @@ export default function RecipeCard({ recipe, hideAuthor = false }: Props) {
               <Heart className={`w-5 h-5 stroke-[1.8] transition-colors ${isLiked ? 'fill-red-500 text-red-500' : ''}`} />
               <span>{likeCount}</span>
             </button>
-            <Link to={recipeUrl(recipe.slug, recipe.authorUsername)}
+            <Link to={`${recipeUrl(recipe.slug, recipe.authorUsername)}#comments`}
+              aria-label={`View ${recipe.commentCount ?? 0} comments for ${recipe.title}`}
               className="recipe-card__action flex items-center gap-1.5 text-xs font-bold transition-colors">
               <MessageCircle className="w-5 h-5 stroke-[1.8]" />
               <span>{recipe.commentCount ?? 0}</span>

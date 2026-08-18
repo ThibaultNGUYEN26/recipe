@@ -417,7 +417,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
       {followListModal && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-stone-900/60 backdrop-blur-sm"
           onClick={() => setFollowListModal(null)}>
-          <div className="profile-modal w-full max-w-sm rounded-t-3xl sm:rounded-3xl shadow-2xl border flex flex-col max-h-[80vh]"
+          <div className="profile-modal w-full max-w-sm rounded-t-3xl sm:rounded-3xl shadow-2xl border flex flex-col max-h-[80vh] overflow-hidden"
             onClick={(e) => e.stopPropagation()}>
             {/* Header */}
             <div className="profile-divider flex items-center justify-between px-5 py-4 border-b shrink-0">
@@ -429,7 +429,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
               </button>
             </div>
             {/* List */}
-            <div className="overflow-y-auto flex-1">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
               {followListLoading ? (
                 <div className="flex items-center justify-center py-12">
                   <LoadingPan />
