@@ -10,6 +10,7 @@ import { diversifyRecommendations, scoreRecommendation } from "../lib/recommenda
 import { normalizeLanguage, selectRecipeTranslation } from "../lib/translations.js";
 import { fetchTikTokImport, validateTikTokUrl } from "../lib/tiktokImport.js";
 import { broadcastRecipeEvent } from "../lib/ws.js";
+import { likeRateLimit } from "../middleware/rateLimit.js";
 
 const router = Router();
 const uploadRecipeMedia = recipeUpload.fields([
@@ -627,7 +628,7 @@ router.delete("/:slug/save", authenticate, async (req, res) => {
 });
 
 // POST /api/recipes/:slug/like
-router.post("/:slug/like", authenticate, async (req, res) => {
+router.post("/:slug/like", authenticate, likeRateLimit, async (req, res) => {
   try {
     const recipe = await prisma.recipe.findUnique({ where: { slug: req.params.slug } });
     if (!recipe) return res.status(404).json({ error: "Recipe not found" });
@@ -648,7 +649,7 @@ router.post("/:slug/like", authenticate, async (req, res) => {
 });
 
 // DELETE /api/recipes/:slug/like
-router.delete("/:slug/like", authenticate, async (req, res) => {
+router.delete("/:slug/like", authenticate, likeRateLimit, async (req, res) => {
   try {
     const recipe = await prisma.recipe.findUnique({ where: { slug: req.params.slug } });
     if (!recipe) return res.status(404).json({ error: "Recipe not found" });

@@ -701,7 +701,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <label className={labelCls}>{t('add.categoryLabel')}</label>
-                {!creatingCategory && (
+                {user?.isAdmin && !creatingCategory && (
                   <button type="button" onClick={() => setCreatingCategory(true)}
                     className="add-recipe-accent text-xs font-semibold hover:underline">
                     {t('add.newCategoryButton')}
@@ -724,7 +724,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                         if (value) clearValidationError('category');
                       }}>
                       <span className="flex-1 text-xs font-bold truncate" style={{ color: 'var(--color-text)' }}>{c.label}</span>
-                      <button type="button"
+                      {user?.isAdmin && <button type="button"
                         onClick={async (e) => {
                           e.stopPropagation();
                           const res = await apiFetch(`/api/categories/${c.id}`, { method: 'DELETE' });
@@ -735,7 +735,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                         }}
                         className="p-1 rounded-md text-stone-400 hover:text-rose-600 hover:bg-stone-200 transition-colors shrink-0">
                         <Trash2 className="w-3 h-3" />
-                      </button>
+                      </button>}
                     </div>
                   ))}
                 </div>

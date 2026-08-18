@@ -1,4 +1,4 @@
-import { Routes, Route, useParams } from 'react-router-dom';
+import { Routes, Route, useParams, Link } from 'react-router-dom';
 import { lazy, Suspense, useRef } from 'react';
 import Header from './components/layout/Header';
 import BottomNav from './components/layout/BottomNav';
@@ -11,6 +11,7 @@ import NotificationDrawer from './components/overlays/NotificationDrawer';
 import { usePullToRefresh } from './hooks/usePullToRefresh';
 import { LoadingPan } from './components/ui/LoadingPan';
 import { useRecipeSocket } from './hooks/useRecipeSocket';
+import { useAuth } from './contexts/AuthContext';
 import HomeFeed from './components/home/HomeFeed';
 import RecipeDetail from './components/detail/RecipeDetail';
 import SearchDiscover from './components/search/SearchDiscover';
@@ -24,6 +25,9 @@ import LanguageSettings from './components/settings/LanguageSettings';
 
 const Login = lazy(() => import('./components/auth/Login'));
 const Register = lazy(() => import('./components/auth/Register'));
+const ForgotPassword = lazy(() => import('./components/auth/ForgotPassword'));
+const ResetPassword = lazy(() => import('./components/auth/ResetPassword'));
+const VerifyEmail = lazy(() => import('./components/auth/VerifyEmail'));
 const PrivacyPolicy = lazy(() => import('./components/misc/PrivacyPolicy'));
 const CreatorVerification = lazy(() => import('./components/profile/CreatorVerification'));
 const VerificationReview = lazy(() => import('./components/admin/VerificationReview'));
@@ -44,12 +48,18 @@ function EditRecipeWrapper() {
 
 export default function App() {
   const mainRef = useRef<HTMLElement>(null);
+  const { user } = useAuth();
   const { pulling, pullDistance } = usePullToRefresh(mainRef);
   useRecipeSocket();
 
   return (
     <div className="flex flex-col h-dvh overflow-hidden" style={{ backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}>
       <Header />
+      {user && !user.emailVerified && (
+        <Link to="/verify-email" className="shrink-0 px-4 py-2 text-center text-xs font-semibold bg-amber-100 text-amber-950 border-b border-amber-200">
+          Verify your email address · Resend email
+        </Link>
+      )}
       <main ref={mainRef} className="flex-1 overflow-y-auto flex flex-col" style={{ overflowX: 'clip' }}>
         {/* Pull-to-refresh indicator */}
         <div
@@ -75,6 +85,9 @@ export default function App() {
             <Route path="/settings/language" element={<LanguageSettings />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/settings/verification" element={<CreatorVerification />} />
             <Route path="/admin/verifications" element={<VerificationReview />} />

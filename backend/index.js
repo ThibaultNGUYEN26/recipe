@@ -20,8 +20,11 @@ import { cleanupUnreferencedLegacyUploads } from "./lib/media/legacyCleanup.js";
 import { assertMediaInfrastructureReady } from "./lib/media/preflight.js";
 import { createWsServer } from "./lib/ws.js";
 import { selectRecipeTranslation } from "./lib/translations.js";
+import { authenticate, requireAdmin } from "./middleware/authenticate.js";
+import { csrfProtection } from "./middleware/csrf.js";
 
 export const app = express();
+app.set("trust proxy", 1);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const allowedOrigins = process.env.CORS_ORIGIN
@@ -34,11 +37,11 @@ app.use(cors({
     else cb(new Error(`CORS blocked: ${origin}`));
   },
   credentials: true,
-  allowedHeaders: ["Content-Type", "Authorization"],
-  exposedHeaders: ["Authorization"],
+  allowedHeaders: ["Content-Type", "X-CSRF-Token"],
 }));
 app.use(express.json());
 app.use(cookieParser());
+app.use(csrfProtection);
 
 app.use("/uploads", express.static(uploadsDir));
 app.use("/images", express.static(path.join(__dirname, "../src/recipes")));
@@ -60,37 +63,31 @@ app.get("/api/categories", async (_req, res) => {
     res.status(500).json({ error: "Failed to fetch categories" });
   }
 });
-app.post("/api/categories", async (req, res) => {
+app.post("/api/categories", authenticate, requireAdmin, async (req, res) => {
   const { prisma } = await import("./lib/prisma.js");
-  const { authenticate } = await import("./middleware/authenticate.js");
-  authenticate(req, res, async () => {
-    const { label } = req.body;
-    if (!label?.trim()) return res.status(400).json({ error: "Label is required" });
-    const slug = label.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-    try {
-      const category = await prisma.category.create({ data: { label: label.trim(), slug } });
-      res.status(201).json(category);
-    } catch (err) {
-      if (err.code === "P2002") return res.status(409).json({ error: "Category already exists" });
-      res.status(500).json({ error: err.message || "Failed to create category" });
-    }
-  });
+  const { label } = req.body;
+  if (!label?.trim()) return res.status(400).json({ error: "Label is required" });
+  const slug = label.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  try {
+    const category = await prisma.category.create({ data: { label: label.trim(), slug } });
+    res.status(201).json(category);
+  } catch (err) {
+    if (err.code === "P2002") return res.status(409).json({ error: "Category already exists" });
+    res.status(500).json({ error: err.message || "Failed to create category" });
+  }
 });
-app.delete("/api/categories/:id", async (req, res) => {
+app.delete("/api/categories/:id", authenticate, requireAdmin, async (req, res) => {
   const { prisma } = await import("./lib/prisma.js");
-  const { authenticate } = await import("./middleware/authenticate.js");
-  authenticate(req, res, async () => {
-    const id = parseInt(req.params.id);
-    if (isNaN(id)) return res.status(400).json({ error: "Invalid id" });
-    try {
-      const count = await prisma.recipe.count({ where: { categoryId: id } });
-      if (count > 0) return res.status(409).json({ error: `Cannot delete — ${count} recipe${count > 1 ? 's' : ''} use this category` });
-      await prisma.category.delete({ where: { id } });
-      res.json({ ok: true });
-    } catch (err) {
-      res.status(500).json({ error: err.message || "Failed to delete category" });
-    }
-  });
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) return res.status(400).json({ error: "Invalid id" });
+  try {
+    const count = await prisma.recipe.count({ where: { categoryId: id } });
+    if (count > 0) return res.status(409).json({ error: `Cannot delete — ${count} recipe${count > 1 ? 's' : ''} use this category` });
+    await prisma.category.delete({ where: { id } });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message || "Failed to delete category" });
+  }
 });
 
 app.use("/api/my-recipes", async (req, res) => {

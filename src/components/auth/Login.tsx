@@ -63,6 +63,9 @@ export default function Login() {
               </button>
             </div>
           </div>
+          <div className="text-right">
+            <Link to="/forgot-password" className="text-xs font-medium text-amber-800">Forgot password?</Link>
+          </div>
           {error && <p className="text-xs text-red-500 px-1">{error}</p>}
           <button type="submit" disabled={loading}
             className="w-full py-4 rounded-2xl font-semibold text-white bg-stone-900 disabled:opacity-50 transition-opacity mt-2">

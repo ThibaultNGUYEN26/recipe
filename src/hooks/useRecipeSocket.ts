@@ -1,6 +1,5 @@
 import { useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { getStoredToken } from '../contexts/AuthContext';
 
 const WS_URL = (import.meta.env.VITE_API_URL as string | undefined)
   ? (import.meta.env.VITE_API_URL as string).replace(/^http/, 'ws')
@@ -15,11 +14,6 @@ export function useRecipeSocket() {
 
     function connect() {
       ws = new WebSocket(WS_URL);
-
-      ws.onopen = () => {
-        const token = getStoredToken();
-        if (token) ws.send(JSON.stringify({ type: 'auth', token }));
-      };
 
       ws.onmessage = (e) => {
         try {

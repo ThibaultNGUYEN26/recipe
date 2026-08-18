@@ -1,16 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { apiFetch, setCsrfToken } from "../lib/apiFetch";
 
 const API = import.meta.env.VITE_API_URL;
-const TOKEN_KEY = "savor_token";
-
-export function getStoredToken() {
-  return localStorage.getItem(TOKEN_KEY);
-}
-
-function authHeaders() {
-  const token = getStoredToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 const AuthContext = createContext(null);
 
@@ -22,17 +13,17 @@ export function AuthProvider({ children }) {
     try {
       const res = await fetch(`${API}/api/auth/me`, {
         credentials: "include",
-        headers: authHeaders(),
       });
       if (res.status === 401) {
         if (clearOnError) {
-          localStorage.removeItem(TOKEN_KEY);
+          setCsrfToken(null);
           setUser(null);
         }
         return null;
       }
       if (!res.ok) return null;
       const data = await res.json();
+      setCsrfToken(data.csrfToken ?? null);
       setUser(data.user);
       return data.user;
     } catch {
@@ -41,6 +32,8 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
+    // Remove JWTs saved by versions prior to cookie-only authentication.
+    localStorage.removeItem("savor_token");
     refreshUser({ clearOnError: true })
       .finally(() => setLoading(false));
   }, [refreshUser]);
@@ -73,7 +66,7 @@ export function AuthProvider({ children }) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Login failed");
-    if (data.token) localStorage.setItem(TOKEN_KEY, data.token);
+    setCsrfToken(data.csrfToken ?? null);
     setUser(data.user);
     return data.user;
   }
@@ -87,7 +80,7 @@ export function AuthProvider({ children }) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Registration failed");
-    if (data.token) localStorage.setItem(TOKEN_KEY, data.token);
+    setCsrfToken(data.csrfToken ?? null);
     setUser(data.user);
     return data.user;
   }
@@ -101,18 +94,16 @@ export function AuthProvider({ children }) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Google sign-in failed");
-    if (data.token) localStorage.setItem(TOKEN_KEY, data.token);
+    setCsrfToken(data.csrfToken ?? null);
     setUser(data.user);
     return data.user;
   }
 
   async function logout() {
-    await fetch(`${API}/api/auth/logout`, {
+    await apiFetch("/api/auth/logout", {
       method: "POST",
-      credentials: "include",
-      headers: authHeaders(),
     });
-    localStorage.removeItem(TOKEN_KEY);
+    setCsrfToken(null);
     setUser(null);
   }
 

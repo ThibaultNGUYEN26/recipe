@@ -99,6 +99,7 @@ export interface AuthUser {
   username: string | null;
   isAdmin: boolean;
   isVerified: boolean;
+  emailVerified: boolean;
   name: string | null;
   avatarUrl?: string | null;
   preferredLanguage?: 'fr' | 'en' | 'es' | null;

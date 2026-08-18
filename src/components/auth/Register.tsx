@@ -99,13 +99,13 @@ export default function Register() {
       setError('Choose a valid username'); return;
     }
     if (usernameStatus === 'taken') { setError('That username is already taken'); return; }
-    if (password.length < 6) { setError('Password must be at least 6 characters'); return; }
+    if (password.length < 8) { setError('Password must be at least 8 characters'); return; }
     if (password !== confirmPassword) { setError('Passwords do not match'); return; }
     setLoading(true);
     try {
       await register(email, password, name, username);
       showToast('Welcome to Savor!');
-      navigate('/');
+      navigate('/verify-email');
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Registration failed');
     } finally {
@@ -174,7 +174,7 @@ export default function Register() {
             <label className="text-xs font-semibold uppercase tracking-wide mb-1 block" style={{ color: 'var(--color-muted)' }}>Password</label>
             <div className="relative">
               <input type={showPassword ? 'text' : 'password'} value={password}
-                onChange={(e) => setPassword(e.target.value)} required placeholder="At least 6 characters"
+                onChange={(e) => setPassword(e.target.value)} required minLength={8} placeholder="At least 8 characters"
                 className="w-full px-4 pr-11 py-2.5 rounded-2xl text-sm outline-none" style={inputStyle} />
               <button type="button" onClick={() => setShowPassword(!showPassword)} tabIndex={-1}
                 className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full transition-colors"

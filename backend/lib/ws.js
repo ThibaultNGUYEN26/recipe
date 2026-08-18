@@ -6,17 +6,24 @@ const userSockets = new Map(); // userId -> Set<WebSocket>
 
 export function createWsServer(server) {
   wss = new WebSocketServer({ server });
-  wss.on('connection', (ws) => {
+  wss.on('connection', (ws, request) => {
+    const sessionToken = request.headers.cookie
+      ?.split(';')
+      .map((part) => part.trim().split('='))
+      .find(([name]) => name === 'token')?.[1];
+    if (sessionToken) {
+      try {
+        const payload = jwt.verify(decodeURIComponent(sessionToken), process.env.JWT_SECRET);
+        ws.userId = payload.id;
+        if (!userSockets.has(payload.id)) userSockets.set(payload.id, new Set());
+        userSockets.get(payload.id).add(ws);
+      } catch { /* anonymous socket */ }
+    }
     ws.on('error', () => {});
     ws.on('message', (data) => {
       try {
         const msg = JSON.parse(data);
-        if (msg.type === 'auth' && msg.token) {
-          const payload = jwt.verify(msg.token, process.env.JWT_SECRET);
-          ws.userId = payload.id;
-          if (!userSockets.has(payload.id)) userSockets.set(payload.id, new Set());
-          userSockets.get(payload.id).add(ws);
-        }
+        if (msg.type === 'ping') ws.send(JSON.stringify({ type: 'pong' }));
       } catch {}
     });
     ws.on('close', () => {

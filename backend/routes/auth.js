@@ -8,6 +8,11 @@ import { DEFAULT_AVATAR_URL } from "../lib/media/config.js";
 import { usernameSuggestionCandidates, validateUsername } from "../lib/username.js";
 import { buildLoginLookup } from "../lib/login.js";
 import { verifyGoogleCredential } from "../lib/googleAuth.js";
+import { csrfTokenForSession } from "../middleware/csrf.js";
+import { loginRateLimit, registrationRateLimit, usernameCheckRateLimit } from "../middleware/rateLimit.js";
+import { accountEmailRateLimit } from "../middleware/rateLimit.js";
+import { hashAccountToken, newAccountToken } from "../lib/accountTokens.js";
+import { sendPasswordResetEmail, sendVerificationEmail } from "../lib/email.js";
 
 const router = Router();
 
@@ -31,17 +36,18 @@ function publicUser(user) {
     avatarUrl: user.avatarUrl || DEFAULT_AVATAR_URL,
     avatarPending: Boolean(user.pendingAvatarId),
     preferredLanguage: user.preferredLanguage,
+    emailVerified: Boolean(user.emailVerifiedAt),
   };
 }
 
 function createSession(res, user, status = 200) {
   const token = jwt.sign(
-    { id: user.id, email: user.email, username: user.username, name: user.name },
+    { id: user.id, email: user.email, username: user.username, name: user.name, sessionVersion: user.sessionVersion },
     process.env.JWT_SECRET,
     { expiresIn: "7d" },
   );
   res.cookie("token", token, COOKIE_OPTIONS);
-  return res.status(status).json({ token, user: publicUser(user) });
+  return res.status(status).json({ csrfToken: csrfTokenForSession(token), user: publicUser(user) });
 }
 
 async function googleUsername(email) {
@@ -76,26 +82,32 @@ async function availableUsernameSuggestions(username) {
   return candidates.filter((candidate) => !usedNames.has(candidate)).slice(0, 3);
 }
 
-router.post("/register", async (req, res) => {
+router.post("/register", registrationRateLimit, async (req, res) => {
   const { email, password, name } = req.body;
+  const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
   const { username, error: usernameError } = validateUsername(req.body.username);
-  if (!email || !password) return res.status(400).json({ error: "Email and password are required" });
+  if (!normalizedEmail || !password) return res.status(400).json({ error: "Email and password are required" });
   if (usernameError) return res.status(400).json({ error: usernameError, code: "INVALID_USERNAME" });
-  if (password.length < 6) return res.status(400).json({ error: "Password must be at least 6 characters" });
+  if (password.length < 8) return res.status(400).json({ error: "Password must be at least 8 characters" });
 
   try {
     const existing = await prisma.user.findFirst({
-      where: { OR: [{ email }, { username }] },
+      where: { OR: [{ email: { equals: normalizedEmail, mode: "insensitive" } }, { username }] },
       select: { email: true, username: true },
     });
-    if (existing?.email === email) return res.status(409).json({ error: "Email already in use", code: "EMAIL_TAKEN" });
+    if (existing?.email?.toLowerCase() === normalizedEmail) return res.status(409).json({ error: "Email already in use", code: "EMAIL_TAKEN" });
     if (existing?.username === username) {
       const suggestions = await availableUsernameSuggestions(username);
       return res.status(409).json({ error: "Username already taken", code: "USERNAME_TAKEN", suggestions });
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
-    const user = await prisma.user.create({ data: { email, username, passwordHash, name: name?.trim() || null } });
+    const user = await prisma.user.create({ data: { email: normalizedEmail, username, passwordHash, name: name?.trim() || null } });
+    const verificationToken = newAccountToken();
+    await prisma.emailVerificationToken.create({
+      data: { userId: user.id, tokenHash: hashAccountToken(verificationToken), expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) },
+    });
+    sendVerificationEmail(user.email, verificationToken).catch((error) => console.error("Verification email failed", error));
 
     return createSession(res, user, 201);
   } catch (err) {
@@ -114,7 +126,7 @@ router.post("/register", async (req, res) => {
   }
 });
 
-router.get("/username-availability", async (req, res) => {
+router.get("/username-availability", usernameCheckRateLimit, async (req, res) => {
   const { username, error } = validateUsername(req.query.username);
   if (error) return res.status(400).json({ available: false, username, error });
 
@@ -136,7 +148,7 @@ router.get("/username-availability", async (req, res) => {
   }
 });
 
-router.post("/login", async (req, res) => {
+router.post("/login", loginRateLimit, async (req, res) => {
   const { password } = req.body;
   const identifier = req.body.identifier ?? req.body.email;
   const loginLookup = buildLoginLookup(identifier);
@@ -157,7 +169,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
-router.post("/google", async (req, res) => {
+router.post("/google", loginRateLimit, async (req, res) => {
   try {
     const identity = await verifyGoogleCredential(req.body.credential, process.env.GOOGLE_CLIENT_ID);
     let user = await prisma.user.findFirst({
@@ -174,10 +186,10 @@ router.post("/google", async (req, res) => {
     }
 
     if (user) {
-      if (!user.googleId) {
+      if (!user.googleId || !user.emailVerifiedAt) {
         user = await prisma.user.update({
           where: { id: user.id },
-          data: { googleId: identity.subject, name: user.name || identity.name || null },
+          data: { googleId: identity.subject, name: user.name || identity.name || null, emailVerifiedAt: new Date() },
         });
       }
     } else {
@@ -187,6 +199,7 @@ router.post("/google", async (req, res) => {
           googleId: identity.subject,
           username: await googleUsername(identity.email),
           name: identity.name || null,
+          emailVerifiedAt: new Date(),
         },
       });
     }
@@ -206,14 +219,81 @@ router.post("/logout", (_req, res) => {
   res.json({ ok: true });
 });
 
+router.post("/forgot-password", accountEmailRateLimit, async (req, res) => {
+  const email = typeof req.body.email === "string" ? req.body.email.trim().toLowerCase() : "";
+  const generic = { message: "If an account exists for that email, a reset link has been sent." };
+  if (!email) return res.json(generic);
+  try {
+    const user = await prisma.user.findFirst({ where: { email: { equals: email, mode: "insensitive" } }, select: { id: true, email: true, passwordHash: true } });
+    if (user?.passwordHash) {
+      const token = newAccountToken();
+      await prisma.$transaction([
+        prisma.passwordResetToken.deleteMany({ where: { userId: user.id } }),
+        prisma.passwordResetToken.create({ data: { userId: user.id, tokenHash: hashAccountToken(token), expiresAt: new Date(Date.now() + 60 * 60 * 1000) } }),
+      ]);
+      await sendPasswordResetEmail(user.email, token);
+    }
+  } catch (error) {
+    console.error("Password reset request failed", error);
+  }
+  res.json(generic);
+});
+
+router.post("/reset-password", accountEmailRateLimit, async (req, res) => {
+  const token = typeof req.body.token === "string" ? req.body.token : "";
+  const password = typeof req.body.password === "string" ? req.body.password : "";
+  if (password.length < 8) return res.status(400).json({ error: "Password must be at least 8 characters" });
+  const record = token ? await prisma.passwordResetToken.findUnique({ where: { tokenHash: hashAccountToken(token) } }) : null;
+  if (!record || record.expiresAt <= new Date()) return res.status(400).json({ error: "This reset link is invalid or has expired" });
+  const passwordHash = await bcrypt.hash(password, 12);
+  await prisma.$transaction([
+    prisma.user.update({ where: { id: record.userId }, data: { passwordHash, sessionVersion: { increment: 1 } } }),
+    prisma.passwordResetToken.deleteMany({ where: { userId: record.userId } }),
+  ]);
+  res.clearCookie("token", COOKIE_OPTIONS);
+  res.json({ ok: true });
+});
+
+router.post("/send-verification", authenticate, accountEmailRateLimit, async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.user.id }, select: { id: true, email: true, emailVerifiedAt: true } });
+    if (!user) return res.status(401).json({ error: "User no longer exists" });
+    if (user.emailVerifiedAt) return res.json({ ok: true, alreadyVerified: true });
+    const token = newAccountToken();
+    await prisma.$transaction([
+      prisma.emailVerificationToken.deleteMany({ where: { userId: user.id } }),
+      prisma.emailVerificationToken.create({ data: { userId: user.id, tokenHash: hashAccountToken(token), expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) } }),
+    ]);
+    await sendVerificationEmail(user.email, token);
+    res.json({ ok: true });
+  } catch (error) {
+    console.error("Verification email failed", error);
+    res.status(503).json({ error: "Could not send the verification email" });
+  }
+});
+
+router.post("/verify-email", accountEmailRateLimit, async (req, res) => {
+  const token = typeof req.body.token === "string" ? req.body.token : "";
+  const record = token ? await prisma.emailVerificationToken.findUnique({ where: { tokenHash: hashAccountToken(token) } }) : null;
+  if (!record || record.expiresAt <= new Date()) return res.status(400).json({ error: "This verification link is invalid or has expired" });
+  await prisma.$transaction([
+    prisma.user.update({ where: { id: record.userId }, data: { emailVerifiedAt: new Date() } }),
+    prisma.emailVerificationToken.deleteMany({ where: { userId: record.userId } }),
+  ]);
+  res.json({ ok: true });
+});
+
 router.get("/me", authenticate, async (req, res) => {
   const user = await prisma.user.findUnique({
     where: { id: req.user.id },
-    select: { id: true, email: true, username: true, name: true, isAdmin: true, isVerified: true, avatarUrl: true, pendingAvatarId: true, preferredLanguage: true },
+    select: { id: true, email: true, username: true, name: true, isAdmin: true, isVerified: true, emailVerifiedAt: true, avatarUrl: true, pendingAvatarId: true, preferredLanguage: true },
   });
   if (!user) return res.status(401).json({ error: "User no longer exists" });
-  const { pendingAvatarId, ...publicUser } = user;
-  res.json({ user: { ...publicUser, avatarUrl: user.avatarUrl || DEFAULT_AVATAR_URL, avatarPending: Boolean(pendingAvatarId) } });
+  const { pendingAvatarId, emailVerifiedAt, ...publicUser } = user;
+  res.json({
+    csrfToken: csrfTokenForSession(req.sessionToken),
+    user: { ...publicUser, emailVerified: Boolean(emailVerifiedAt), avatarUrl: user.avatarUrl || DEFAULT_AVATAR_URL, avatarPending: Boolean(pendingAvatarId) },
+  });
 });
 
 export default router;

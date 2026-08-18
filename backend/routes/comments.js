@@ -2,6 +2,7 @@ import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
 import { authenticate, optionalAuthenticate } from "../middleware/authenticate.js";
 import { createNotification } from "../lib/notify.js";
+import { commentRateLimit, likeRateLimit } from "../middleware/rateLimit.js";
 
 const router = Router({ mergeParams: true });
 
@@ -46,7 +47,7 @@ router.get("/", optionalAuthenticate, async (req, res) => {
 });
 
 // POST /api/recipes/:slug/comments
-router.post("/", authenticate, async (req, res) => {
+router.post("/", authenticate, commentRateLimit, async (req, res) => {
   const { text, parentId } = req.body;
   if (!text?.trim()) return res.status(400).json({ error: "Comment text is required" });
 
@@ -110,7 +111,7 @@ router.delete("/:id", authenticate, async (req, res) => {
 });
 
 // POST /api/recipes/:slug/comments/:id/like  (toggle)
-router.post("/:id/like", authenticate, async (req, res) => {
+router.post("/:id/like", authenticate, likeRateLimit, async (req, res) => {
   const commentId = parseInt(req.params.id);
   try {
     const comment = await prisma.comment.findUnique({ where: { id: commentId } });

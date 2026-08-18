@@ -22,6 +22,8 @@ model User {
   googleId              String?               @unique
   name                  String?
   preferredLanguage     String?
+  emailVerifiedAt       DateTime?
+  sessionVersion        Int                   @default(0)
   isAdmin               Boolean               @default(false)
   isVerified            Boolean               @default(false)
   bio                   String?
@@ -46,6 +48,32 @@ model User {
   sentNotifications     Notification[]        @relation("NotificationActor")
   verification          CreatorVerification?  @relation("VerificationApplicant")
   reviewedVerifications CreatorVerification[] @relation("VerificationReviewer")
+  passwordResetTokens   PasswordResetToken[]
+  emailVerificationTokens EmailVerificationToken[]
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  tokenHash String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(uuid())
+  tokenHash String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
 }
 
 enum VerificationStatus {

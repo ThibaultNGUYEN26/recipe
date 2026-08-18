@@ -9,6 +9,7 @@ import { DEFAULT_AVATAR_URL } from "../lib/media/config.js";
 import { uploadRateLimit } from "../middleware/uploadRateLimit.js";
 import { normalizeUsername, validateUsername } from "../lib/username.js";
 import { selectRecipeTranslation } from "../lib/translations.js";
+import { followRateLimit } from "../middleware/rateLimit.js";
 
 const router = Router();
 const SAVED_CATEGORY_MAX_LENGTH = 40;
@@ -468,7 +469,7 @@ router.get("/:id/recipes", async (req, res) => {
 });
 
 // POST /api/users/:id/follow
-router.post("/:id/follow", authenticate, async (req, res) => {
+router.post("/:id/follow", authenticate, followRateLimit, async (req, res) => {
   const followingId = parseInt(req.params.id);
   if (followingId === req.user.id) return res.status(400).json({ error: "Cannot follow yourself" });
 
@@ -493,7 +494,7 @@ router.post("/:id/follow", authenticate, async (req, res) => {
 });
 
 // DELETE /api/users/:id/follow
-router.delete("/:id/follow", authenticate, async (req, res) => {
+router.delete("/:id/follow", authenticate, followRateLimit, async (req, res) => {
   const followingId = parseInt(req.params.id);
   try {
     await prisma.follow.deleteMany({ where: { followerId: req.user.id, followingId } });
