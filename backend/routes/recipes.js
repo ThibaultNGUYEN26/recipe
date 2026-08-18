@@ -39,6 +39,7 @@ router.get("/", async (req, res) => {
         translations: true,
         author: { select: { id: true, username: true, name: true, avatarUrl: true, isVerified: true } },
         ratings: { select: { score: true } },
+        _count: { select: { likes: true } },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -62,6 +63,7 @@ router.get("/", async (req, res) => {
         authorAvatar: r.author?.avatarUrl ?? null,
         avgRating,
         ratingCount: r.ratings.length,
+        likeCount: r._count.likes,
         contentLanguage: selected.contentLanguage,
         originalLanguage: selected.originalLanguage,
         availableLanguages: selected.availableLanguages,
@@ -98,6 +100,7 @@ router.get("/recommended", async (req, res) => {
           ratings: { select: { score: true } },
           savedBy: { select: { userId: true } },
           views: { where: { viewedAt: { gte: recentFrom } }, select: { id: true } },
+          _count: { select: { likes: true } },
         },
       }),
       userId ? prisma.savedRecipe.findMany({ where: { userId }, select: { recipeId: true, recipe: { select: { category: { select: { slug: true } }, tags: true } } } }) : [],
@@ -149,7 +152,7 @@ router.get("/recommended", async (req, res) => {
         ...normalized,
         avgRating: scores.length ? avgRating : null,
         ratingCount: scores.length,
-        score: ranking.score,
+        likeCount: recipe._count.likes,
         recommendationReason: ranking.reasonCode,
         recommendationReasonValue: ranking.reasonValue,
         slug: recipe.slug,
@@ -620,6 +623,41 @@ router.delete("/:slug/save", authenticate, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message || "Failed to unsave recipe" });
+  }
+});
+
+// POST /api/recipes/:slug/like
+router.post("/:slug/like", authenticate, async (req, res) => {
+  try {
+    const recipe = await prisma.recipe.findUnique({ where: { slug: req.params.slug } });
+    if (!recipe) return res.status(404).json({ error: "Recipe not found" });
+    await prisma.recipeLike.upsert({
+      where: { userId_recipeId: { userId: req.user.id, recipeId: recipe.id } },
+      update: {},
+      create: { userId: req.user.id, recipeId: recipe.id },
+    });
+    const likeCount = await prisma.recipeLike.count({ where: { recipeId: recipe.id } });
+    res.json({ likeCount });
+    if (recipe.authorId && recipe.authorId !== req.user.id) {
+      createNotification({ userId: recipe.authorId, actorId: req.user.id, type: "like", recipeId: recipe.id });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message || "Failed to like recipe" });
+  }
+});
+
+// DELETE /api/recipes/:slug/like
+router.delete("/:slug/like", authenticate, async (req, res) => {
+  try {
+    const recipe = await prisma.recipe.findUnique({ where: { slug: req.params.slug } });
+    if (!recipe) return res.status(404).json({ error: "Recipe not found" });
+    await prisma.recipeLike.deleteMany({ where: { userId: req.user.id, recipeId: recipe.id } });
+    const likeCount = await prisma.recipeLike.count({ where: { recipeId: recipe.id } });
+    res.json({ likeCount });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message || "Failed to unlike recipe" });
   }
 });
 

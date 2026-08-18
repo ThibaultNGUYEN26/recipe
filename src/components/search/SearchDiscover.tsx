@@ -2,13 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
-  Search, SlidersHorizontal, Star, Clock, UserPlus, X,
+  Search, SlidersHorizontal, Star, Clock, UserPlus, UserMinus, X,
   Sparkles, Flame, ChefHat
 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import type { RecipeListItem } from '../../types';
 import VerifiedBadge from '../profile/VerifiedBadge';
 import { apiFetch } from '../../lib/apiFetch';
+import { useAuth } from '../../contexts/AuthContext';
 import { LoadingPan } from '../ui/LoadingPan';
 import { useMinLoading } from '../../hooks/useMinLoading';
 
@@ -42,10 +43,20 @@ function imgSrc(url: string | null | undefined) {
 export default function SearchDiscover() {
   const { language, t } = useLanguage();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [query, setQuery] = useState('');
   const [users, setUsers] = useState<UserResult[]>([]);
+  const [followedUsers, setFollowedUsers] = useState<Record<number, boolean>>({});
+
+  async function toggleFollow(userId: number) {
+    if (!user) { navigate('/login'); return; }
+    const isFollowing = !!followedUsers[userId];
+    const method = isFollowing ? 'DELETE' : 'POST';
+    const res = await apiFetch(`/api/users/${userId}/follow`, { method });
+    if (res.ok) setFollowedUsers((prev) => ({ ...prev, [userId]: !isFollowing }));
+  }
 
   // Filters
   const [difficulty, setDifficulty] = useState('All');
@@ -230,9 +241,10 @@ export default function SearchDiscover() {
                   {u.isVerified && <VerifiedBadge className="w-3.5 h-3.5" />}
                 </div>
                 {u.username && <p className="discover-muted text-[10px] truncate w-full">@{u.username}</p>}
-                <button onClick={() => navigate(u.username ? `/u/${encodeURIComponent(u.username)}` : `/profile/${u.id}`)}
+                <button onClick={() => toggleFollow(u.id)}
                   className="discover-follow-button w-full mt-2.5 py-1.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 transition-colors">
-                  <UserPlus className="w-3 h-3" /> {t('discover.follow')}
+                  {followedUsers[u.id] ? <UserMinus className="w-3 h-3" /> : <UserPlus className="w-3 h-3" />}
+                  {followedUsers[u.id] ? t('discover.following') : t('discover.follow')}
                 </button>
               </div>
             ))}
@@ -384,7 +396,17 @@ export default function SearchDiscover() {
 function TrendingCreators({ lang }: { lang: string }) {
   const [creators, setCreators] = useState<(UserResult & { recipeCount: number })[]>([]);
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { t } = useLanguage();
+  const [followedUsers, setFollowedUsers] = useState<Record<number, boolean>>({});
+
+  async function toggleFollow(userId: number) {
+    if (!user) { navigate('/login'); return; }
+    const isFollowing = !!followedUsers[userId];
+    const method = isFollowing ? 'DELETE' : 'POST';
+    const res = await apiFetch(`/api/users/${userId}/follow`, { method });
+    if (res.ok) setFollowedUsers((prev) => ({ ...prev, [userId]: !isFollowing }));
+  }
 
   useEffect(() => {
     apiFetch('/api/users')
@@ -419,9 +441,10 @@ function TrendingCreators({ lang }: { lang: string }) {
           </div>
           {u.username && <p className="discover-muted text-[10px] truncate w-full">@{u.username}</p>}
           <p className="discover-accent text-[10px] font-medium mt-0.5">{t('discover.recipeCount', { count: u.recipeCount })}</p>
-          <button onClick={() => navigate(u.username ? `/u/${encodeURIComponent(u.username)}` : `/profile/${u.id}`)}
+          <button onClick={() => toggleFollow(u.id)}
             className="discover-follow-button w-full mt-2.5 py-1.5 px-3 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1">
-            <UserPlus className="w-3 h-3" /> Follow
+            {followedUsers[u.id] ? <UserMinus className="w-3 h-3" /> : <UserPlus className="w-3 h-3" />}
+            {followedUsers[u.id] ? t('discover.following') : t('discover.follow')}
           </button>
         </div>
       ))}

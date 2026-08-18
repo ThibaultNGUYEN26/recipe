@@ -35,6 +35,10 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
 
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
+  const [followListModal, setFollowListModal] = useState<'followers' | 'following' | null>(null);
+  const [followList, setFollowList] = useState<Array<{ id: number; name: string | null; username: string | null; avatarUrl: string | null; isVerified: boolean }>>([]);
+  const [followListLoading, setFollowListLoading] = useState(false);
+  const [followedInModal, setFollowedInModal] = useState<Record<number, boolean>>({});
   const [activeTab, setActiveTab] = useState<'recipes' | 'saved'>('recipes');
 
   // Edit modal
@@ -150,6 +154,29 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
     } finally {
       setFollowLoading(false);
     }
+  }
+
+  async function openFollowList(type: 'followers' | 'following') {
+    setFollowListModal(type);
+    setFollowListLoading(true);
+    setFollowList([]);
+    try {
+      const endpoint = type === 'followers'
+        ? `/api/users/${userId}/followers`
+        : `/api/users/${userId}/following`;
+      const res = await apiFetch(endpoint);
+      const data = await res.json();
+      setFollowList(Array.isArray(data) ? data : []);
+    } finally {
+      setFollowListLoading(false);
+    }
+  }
+
+  async function toggleFollowInModal(targetId: number) {
+    if (!me) { navigate('/login'); return; }
+    const following = !!followedInModal[targetId];
+    const res = await apiFetch(`/api/users/${targetId}/follow`, { method: following ? 'DELETE' : 'POST' });
+    if (res.ok) setFollowedInModal((prev) => ({ ...prev, [targetId]: !following }));
   }
 
   async function saveProfile(e: React.FormEvent) {
@@ -329,14 +356,23 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
         {/* Stats */}
         <div className="profile-divider grid grid-cols-3 gap-2 pt-4 border-t text-center">
           {[
-            { label: 'Recipes', value: profile.recipeCount },
-            { label: 'Followers', value: profile.followerCount },
-            { label: 'Following', value: profile.followingCount },
-          ].map(({ label, value }) => (
-            <div key={label} className="p-3 rounded-2xl border" style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }}>
-              <p className="font-serif text-xl font-bold" style={{ color: 'var(--color-text)' }}>{value}</p>
-              <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--color-muted)' }}>{label}</p>
-            </div>
+            { label: 'Recipes', value: profile.recipeCount, onClick: undefined },
+            { label: 'Followers', value: profile.followerCount, onClick: () => openFollowList('followers') },
+            { label: 'Following', value: profile.followingCount, onClick: () => openFollowList('following') },
+          ].map(({ label, value, onClick }) => (
+            onClick ? (
+              <button key={label} onClick={onClick}
+                className="p-3 rounded-2xl border text-center hover:opacity-80 transition-opacity"
+                style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }}>
+                <p className="font-serif text-xl font-bold" style={{ color: 'var(--color-text)' }}>{value}</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--color-muted)' }}>{label}</p>
+              </button>
+            ) : (
+              <div key={label} className="p-3 rounded-2xl border" style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }}>
+                <p className="font-serif text-xl font-bold" style={{ color: 'var(--color-text)' }}>{value}</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--color-muted)' }}>{label}</p>
+              </div>
+            )
           ))}
         </div>
       </section>
@@ -374,6 +410,66 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {tabContent.map((r) => <RecipeCard key={r.slug} recipe={r} hideAuthor />)}
+        </div>
+      )}
+
+      {/* Followers / Following modal */}
+      {followListModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-stone-900/60 backdrop-blur-sm"
+          onClick={() => setFollowListModal(null)}>
+          <div className="profile-modal w-full max-w-sm rounded-t-3xl sm:rounded-3xl shadow-2xl border flex flex-col max-h-[80vh]"
+            onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="profile-divider flex items-center justify-between px-5 py-4 border-b shrink-0">
+              <h3 className="font-serif text-base font-bold" style={{ color: 'var(--color-text)' }}>
+                {followListModal === 'followers' ? 'Followers' : 'Following'}
+              </h3>
+              <button onClick={() => setFollowListModal(null)} className="profile-icon-button p-1 rounded-full transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            {/* List */}
+            <div className="overflow-y-auto flex-1">
+              {followListLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <LoadingPan />
+                </div>
+              ) : followList.length === 0 ? (
+                <p className="text-center text-xs py-12" style={{ color: 'var(--color-muted)' }}>
+                  {followListModal === 'followers' ? 'No followers yet' : 'Not following anyone yet'}
+                </p>
+              ) : (
+                <ul className="divide-y" style={{ borderColor: 'var(--color-border)' }}>
+                  {followList.map((u) => (
+                    <li key={u.id} className="flex items-center gap-3 px-5 py-3">
+                      <Link to={u.username ? `/u/${encodeURIComponent(u.username)}` : `/profile/${u.id}`}
+                        onClick={() => setFollowListModal(null)}
+                        className="w-10 h-10 rounded-full bg-amber-800 text-white flex items-center justify-center text-sm font-bold shrink-0 overflow-hidden">
+                        {u.avatarUrl
+                          ? <img src={imgSrc(u.avatarUrl)!} alt="" className="w-full h-full object-cover" />
+                          : u.name?.[0]?.toUpperCase() ?? '?'}
+                      </Link>
+                      <Link to={u.username ? `/u/${encodeURIComponent(u.username)}` : `/profile/${u.id}`}
+                        onClick={() => setFollowListModal(null)}
+                        className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1">
+                          <p className="text-xs font-bold truncate" style={{ color: 'var(--color-text)' }}>{u.name ?? u.username ?? 'Creator'}</p>
+                          {u.isVerified && <VerifiedBadge className="w-3.5 h-3.5 shrink-0" />}
+                        </div>
+                        {u.username && <p className="text-[10px] truncate" style={{ color: 'var(--color-muted)' }}>@{u.username}</p>}
+                      </Link>
+                      {me && u.id !== me.id && (
+                        <button onClick={() => toggleFollowInModal(u.id)}
+                          className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full transition-all ${followedInModal[u.id] ? 'profile-secondary border' : 'profile-primary'}`}>
+                          {followedInModal[u.id] ? 'Following' : 'Follow'}
+                        </button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
         </div>
       )}
 

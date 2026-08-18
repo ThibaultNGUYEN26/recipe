@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Heart, MessageCircle, Bookmark, BookmarkCheck, Star, Clock, ChefHat, Share2, UserPlus, Sparkles } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Heart, MessageCircle, Bookmark, BookmarkCheck, Star, Clock, ChefHat, Share2, UserPlus, UserMinus, Sparkles } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { RecipeListItem } from '../../types';
 
@@ -27,7 +27,41 @@ export default function RecipeCard({ recipe, hideAuthor = false }: Props) {
   const { user } = useAuth();
   const { t } = useLanguage();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const info = recipe.info as Record<string, string> | null | undefined;
+
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(recipe.likeCount ?? 0);
+
+  async function handleFollow(e: React.MouseEvent) {
+    e.preventDefault(); e.stopPropagation();
+    if (!user) { navigate('/login'); return; }
+    setFollowLoading(true);
+    try {
+      const method = isFollowing ? 'DELETE' : 'POST';
+      const res = await apiFetch(`/api/users/${recipe.authorId}/follow`, { method });
+      if (res.ok) {
+        setIsFollowing(!isFollowing);
+        showToast(isFollowing ? 'Unfollowed' : 'Following!');
+      }
+    } finally {
+      setFollowLoading(false);
+    }
+  }
+
+  async function handleLike(e: React.MouseEvent) {
+    e.preventDefault(); e.stopPropagation();
+    if (!user) { showToast('Sign in to like recipes', undefined, 'info'); return; }
+    const method = isLiked ? 'DELETE' : 'POST';
+    const res = await apiFetch(`/api/recipes/${recipe.slug}/like`, { method });
+    if (res.ok) {
+      const data = await res.json();
+      setIsLiked(!isLiked);
+      setLikeCount(data.likeCount);
+    }
+  }
 
   const [isSaved, setIsSaved] = useState(() => {
     // Check saved cache for initial state
@@ -87,12 +121,12 @@ export default function RecipeCard({ recipe, hideAuthor = false }: Props) {
             </div>
           </div>
         </div>
-        {recipe.authorId && (
-          <Link to={`${recipe.authorUsername ? `/u/${encodeURIComponent(recipe.authorUsername)}` : `/profile/${recipe.authorId}`}?fromRecipe=${encodeURIComponent(recipe.slug)}`} onClick={(e) => e.stopPropagation()}
-            className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-amber-800 text-white hover:bg-amber-900 transition-all shadow-sm">
-            <UserPlus className="w-3.5 h-3.5" />
-            <span>Follow</span>
-          </Link>
+        {recipe.authorId && recipe.authorId !== user?.id && (
+          <button onClick={handleFollow} disabled={followLoading}
+            className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-amber-800 text-white hover:bg-amber-900 transition-all shadow-sm disabled:opacity-60">
+            {isFollowing ? <UserMinus className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}
+            <span>{isFollowing ? 'Following' : 'Follow'}</span>
+          </button>
         )}
       </div>
       )}
@@ -168,9 +202,9 @@ export default function RecipeCard({ recipe, hideAuthor = false }: Props) {
         {/* Actions row */}
         <div className="recipe-card__divider flex items-center justify-between pt-4 mt-3 border-t">
           <div className="flex items-center gap-5">
-            <button className="recipe-card__action flex items-center gap-1.5 text-xs font-bold transition-colors">
-              <Heart className="w-5 h-5 stroke-[1.8]" />
-              <span>{recipe.ratingCount ?? 0}</span>
+            <button onClick={handleLike} className="recipe-card__action flex items-center gap-1.5 text-xs font-bold transition-colors">
+              <Heart className={`w-5 h-5 stroke-[1.8] transition-colors ${isLiked ? 'fill-red-500 text-red-500' : ''}`} />
+              <span>{likeCount}</span>
             </button>
             <Link to={recipeUrl(recipe.slug, recipe.authorUsername)}
               className="recipe-card__action flex items-center gap-1.5 text-xs font-bold transition-colors">

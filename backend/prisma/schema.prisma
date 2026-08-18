@@ -41,6 +41,7 @@ model User {
   recipeViews           RecipeView[]
   comments              Comment[]
   commentLikes          CommentLike[]
+  recipeLikes           RecipeLike[]
   notifications         Notification[]        @relation("NotificationRecipient")
   sentNotifications     Notification[]        @relation("NotificationActor")
   verification          CreatorVerification?  @relation("VerificationApplicant")
@@ -99,6 +100,7 @@ model Recipe {
   mediaAssets   MediaAsset[]
   views         RecipeView[]
   followSources Follow[]          @relation("FollowSourceRecipe")
+  likes         RecipeLike[]
 }
 
 model RecipeView {
@@ -206,6 +208,17 @@ model Rating {
   recipeId  Int
   recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   score     Float
+  createdAt DateTime @default(now())
+
+  @@unique([userId, recipeId])
+}
+
+model RecipeLike {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  recipeId  Int
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
   @@unique([userId, recipeId])
