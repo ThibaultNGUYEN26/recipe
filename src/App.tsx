@@ -36,6 +36,7 @@ const CookiePolicy = lazy(() => import('./components/misc/CookiePolicy'));
 const About = lazy(() => import('./components/misc/About'));
 const Contact = lazy(() => import('./components/misc/Contact'));
 const CookieSettings = lazy(() => import('./components/misc/CookieSettings'));
+const NotFound = lazy(() => import('./components/misc/NotFound'));
 const CreatorVerification = lazy(() => import('./components/profile/CreatorVerification'));
 const VerificationReview = lazy(() => import('./components/admin/VerificationReview'));
 const AdminAnalytics = lazy(() => import('./components/admin/AdminAnalytics'));
@@ -110,6 +111,7 @@ export default function App() {
             <Route path="/admin/verifications" element={<VerificationReview />} />
             <Route path="/admin/analytics" element={<AdminAnalytics />} />
             <Route path="/creator/analytics" element={<CreatorAnalytics />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
         {!AUTH_PATHS.has(location.pathname) && <Footer />}
