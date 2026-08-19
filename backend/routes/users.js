@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { prisma } from "../lib/prisma.js";
-import { authenticate } from "../middleware/authenticate.js";
+import { authenticate, optionalAuthenticate } from "../middleware/authenticate.js";
 import { createNotification } from "../lib/notify.js";
 import { broadcastFollowEvent } from "../lib/ws.js";
 import { submitAvatar, deleteOwnAvatar } from "../lib/media/avatarService.js";
@@ -29,7 +29,7 @@ function savedCategoryName(value) {
 }
 
 // GET /api/users?q=
-router.get("/", async (req, res) => {
+router.get("/", optionalAuthenticate, async (req, res) => {
   const { q = "" } = req.query;
   const query = String(q).trim();
   const usernameQuery = normalizeUsername(query);
@@ -58,7 +58,13 @@ router.get("/", async (req, res) => {
       const bPrefix = b.username?.startsWith(usernameQuery) ? 1 : 0;
       return bExact - aExact || bPrefix - aPrefix || (a.username ?? a.name ?? "").localeCompare(b.username ?? b.name ?? "");
     });
-    res.json(users.slice(0, 20));
+    const visibleUsers = users.slice(0, 20);
+    const followed = req.user ? await prisma.follow.findMany({
+      where: { followerId: req.user.id, followingId: { in: visibleUsers.map((user) => user.id) } },
+      select: { followingId: true },
+    }) : [];
+    const followedIds = new Set(followed.map((follow) => follow.followingId));
+    res.json(visibleUsers.map((user) => ({ ...user, isFollowing: followedIds.has(user.id) })));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message || "Failed to search users" });

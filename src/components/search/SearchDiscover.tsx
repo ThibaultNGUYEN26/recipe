@@ -12,6 +12,7 @@ import { apiFetch } from '../../lib/apiFetch';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoadingPan } from '../ui/LoadingPan';
 import { useMinLoading } from '../../hooks/useMinLoading';
+import { useUI } from '../../contexts/UIContext';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -33,7 +34,7 @@ const DIFFICULTY_LABEL_KEYS: Record<string, string> = {
 };
 const TIME_OPTS = [15, 30, 60, 'Any'] as const;
 
-interface UserResult { id: number; username: string | null; name: string | null; avatarUrl: string | null; isVerified: boolean }
+interface UserResult { id: number; username: string | null; name: string | null; avatarUrl: string | null; isVerified: boolean; isFollowing?: boolean }
 
 function imgSrc(url: string | null | undefined) {
   if (!url) return null;
@@ -44,6 +45,7 @@ export default function SearchDiscover() {
   const { language, t } = useLanguage();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { showToast } = useUI();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [query, setQuery] = useState('');
@@ -55,7 +57,17 @@ export default function SearchDiscover() {
     const isFollowing = !!followedUsers[userId];
     const method = isFollowing ? 'DELETE' : 'POST';
     const res = await apiFetch(`/api/users/${userId}/follow`, { method });
-    if (res.ok) setFollowedUsers((prev) => ({ ...prev, [userId]: !isFollowing }));
+    if (res.ok) {
+      setFollowedUsers((prev) => ({ ...prev, [userId]: !isFollowing }));
+      return;
+    }
+    const data = await res.json().catch(() => null);
+    if (res.status === 409 && data?.error === 'Already following') {
+      setFollowedUsers((prev) => ({ ...prev, [userId]: true }));
+      return;
+    }
+    console.error('Follow request failed', res.status, data?.error);
+    showToast('Could not update follow', data?.error || 'Please try again.', 'error');
   }
 
   // Filters
@@ -88,7 +100,14 @@ export default function SearchDiscover() {
     const t = setTimeout(() => {
       apiFetch(`/api/users?q=${encodeURIComponent(query)}`, { signal: controller.signal })
         .then((r) => r.json())
-        .then((d) => setUsers(Array.isArray(d) ? d : []))
+        .then((d) => {
+          const results = Array.isArray(d) ? d as UserResult[] : [];
+          setUsers(results);
+          setFollowedUsers((previous) => ({
+            ...previous,
+            ...Object.fromEntries(results.map((result) => [result.id, Boolean(result.isFollowing)])),
+          }));
+        })
         .catch((error) => {
           if (!(error instanceof DOMException && error.name === 'AbortError')) console.error(error);
         });
@@ -401,6 +420,7 @@ function TrendingCreators({ lang }: { lang: string }) {
   const [creators, setCreators] = useState<(UserResult & { recipeCount: number })[]>([]);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { showToast } = useUI();
   const { t } = useLanguage();
   const [followedUsers, setFollowedUsers] = useState<Record<number, boolean>>({});
 
@@ -409,7 +429,17 @@ function TrendingCreators({ lang }: { lang: string }) {
     const isFollowing = !!followedUsers[userId];
     const method = isFollowing ? 'DELETE' : 'POST';
     const res = await apiFetch(`/api/users/${userId}/follow`, { method });
-    if (res.ok) setFollowedUsers((prev) => ({ ...prev, [userId]: !isFollowing }));
+    if (res.ok) {
+      setFollowedUsers((prev) => ({ ...prev, [userId]: !isFollowing }));
+      return;
+    }
+    const data = await res.json().catch(() => null);
+    if (res.status === 409 && data?.error === 'Already following') {
+      setFollowedUsers((prev) => ({ ...prev, [userId]: true }));
+      return;
+    }
+    console.error('Follow request failed', res.status, data?.error);
+    showToast('Could not update follow', data?.error || 'Please try again.', 'error');
   }
 
   useEffect(() => {
@@ -424,6 +454,7 @@ function TrendingCreators({ lang }: { lang: string }) {
           })
         );
         setCreators(withCounts);
+        setFollowedUsers(Object.fromEntries(withCounts.map((creator) => [creator.id, Boolean(creator.isFollowing)])));
       })
       .catch(console.error);
   }, [user?.id]);
