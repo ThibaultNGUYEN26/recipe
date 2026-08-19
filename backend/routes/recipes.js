@@ -154,6 +154,7 @@ router.get("/recommended", async (req, res) => {
         avgRating: scores.length ? avgRating : null,
         ratingCount: scores.length,
         likeCount: recipe._count.likes,
+        score: ranking.score,
         recommendationReason: ranking.reasonCode,
         recommendationReasonValue: ranking.reasonValue,
         slug: recipe.slug,

@@ -145,9 +145,6 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
       });
       if (res.ok) {
         setIsFollowing(!isFollowing);
-        queryClient.setQueryData(['profile', userId], (old: UserProfileType) =>
-          old ? { ...old, followerCount: old.followerCount + (isFollowing ? -1 : 1) } : old
-        );
         queryClient.invalidateQueries({ queryKey: ['feed'] });
         showToast(isFollowing ? 'Unfollowed' : 'Following!');
       }

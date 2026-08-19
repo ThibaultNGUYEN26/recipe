@@ -231,15 +231,18 @@ export default function SearchDiscover() {
         <section className="space-y-3">
           <h3 className="font-serif text-lg font-bold" style={{ color: 'var(--color-text)' }}>{t('discover.creators')}</h3>
           <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
-            {users.map((u) => (
+            {users.filter((u) => u.id !== user?.id).map((u) => (
               <div key={u.id} className="discover-creator-card rounded-2xl p-3.5 border shadow-sm flex flex-col items-center text-center min-w-[140px] shrink-0">
-                <div className="w-14 h-14 rounded-full bg-amber-800 text-white flex items-center justify-center text-xl font-bold mb-2 ring-2 ring-amber-600/30 overflow-hidden">
+                <Link to={u.username ? `/u/${encodeURIComponent(u.username)}` : `/profile/${u.id}`}
+                  className="w-14 h-14 rounded-full bg-amber-800 text-white flex items-center justify-center text-xl font-bold mb-2 ring-2 ring-amber-600/30 overflow-hidden">
                   {u.avatarUrl ? <img src={imgSrc(u.avatarUrl)!} alt="" className="w-full h-full object-cover" /> : u.name?.[0]?.toUpperCase() ?? '?'}
-                </div>
-                <div className="flex items-center justify-center gap-1 w-full">
-                  <h4 className="text-xs font-bold truncate">{u.name ?? (u.username ? `@${u.username}` : 'Creator')}</h4>
-                  {u.isVerified && <VerifiedBadge className="w-3.5 h-3.5" />}
-                </div>
+                </Link>
+                <Link to={u.username ? `/u/${encodeURIComponent(u.username)}` : `/profile/${u.id}`} className="w-full">
+                  <div className="flex items-center justify-center gap-1 w-full">
+                    <h4 className="text-xs font-bold truncate">{u.name ?? (u.username ? `@${u.username}` : 'Creator')}</h4>
+                    {u.isVerified && <VerifiedBadge className="w-3.5 h-3.5" />}
+                  </div>
+                </Link>
                 {u.username && <p className="discover-muted text-[10px] truncate w-full">@{u.username}</p>}
                 <button onClick={() => toggleFollow(u.id)}
                   className="discover-follow-button w-full mt-2.5 py-1.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 transition-colors">
@@ -413,7 +416,7 @@ function TrendingCreators({ lang }: { lang: string }) {
       .then((r) => r.json())
       .then(async (users: UserResult[]) => {
         const withCounts = await Promise.all(
-          users.slice(0, 6).map(async (u) => {
+          users.filter((u) => u.id !== user?.id).slice(0, 6).map(async (u) => {
             const res = await apiFetch(`/api/users/${u.id}`);
             const data = await res.json();
             return { ...u, recipeCount: data.recipeCount ?? 0 };
@@ -422,7 +425,7 @@ function TrendingCreators({ lang }: { lang: string }) {
         setCreators(withCounts);
       })
       .catch(console.error);
-  }, []);
+  }, [user?.id]);
 
   if (creators.length === 0) return null;
 
@@ -430,15 +433,18 @@ function TrendingCreators({ lang }: { lang: string }) {
     <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-none">
       {creators.map((u) => (
         <div key={u.id} className="discover-creator-card rounded-2xl p-3.5 border shadow-sm flex flex-col items-center text-center min-w-[150px] shrink-0">
-          <div className="w-14 h-14 rounded-full bg-amber-800 text-white flex items-center justify-center text-xl font-bold mb-2 ring-2 ring-amber-600/30 overflow-hidden">
+          <Link to={u.username ? `/u/${encodeURIComponent(u.username)}` : `/profile/${u.id}`}
+            className="w-14 h-14 rounded-full bg-amber-800 text-white flex items-center justify-center text-xl font-bold mb-2 ring-2 ring-amber-600/30 overflow-hidden">
             {u.avatarUrl
               ? <img src={u.avatarUrl.startsWith('/') ? `${import.meta.env.VITE_API_URL}${u.avatarUrl}` : u.avatarUrl} alt="" className="w-full h-full object-cover" />
               : u.name?.[0]?.toUpperCase() ?? '?'}
-          </div>
-          <div className="flex items-center justify-center gap-1 w-full">
-            <h4 className="text-xs font-bold truncate">{u.name ?? (u.username ? `@${u.username}` : 'Creator')}</h4>
-            {u.isVerified && <VerifiedBadge className="w-3.5 h-3.5" />}
-          </div>
+          </Link>
+          <Link to={u.username ? `/u/${encodeURIComponent(u.username)}` : `/profile/${u.id}`} className="w-full">
+            <div className="flex items-center justify-center gap-1 w-full">
+              <h4 className="text-xs font-bold truncate">{u.name ?? (u.username ? `@${u.username}` : 'Creator')}</h4>
+              {u.isVerified && <VerifiedBadge className="w-3.5 h-3.5" />}
+            </div>
+          </Link>
           {u.username && <p className="discover-muted text-[10px] truncate w-full">@{u.username}</p>}
           <p className="discover-accent text-[10px] font-medium mt-0.5">{t('discover.recipeCount', { count: u.recipeCount })}</p>
           <button onClick={() => toggleFollow(u.id)}
