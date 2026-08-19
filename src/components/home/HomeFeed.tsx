@@ -94,8 +94,8 @@ export default function HomeFeed() {
   });
 
   const showLoader = useMinLoading(loading);
-  const recipes: RecipeListItem[] = data?.personalized ?? [];
   const trending: RecipeListItem[] = data?.trending ?? [];
+  const recipes: RecipeListItem[] = data?.personalized?.length ? data.personalized : trending;
   const following: RecipeListItem[] = data?.following ?? [];
   const isPersonalized = Boolean(data?.personalizedForUser);
 

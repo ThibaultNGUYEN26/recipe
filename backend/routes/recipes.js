@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import fs from "fs";
 import process from "node:process";
 import { prisma } from "../lib/prisma.js";
-import { authenticate } from "../middleware/authenticate.js";
+import { authenticate, optionalAuthenticate } from "../middleware/authenticate.js";
 import { recipeUpload } from "../lib/upload.js";
 import { createNotification } from "../lib/notify.js";
 import { diversifyRecommendations, scoreRecommendation } from "../lib/recommendations.js";
@@ -80,14 +80,11 @@ router.get("/", async (req, res) => {
 });
 
 // GET /api/recipes/recommended — explainable rules-based discovery feeds.
-router.get("/recommended", async (req, res) => {
+router.get("/recommended", optionalAuthenticate, async (req, res) => {
   const lang = String(req.query.lang || "fr");
   const now = new Date();
   const recentFrom = new Date(now.getTime() - 30 * 86400000);
-  let userId = null;
-  if (req.cookies?.token) {
-    try { userId = jwt.verify(req.cookies.token, process.env.JWT_SECRET).id; } catch { /* anonymous feed */ }
-  }
+  const userId = req.user?.id ?? null;
 
   try {
     const [recipes, saved, rated, viewed, follows] = await Promise.all([
@@ -175,7 +172,13 @@ router.get("/recommended", async (req, res) => {
       };
     });
 
-    const byScore = [...formatted].filter((recipe) => !savedIds.has(recipe.id)).sort((a, b) => b.score - a.score);
+    const ranked = [...formatted].sort((a, b) => b.score - a.score);
+    // Prefer new discoveries, but keep saved recipes as a backfill for small catalogs.
+    // Otherwise a user who saved every available recipe receives an empty "For You" feed.
+    const byScore = [
+      ...ranked.filter((recipe) => !savedIds.has(recipe.id)),
+      ...ranked.filter((recipe) => savedIds.has(recipe.id)),
+    ];
     const trending = [...formatted].sort((a, b) => (b.recentViews * 0.7 + b.saveCount * 2 + b.ratingCount) - (a.recentViews * 0.7 + a.saveCount * 2 + a.ratingCount)).slice(0, 20).map((recipe) => ({ ...recipe, recommendationReason: 'trending' }));
     const following = formatted.filter((recipe) => preferences.following.has(recipe.authorId)).sort((a, b) => b.score - a.score).map((recipe) => ({ ...recipe, recommendationReason: 'follow' }));
     res.json({
