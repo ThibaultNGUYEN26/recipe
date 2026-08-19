@@ -36,7 +36,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [followListModal, setFollowListModal] = useState<'followers' | 'following' | null>(null);
-  const [followList, setFollowList] = useState<Array<{ id: number; name: string | null; username: string | null; avatarUrl: string | null; isVerified: boolean }>>([]);
+  const [followList, setFollowList] = useState<Array<{ id: number; name: string | null; username: string | null; avatarUrl: string | null; isVerified: boolean; isFollowing?: boolean }>>([]);
   const [followListLoading, setFollowListLoading] = useState(false);
   const [followedInModal, setFollowedInModal] = useState<Record<number, boolean>>({});
   const [activeTab, setActiveTab] = useState<'recipes' | 'saved'>('recipes');
@@ -175,7 +175,16 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
     if (!me) { navigate('/login'); return; }
     const following = !!followedInModal[targetId];
     const res = await apiFetch(`/api/users/${targetId}/follow`, { method: following ? 'DELETE' : 'POST' });
-    if (res.ok) setFollowedInModal((prev) => ({ ...prev, [targetId]: !following }));
+    if (res.ok) {
+      setFollowedInModal((prev) => ({ ...prev, [targetId]: !following }));
+      return;
+    }
+    const data = await res.json().catch(() => null);
+    if (res.status === 409 && data?.error === 'Already following') {
+      setFollowedInModal((prev) => ({ ...prev, [targetId]: true }));
+      return;
+    }
+    showToast('Could not update follow', data?.error || 'Please try again.', 'error');
   }
 
   async function saveProfile(e: React.FormEvent) {

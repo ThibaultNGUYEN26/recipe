@@ -513,12 +513,9 @@ router.delete("/:id/follow", authenticate, followRateLimit, async (req, res) => 
 });
 
 // GET /api/users/:id/followers
-router.get("/:id/followers", async (req, res) => {
+router.get("/:id/followers", optionalAuthenticate, async (req, res) => {
   const userId = parseInt(req.params.id);
-  let viewerId = null;
-  if (req.cookies?.token) {
-    try { viewerId = jwt.verify(req.cookies.token, process.env.JWT_SECRET).id; } catch { /* anonymous */ }
-  }
+  const viewerId = req.user?.id ?? null;
   try {
     const follows = await prisma.follow.findMany({
       where: { followingId: userId },
@@ -540,12 +537,9 @@ router.get("/:id/followers", async (req, res) => {
 });
 
 // GET /api/users/:id/following
-router.get("/:id/following", async (req, res) => {
+router.get("/:id/following", optionalAuthenticate, async (req, res) => {
   const userId = parseInt(req.params.id);
-  let viewerId = null;
-  if (req.cookies?.token) {
-    try { viewerId = jwt.verify(req.cookies.token, process.env.JWT_SECRET).id; } catch { /* anonymous */ }
-  }
+  const viewerId = req.user?.id ?? null;
   try {
     const follows = await prisma.follow.findMany({
       where: { followerId: userId },
