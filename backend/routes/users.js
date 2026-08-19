@@ -481,7 +481,7 @@ router.post("/:id/follow", authenticate, followRateLimit, async (req, res) => {
 
   try {
     let sourceRecipeId = null;
-    if (typeof req.body.sourceRecipeSlug === "string") {
+    if (req.body && typeof req.body.sourceRecipeSlug === "string") {
       const source = await prisma.recipe.findFirst({
         where: { slug: req.body.sourceRecipeSlug, authorId: followingId, isPublic: true },
         select: { id: true },
