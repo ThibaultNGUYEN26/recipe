@@ -466,9 +466,12 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
                         </div>
                         {u.username && <p className="text-[10px] truncate" style={{ color: 'var(--color-muted)' }}>@{u.username}</p>}
                       </Link>
-                      {me && u.id !== me.id && followListModal === 'followers' && (
+                      {me && u.id !== me.id && (
                         <button onClick={() => toggleFollowInModal(u.id)}
-                          className={`discover-follow-button${followedInModal[u.id] ? ' following' : ''} shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full transition-all`}>
+                          className={`discover-follow-button${followedInModal[u.id] ? ' following' : ''} shrink-0 inline-flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full transition-all`}>
+                          {followedInModal[u.id]
+                            ? <UserMinus className="w-3.5 h-3.5" />
+                            : <UserPlus className="w-3.5 h-3.5" />}
                           {followedInModal[u.id] ? 'Following' : 'Follow'}
                         </button>
                       )}
