@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+Disallow: /settings/
+Disallow: /admin/
+Disallow: /creator/
+Disallow: /add-recipe
+Disallow: /edit-recipe/
+Disallow: /my-recipes
+Disallow: /login
+Disallow: /register
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /verify-email
+
+Sitemap: https://recipe.thibault-nguyen.dev/sitemap.xml

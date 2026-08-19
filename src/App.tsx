@@ -10,6 +10,7 @@ import ReportModal from './components/overlays/ReportModal';
 import CollectionModal from './components/overlays/CollectionModal';
 import NotificationDrawer from './components/overlays/NotificationDrawer';
 import CookieConsentBanner from './components/overlays/CookieConsentBanner';
+import RouteSeo from './components/misc/RouteSeo';
 import { usePullToRefresh } from './hooks/usePullToRefresh';
 import { LoadingPan } from './components/ui/LoadingPan';
 import { useRecipeSocket } from './hooks/useRecipeSocket';
@@ -68,6 +69,7 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-dvh overflow-hidden" style={{ backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}>
+      <RouteSeo />
       <Header />
       {user && !user.emailVerified && (
         <Link to="/verify-email" className="shrink-0 px-4 py-2 text-center text-xs font-semibold bg-amber-100 text-amber-950 border-b border-amber-200">

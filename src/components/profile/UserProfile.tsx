@@ -15,6 +15,7 @@ import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-cr
 import 'react-image-crop/dist/ReactCrop.css';
 import VerifiedBadge from './VerifiedBadge';
 import { apiFetch } from '../../lib/apiFetch';
+import { useSeo } from '../../hooks/useSeo';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -70,6 +71,14 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
     staleTime: 30_000,
   });
   const loading = queryLoading;
+
+  useSeo({
+    title: profile?.name ?? (profile?.username ? `@${profile.username}` : 'Creator profile'),
+    description: profile?.bio || (profile ? `Discover ${profile.name ?? profile.username ?? 'this creator'}'s recipes on Savor.` : 'Discover recipes shared by this creator on Savor.'),
+    path: profile?.username ? `/u/${encodeURIComponent(profile.username)}` : `/profile/${userId ?? ''}`,
+    image: profile?.avatarUrl ? imgSrc(profile.avatarUrl) : null,
+    type: 'profile',
+  });
 
   async function blockUser() {
     if (!profile) return;
@@ -134,13 +143,6 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
     window.addEventListener('ws:user-follow', handler);
     return () => window.removeEventListener('ws:user-follow', handler);
   }, [userId, queryClient]);
-
-  useEffect(() => {
-    if (!profile) return;
-    const previousTitle = document.title;
-    document.title = `${profile.name ?? (profile.username ? `@${profile.username}` : 'Creator')} — Savor`;
-    return () => { document.title = previousTitle; };
-  }, [profile?.id]);
 
   async function toggleFollow() {
     if (!me) { navigate('/login'); return; }

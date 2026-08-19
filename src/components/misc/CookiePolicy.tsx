@@ -4,7 +4,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 
 export default function CookiePolicy() {
   const { t } = useLanguage();
-  const sections = Array.from({ length: 7 }, (_, index) => index + 1);
+  const sections = Array.from({ length: 9 }, (_, index) => index + 1);
 
   return (
     <div className="w-full max-w-2xl mx-auto px-4 py-6 pb-24">
@@ -22,6 +22,15 @@ export default function CookiePolicy() {
             <p style={{ color: 'var(--color-muted)' }}>{t(`cookies.${section}.body`)}</p>
           </section>
         ))}
+        <section>
+          <h2 className="font-serif text-lg font-semibold mb-2" style={{ color: 'var(--color-text)' }}>{t('cookies.links.title')}</h2>
+          <ul className="space-y-2 underline" style={{ color: 'var(--color-muted)' }}>
+            <li><Link to="/cookie-settings">{t('cookies.links.preferences')}</Link></li>
+            <li><a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noreferrer">{t('cookies.links.googleData')}</a></li>
+            <li><a href="https://adssettings.google.com/" target="_blank" rel="noreferrer">{t('cookies.links.googleSettings')}</a></li>
+            <li><a href="https://support.google.com/adsense/answer/9012903" target="_blank" rel="noreferrer">{t('cookies.links.vendors')}</a></li>
+          </ul>
+        </section>
       </div>
     </div>
   );

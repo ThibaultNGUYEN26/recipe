@@ -11,6 +11,7 @@ import { ArrowLeft, Star, StarHalf, Bookmark, BookmarkCheck, Share2, Clock, User
 import VerifiedBadge from '../profile/VerifiedBadge';
 import { apiFetch } from '../../lib/apiFetch';
 import { ANALYTICS_VISITOR_KEY, hasAnalyticsConsent } from '../../lib/cookiePreferences';
+import { useSeo } from '../../hooks/useSeo';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -207,6 +208,15 @@ export default function RecipeDetail() {
 
   const showLoader = useMinLoading(loading);
 
+  useSeo({
+    title: recipe?.title || 'Recipe',
+    description: recipe?.description || 'View ingredients, instructions and community tips for this recipe on Savor.',
+    path: recipe?.authorUsername ? `/${recipe.authorUsername}/${recipe.slug}` : `/recipe/${slug ?? ''}`,
+    image: recipe?.image ? imgSrc(recipe.image) : null,
+    type: 'article',
+    noIndex: Boolean(recipe && (recipe as { error?: string }).error),
+  });
+
   const { data: fetchedComments } = useQuery<Comment[]>({
     queryKey: ['comments', slug],
     queryFn: () => apiFetch(`/api/recipes/${slug}/comments`).then((r) => r.json()),
@@ -245,13 +255,6 @@ export default function RecipeDetail() {
     window.addEventListener('recipe-saved', handleRecipeSaved);
     return () => window.removeEventListener('recipe-saved', handleRecipeSaved);
   }, [slug, contentLanguage, language]);
-
-  useEffect(() => {
-    if (!recipe?.title) return;
-    const previousTitle = document.title;
-    document.title = `${recipe.title} — Savor`;
-    return () => { document.title = previousTitle; };
-  }, [recipe?.title]);
 
   async function rate(score: number) {
     if (!user) { showToast('Sign in to rate', undefined, 'info'); return; }
