@@ -73,7 +73,7 @@ export default function SearchDiscover() {
         apiFetch(`/api/recipes/recommended?lang=${language}`).then((r) => (r.ok ? r.json() : null)),
       ]).then(([all, recommendations]) => ({
         allRecipes: Array.isArray(all) ? (all as RecipeListItem[]) : [],
-        discoveryRecipes: Array.isArray(recommendations?.trending) ? recommendations.trending : (Array.isArray(all) ? all : []),
+        discoveryRecipes: (Array.isArray(recommendations?.trending) && recommendations.trending.length > 0) ? recommendations.trending : (Array.isArray(all) ? all : []),
       })),
   });
 
