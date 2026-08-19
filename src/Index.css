@@ -221,6 +221,16 @@ select:disabled {
   background-color: #92400e;
 }
 
+.discover-follow-button.following {
+  color: #92400e;
+  background-color: transparent;
+  border: 1.5px solid #92400e;
+}
+
+.discover-follow-button.following:hover {
+  background-color: #92400e1a;
+}
+
 [data-theme="dark"] .discover-follow-button {
   color: #1c1917;
   background-color: #fbbf24;
@@ -228,6 +238,16 @@ select:disabled {
 
 [data-theme="dark"] .discover-follow-button:hover {
   background-color: #f59e0b;
+}
+
+[data-theme="dark"] .discover-follow-button.following {
+  color: #fbbf24;
+  background-color: transparent;
+  border: 1.5px solid #fbbf24;
+}
+
+[data-theme="dark"] .discover-follow-button.following:hover {
+  background-color: #fbbf2420;
 }
 
 .discover-reset-button {

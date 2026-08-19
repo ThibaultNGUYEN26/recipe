@@ -264,7 +264,7 @@ export default function SearchDiscover() {
                   </div>
                   {u.username && <p className="discover-muted text-[10px] truncate w-full">@{u.username}</p>}
                   <button onClick={(e) => { e.stopPropagation(); toggleFollow(u.id); }}
-                    className="discover-follow-button w-full mt-2.5 py-1.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 transition-colors">
+                    className={`discover-follow-button${followedUsers[u.id] ? ' following' : ''} w-full mt-2.5 py-1.5 px-3 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 transition-colors`}>
                     {followedUsers[u.id] ? <UserMinus className="w-3 h-3" /> : <UserPlus className="w-3 h-3" />}
                     {followedUsers[u.id] ? t('discover.following') : t('discover.follow')}
                   </button>
@@ -480,7 +480,7 @@ function TrendingCreators({ lang }: { lang: string }) {
             {u.username && <p className="discover-muted text-[10px] truncate w-full">@{u.username}</p>}
             <p className="discover-accent text-[10px] font-medium mt-0.5">{t('discover.recipeCount', { count: u.recipeCount })}</p>
             <button onClick={(e) => { e.stopPropagation(); toggleFollow(u.id); }}
-              className="discover-follow-button w-full mt-2.5 py-1.5 px-3 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1">
+              className={`discover-follow-button${followedUsers[u.id] ? ' following' : ''} w-full mt-2.5 py-1.5 px-3 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1`}>
               {followedUsers[u.id] ? <UserMinus className="w-3 h-3" /> : <UserPlus className="w-3 h-3" />}
               {followedUsers[u.id] ? t('discover.following') : t('discover.follow')}
             </button>
