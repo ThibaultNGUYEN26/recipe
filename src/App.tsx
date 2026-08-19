@@ -41,6 +41,8 @@ const CreatorVerification = lazy(() => import('./components/profile/CreatorVerif
 const VerificationReview = lazy(() => import('./components/admin/VerificationReview'));
 const AdminAnalytics = lazy(() => import('./components/admin/AdminAnalytics'));
 const CreatorAnalytics = lazy(() => import('./components/profile/CreatorAnalytics'));
+const PrivacySafety = lazy(() => import('./components/settings/PrivacySafety'));
+const AdminReports = lazy(() => import('./components/admin/AdminReports'));
 
 function LoadingFallback() {
   return (
@@ -95,6 +97,7 @@ export default function App() {
             <Route path="/settings/profile" element={<EditProfile />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/settings/language" element={<LanguageSettings />} />
+            <Route path="/settings/privacy-safety" element={<PrivacySafety />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -110,6 +113,7 @@ export default function App() {
             <Route path="/settings/verification" element={<CreatorVerification />} />
             <Route path="/admin/verifications" element={<VerificationReview />} />
             <Route path="/admin/analytics" element={<AdminAnalytics />} />
+            <Route path="/admin/reports" element={<AdminReports />} />
             <Route path="/creator/analytics" element={<CreatorAnalytics />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

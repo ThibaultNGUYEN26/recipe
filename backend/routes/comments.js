@@ -3,6 +3,7 @@ import { prisma } from "../lib/prisma.js";
 import { authenticate, optionalAuthenticate } from "../middleware/authenticate.js";
 import { createNotification } from "../lib/notify.js";
 import { commentRateLimit, likeRateLimit } from "../middleware/rateLimit.js";
+import { blockedUserIds, usersAreBlocked } from "../lib/blocks.js";
 
 const router = Router({ mergeParams: true });
 
@@ -23,12 +24,14 @@ router.get("/", optionalAuthenticate, async (req, res) => {
     const recipe = await prisma.recipe.findUnique({ where: { slug: req.params.slug } });
     if (!recipe) return res.status(404).json({ error: "Recipe not found" });
 
+    const excludedUsers = await blockedUserIds(req.user?.id);
     const comments = await prisma.comment.findMany({
-      where: { recipeId: recipe.id, parentId: null },
+      where: { recipeId: recipe.id, parentId: null, ...(excludedUsers.length && { userId: { notIn: excludedUsers } }) },
       include: {
         user: { select: { id: true, name: true, avatarUrl: true, isVerified: true } },
         likes: { select: { userId: true } },
         children: {
+          where: excludedUsers.length ? { userId: { notIn: excludedUsers } } : undefined,
           include: {
             user: { select: { id: true, name: true, avatarUrl: true, isVerified: true } },
             likes: { select: { userId: true } },
@@ -54,6 +57,7 @@ router.post("/", authenticate, commentRateLimit, async (req, res) => {
   try {
     const recipe = await prisma.recipe.findUnique({ where: { slug: req.params.slug } });
     if (!recipe) return res.status(404).json({ error: "Recipe not found" });
+    if (recipe.authorId && await usersAreBlocked(req.user.id, recipe.authorId)) return res.status(403).json({ error: "This interaction is not allowed" });
 
     if (parentId) {
       const parent = await prisma.comment.findUnique({ where: { id: parseInt(parentId) } });

@@ -10,6 +10,7 @@ import { uploadRateLimit } from "../middleware/uploadRateLimit.js";
 import { normalizeUsername, validateUsername } from "../lib/username.js";
 import { selectRecipeTranslation } from "../lib/translations.js";
 import { followRateLimit } from "../middleware/rateLimit.js";
+import { blockedUserIds, usersAreBlocked } from "../lib/blocks.js";
 
 const router = Router();
 const SAVED_CATEGORY_MAX_LENGTH = 40;
@@ -51,6 +52,7 @@ router.get("/", optionalAuthenticate, async (req, res) => {
     const users = exactUser
       ? [exactUser, ...matches.filter((user) => user.id !== exactUser.id)]
       : matches;
+    const excludedUserIds = new Set(await blockedUserIds(req.user?.id));
     users.sort((a, b) => {
       const aExact = a.username === usernameQuery ? 1 : 0;
       const bExact = b.username === usernameQuery ? 1 : 0;
@@ -58,7 +60,7 @@ router.get("/", optionalAuthenticate, async (req, res) => {
       const bPrefix = b.username?.startsWith(usernameQuery) ? 1 : 0;
       return bExact - aExact || bPrefix - aPrefix || (a.username ?? a.name ?? "").localeCompare(b.username ?? b.name ?? "");
     });
-    const visibleUsers = users.slice(0, 20);
+    const visibleUsers = users.filter((user) => !excludedUserIds.has(user.id)).slice(0, 20);
     const followed = req.user ? await prisma.follow.findMany({
       where: { followerId: req.user.id, followingId: { in: visibleUsers.map((user) => user.id) } },
       select: { followingId: true },
@@ -379,7 +381,7 @@ router.delete("/me/avatar", authenticate, async (req, res) => {
 });
 
 // GET /api/users/by-username/:username
-router.get("/by-username/:username", async (req, res) => {
+router.get("/by-username/:username", optionalAuthenticate, async (req, res) => {
   const username = normalizeUsername(req.params.username);
   if (!username) return res.status(400).json({ error: "Invalid username" });
 
@@ -389,6 +391,7 @@ router.get("/by-username/:username", async (req, res) => {
       select: { id: true, username: true, name: true, bio: true, avatarUrl: true, isVerified: true, createdAt: true },
     });
     if (!user) return res.status(404).json({ error: "User not found" });
+    if (await usersAreBlocked(req.user?.id, user.id)) return res.status(404).json({ error: "User not found" });
 
     const [followerCount, followingCount, recipeCount] = await Promise.all([
       prisma.follow.count({ where: { followingId: user.id } }),
@@ -403,7 +406,7 @@ router.get("/by-username/:username", async (req, res) => {
 });
 
 // GET /api/users/:id
-router.get("/:id", async (req, res) => {
+router.get("/:id", optionalAuthenticate, async (req, res) => {
   const userId = parseInt(req.params.id);
   if (isNaN(userId)) return res.status(400).json({ error: "Invalid user id" });
 
@@ -413,6 +416,7 @@ router.get("/:id", async (req, res) => {
       select: { id: true, username: true, name: true, bio: true, avatarUrl: true, isVerified: true, createdAt: true },
     });
     if (!user) return res.status(404).json({ error: "User not found" });
+    if (await usersAreBlocked(req.user?.id, user.id)) return res.status(404).json({ error: "User not found" });
 
     const [followerCount, followingCount, recipeCount] = await Promise.all([
       prisma.follow.count({ where: { followingId: userId } }),
@@ -428,12 +432,13 @@ router.get("/:id", async (req, res) => {
 });
 
 // GET /api/users/:id/recipes
-router.get("/:id/recipes", async (req, res) => {
+router.get("/:id/recipes", optionalAuthenticate, async (req, res) => {
   const userId = parseInt(req.params.id);
   const { lang = "fr" } = req.query;
   if (isNaN(userId)) return res.status(400).json({ error: "Invalid user id" });
 
   try {
+    if (await usersAreBlocked(req.user?.id, userId)) return res.json([]);
     const recipes = await prisma.recipe.findMany({
       where: { authorId: userId, isPublic: true },
       include: {
@@ -480,6 +485,11 @@ router.post("/:id/follow", authenticate, followRateLimit, async (req, res) => {
   if (followingId === req.user.id) return res.status(400).json({ error: "Cannot follow yourself" });
 
   try {
+    const blocked = await prisma.userBlock.findFirst({
+      where: { OR: [{ blockerId: req.user.id, blockedId: followingId }, { blockerId: followingId, blockedId: req.user.id }] },
+      select: { id: true },
+    });
+    if (blocked) return res.status(403).json({ error: "This follow is not allowed" });
     let sourceRecipeId = null;
     if (req.body && typeof req.body.sourceRecipeSlug === "string") {
       const source = await prisma.recipe.findFirst({

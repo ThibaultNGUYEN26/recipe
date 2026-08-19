@@ -111,6 +111,10 @@ export default function Header() {
                           className="savor-header__menu-item flex items-center gap-2.5 w-full px-4 py-2.5 text-xs font-medium transition-colors">
                           <ShieldCheck className="savor-header__muted w-4 h-4" /> {t('header.verificationReview')}
                         </Link>
+                        <Link to="/admin/reports" onClick={() => setMenuOpen(false)}
+                          className="savor-header__menu-item flex items-center gap-2.5 w-full px-4 py-2.5 text-xs font-medium transition-colors">
+                          <ShieldCheck className="savor-header__muted w-4 h-4" /> {t('header.adminReports')}
+                        </Link>
                       </>
                     )}
 

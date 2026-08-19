@@ -73,6 +73,7 @@ function CommentItem({ comment, recipeSlug, onDelete, onLike }: {
   onLike: (id: number, isLiked: boolean, likesCount: number) => void;
 }) {
   const { user } = useAuth();
+  const { openReport } = useUI();
   const [replying, setReplying] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -131,6 +132,9 @@ function CommentItem({ comment, recipeSlug, onDelete, onLike }: {
               <button onClick={() => onDelete(comment.id)} className="text-xs" style={{ color: 'var(--color-muted)' }}>
                 <Trash2 size={13} />
               </button>
+            )}
+            {user && user.id !== comment.author.id && (
+              <button onClick={() => openReport(String(comment.id), 'comment')} aria-label="Report comment" style={{ color: 'var(--color-muted)' }}><Flag size={13} /></button>
             )}
           </div>
           {replying && (

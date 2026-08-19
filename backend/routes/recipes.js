@@ -11,6 +11,7 @@ import { normalizeLanguage, selectRecipeTranslation } from "../lib/translations.
 import { fetchTikTokImport, validateTikTokUrl } from "../lib/tiktokImport.js";
 import { broadcastRecipeEvent } from "../lib/ws.js";
 import { likeRateLimit } from "../middleware/rateLimit.js";
+import { blockedUserIds, usersAreBlocked } from "../lib/blocks.js";
 
 const router = Router();
 const uploadRecipeMedia = recipeUpload.fields([
@@ -29,11 +30,12 @@ function handleRecipeMedia(req, res, next) {
 }
 
 // GET /api/recipes
-router.get("/", async (req, res) => {
+router.get("/", optionalAuthenticate, async (req, res) => {
   const { lang = "fr", category } = req.query;
   try {
+    const excludedAuthors = await blockedUserIds(req.user?.id);
     const recipes = await prisma.recipe.findMany({
-      where: { isPublic: true, ...(category && { category: { slug: category } }) },
+      where: { isPublic: true, ...(excludedAuthors.length && { authorId: { notIn: excludedAuthors } }), ...(category && { category: { slug: category } }) },
       include: {
         category: true,
         images: { where: { isMain: true } },
@@ -87,9 +89,10 @@ router.get("/recommended", optionalAuthenticate, async (req, res) => {
   const userId = req.user?.id ?? null;
 
   try {
+    const excludedAuthors = await blockedUserIds(userId);
     const [recipes, saved, rated, viewed, follows] = await Promise.all([
       prisma.recipe.findMany({
-        where: { isPublic: true, ...(userId ? { authorId: { not: userId } } : {}) },
+        where: { isPublic: true, ...(userId ? { authorId: { not: userId, notIn: excludedAuthors } } : {}) },
         include: {
           category: true,
           images: { where: { isMain: true }, take: 1 },
@@ -205,7 +208,7 @@ router.post("/import/tiktok", authenticate, async (req, res) => {
 });
 
 // GET /api/recipes/:slug
-router.get("/:slug", async (req, res) => {
+router.get("/:slug", optionalAuthenticate, async (req, res) => {
   const { slug } = req.params;
   const { lang = "fr" } = req.query;
 
@@ -221,6 +224,7 @@ router.get("/:slug", async (req, res) => {
     });
 
     if (!recipe || recipe.translations.length === 0) return res.status(404).json({ error: "Recipe not found" });
+    if (await usersAreBlocked(req.user?.id, recipe.authorId)) return res.status(404).json({ error: "Recipe not found" });
 
     const selected = selectRecipeTranslation(recipe, lang);
     const t = selected.translation;

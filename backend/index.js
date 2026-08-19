@@ -15,6 +15,8 @@ import notificationsRouter from "./routes/notifications.js";
 import mediaRouter from "./routes/media.js";
 import verificationsRouter from "./routes/verifications.js";
 import adminAnalyticsRouter from "./routes/adminAnalytics.js";
+import privacyRouter from "./routes/privacy.js";
+import safetyRouter from "./routes/safety.js";
 import { uploadsDir } from "./lib/upload.js";
 import { startMediaCleanup } from "./lib/media/cleanup.js";
 import { cleanupUnreferencedLegacyUploads } from "./lib/media/legacyCleanup.js";
@@ -55,6 +57,8 @@ app.use("/api/notifications", notificationsRouter);
 app.use("/api/media", mediaRouter);
 app.use("/api/verifications", verificationsRouter);
 app.use("/api/admin/analytics", adminAnalyticsRouter);
+app.use("/api/privacy", privacyRouter);
+app.use("/api/safety", safetyRouter);
 app.get("/api/categories", async (_req, res) => {
   const { prisma } = await import("./lib/prisma.js");
   try {

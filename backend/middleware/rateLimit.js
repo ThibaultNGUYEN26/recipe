@@ -85,3 +85,9 @@ export const likeRateLimit = createRateLimit({
   max: 120,
   message: "Too many like changes. Please wait a moment.",
 });
+
+export const safetyRateLimit = createRateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 30,
+  message: "Too many safety requests. Please try again later.",
+});

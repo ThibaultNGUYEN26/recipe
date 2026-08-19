@@ -9,7 +9,7 @@ import RecipeCard from '../home/RecipeCard';
 import type { UserProfile as UserProfileType, RecipeListItem } from '../../types';
 import {
   Edit3, MapPin, Utensils, Bookmark, BarChart3,
-  X, UserPlus, UserMinus, Camera, Crop as CropIcon, Share2
+  X, UserPlus, UserMinus, Camera, Crop as CropIcon, Share2, Flag, ShieldBan
 } from 'lucide-react';
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
@@ -27,8 +27,8 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
   const { userId: routeUserId } = useParams<{ userId: string }>();
   const userId = userIdOverride ? String(userIdOverride) : routeUserId;
   const { user: me, logout, updateUser } = useAuth();
-  const { language } = useLanguage();
-  const { showToast, openShare } = useUI();
+  const { language, t } = useLanguage();
+  const { showToast, openShare, openReport } = useUI();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
@@ -69,6 +69,13 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
     staleTime: 30_000,
   });
   const loading = queryLoading;
+
+  async function blockUser() {
+    if (!profile || !window.confirm(t('safety.blockConfirm'))) return;
+    const response = await apiFetch(`/api/safety/blocks/${profile.id}`, { method: 'POST' });
+    if (response.ok) { showToast(t('safety.blocked')); navigate('/'); }
+    else showToast(t('safety.blockError'), undefined, 'error');
+  }
 
   const { data: recipes = [] } = useQuery<RecipeListItem[]>({
     queryKey: ['userRecipes', userId, language],
@@ -339,11 +346,11 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
                     </button>
                   </>
                 ) : (
-                  <button onClick={toggleFollow} disabled={followLoading}
+                  <><button onClick={toggleFollow} disabled={followLoading}
                     className={`${isFollowing ? 'profile-secondary border' : 'profile-primary'} flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-2xl transition-colors shadow-sm`}>
                     {isFollowing ? <UserMinus className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}
                     {isFollowing ? 'Following' : 'Follow'}
-                  </button>
+                  </button>{me && <button onClick={() => openReport(String(profile.id), 'user')} className="rounded-2xl border p-2" aria-label={t('safety.reportUser')} style={{ borderColor: 'var(--color-border)' }}><Flag className="h-4 w-4" /></button>}{me && <button onClick={blockUser} className="rounded-2xl border p-2 text-rose-700" aria-label={t('safety.blockUser')} style={{ borderColor: 'var(--color-border)' }}><ShieldBan className="h-4 w-4" /></button>}</>
                 )}
               </div>
             </div>
