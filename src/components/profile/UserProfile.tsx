@@ -163,7 +163,9 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
         : `/api/users/${userId}/following`;
       const res = await apiFetch(endpoint);
       const data = await res.json();
-      setFollowList(Array.isArray(data) ? data : []);
+      const list = Array.isArray(data) ? data : [];
+      setFollowList(list);
+      setFollowedInModal(Object.fromEntries(list.map((u: { id: number; isFollowing?: boolean }) => [u.id, !!u.isFollowing])));
     } finally {
       setFollowListLoading(false);
     }
@@ -455,7 +457,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
                         </div>
                         {u.username && <p className="text-[10px] truncate" style={{ color: 'var(--color-muted)' }}>@{u.username}</p>}
                       </Link>
-                      {me && u.id !== me.id && (
+                      {me && u.id !== me.id && followListModal === 'followers' && (
                         <button onClick={() => toggleFollowInModal(u.id)}
                           className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full transition-all ${followedInModal[u.id] ? 'profile-secondary border' : 'profile-primary'}`}>
                           {followedInModal[u.id] ? 'Following' : 'Follow'}

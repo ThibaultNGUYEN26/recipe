@@ -515,12 +515,24 @@ router.delete("/:id/follow", authenticate, followRateLimit, async (req, res) => 
 // GET /api/users/:id/followers
 router.get("/:id/followers", async (req, res) => {
   const userId = parseInt(req.params.id);
+  let viewerId = null;
+  if (req.cookies?.token) {
+    try { viewerId = jwt.verify(req.cookies.token, process.env.JWT_SECRET).id; } catch { /* anonymous */ }
+  }
   try {
     const follows = await prisma.follow.findMany({
       where: { followingId: userId },
       include: { follower: { select: { id: true, username: true, name: true, avatarUrl: true, isVerified: true } } },
     });
-    res.json(follows.map((f) => f.follower));
+    const followers = follows.map((f) => f.follower);
+    if (viewerId) {
+      const myFollows = new Set(
+        (await prisma.follow.findMany({ where: { followerId: viewerId, followingId: { in: followers.map((u) => u.id) } }, select: { followingId: true } }))
+          .map((f) => f.followingId)
+      );
+      return res.json(followers.map((u) => ({ ...u, isFollowing: myFollows.has(u.id) })));
+    }
+    res.json(followers.map((u) => ({ ...u, isFollowing: false })));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message || "Failed to fetch followers" });
@@ -530,12 +542,24 @@ router.get("/:id/followers", async (req, res) => {
 // GET /api/users/:id/following
 router.get("/:id/following", async (req, res) => {
   const userId = parseInt(req.params.id);
+  let viewerId = null;
+  if (req.cookies?.token) {
+    try { viewerId = jwt.verify(req.cookies.token, process.env.JWT_SECRET).id; } catch { /* anonymous */ }
+  }
   try {
     const follows = await prisma.follow.findMany({
       where: { followerId: userId },
       include: { following: { select: { id: true, username: true, name: true, avatarUrl: true, isVerified: true } } },
     });
-    res.json(follows.map((f) => f.following));
+    const following = follows.map((f) => f.following);
+    if (viewerId) {
+      const myFollows = new Set(
+        (await prisma.follow.findMany({ where: { followerId: viewerId, followingId: { in: following.map((u) => u.id) } }, select: { followingId: true } }))
+          .map((f) => f.followingId)
+      );
+      return res.json(following.map((u) => ({ ...u, isFollowing: myFollows.has(u.id) })));
+    }
+    res.json(following.map((u) => ({ ...u, isFollowing: false })));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message || "Failed to fetch following" });
