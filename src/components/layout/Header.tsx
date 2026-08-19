@@ -102,10 +102,16 @@ export default function Header() {
                     )}
 
                     {user.isAdmin && (
-                      <Link to="/admin/verifications" onClick={() => setMenuOpen(false)}
-                        className="savor-header__menu-item flex items-center gap-2.5 w-full px-4 py-2.5 text-xs font-medium transition-colors">
-                        <ShieldCheck className="savor-header__muted w-4 h-4" /> {t('header.verificationReview')}
-                      </Link>
+                      <>
+                        <Link to="/admin/analytics" onClick={() => setMenuOpen(false)}
+                          className="savor-header__menu-item flex items-center gap-2.5 w-full px-4 py-2.5 text-xs font-medium transition-colors">
+                          <BarChart3 className="savor-header__muted w-4 h-4" /> {t('header.adminAnalytics')}
+                        </Link>
+                        <Link to="/admin/verifications" onClick={() => setMenuOpen(false)}
+                          className="savor-header__menu-item flex items-center gap-2.5 w-full px-4 py-2.5 text-xs font-medium transition-colors">
+                          <ShieldCheck className="savor-header__muted w-4 h-4" /> {t('header.verificationReview')}
+                        </Link>
+                      </>
                     )}
 
                     <div className="savor-header__divider border-t my-1" />

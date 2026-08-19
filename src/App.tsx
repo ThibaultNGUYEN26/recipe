@@ -38,6 +38,7 @@ const Contact = lazy(() => import('./components/misc/Contact'));
 const CookieSettings = lazy(() => import('./components/misc/CookieSettings'));
 const CreatorVerification = lazy(() => import('./components/profile/CreatorVerification'));
 const VerificationReview = lazy(() => import('./components/admin/VerificationReview'));
+const AdminAnalytics = lazy(() => import('./components/admin/AdminAnalytics'));
 const CreatorAnalytics = lazy(() => import('./components/profile/CreatorAnalytics'));
 
 function LoadingFallback() {
@@ -107,6 +108,7 @@ export default function App() {
             <Route path="/cookie-settings" element={<CookieSettings />} />
             <Route path="/settings/verification" element={<CreatorVerification />} />
             <Route path="/admin/verifications" element={<VerificationReview />} />
+            <Route path="/admin/analytics" element={<AdminAnalytics />} />
             <Route path="/creator/analytics" element={<CreatorAnalytics />} />
           </Routes>
         </Suspense>
