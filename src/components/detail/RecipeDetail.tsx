@@ -10,6 +10,7 @@ import type { RecipeDetail as RecipeDetailType, Comment, IngredientSection, Inst
 import { ArrowLeft, Star, StarHalf, Bookmark, BookmarkCheck, Share2, Clock, Users, ChefHat, Timer, Check, Heart, Send, Flag, Trash2, Languages, ExternalLink, Pencil } from 'lucide-react';
 import VerifiedBadge from '../profile/VerifiedBadge';
 import { apiFetch } from '../../lib/apiFetch';
+import { ANALYTICS_VISITOR_KEY, hasAnalyticsConsent } from '../../lib/cookiePreferences';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -187,11 +188,11 @@ export default function RecipeDetail() {
       const r = await apiFetch(`/api/recipes/${slug}?lang=${contentLanguage ?? language}`);
       const data = await r.json();
       // Track view
-      if (!data.error) {
-        let visitorId = localStorage.getItem('savor-analytics-visitor');
+      if (!data.error && hasAnalyticsConsent()) {
+        let visitorId = localStorage.getItem(ANALYTICS_VISITOR_KEY);
         if (!visitorId) {
           visitorId = crypto.randomUUID();
-          localStorage.setItem('savor-analytics-visitor', visitorId);
+          localStorage.setItem(ANALYTICS_VISITOR_KEY, visitorId);
         }
         apiFetch(`/api/recipes/${slug}/view`, { method: 'POST', body: JSON.stringify({ visitorId }) }).catch(() => {});
       }

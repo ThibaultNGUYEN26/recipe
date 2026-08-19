@@ -805,3 +805,23 @@ body {
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
+
+.savor-footer-link {
+  color: var(--color-muted);
+  transition: color 0.15s;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: inherit;
+}
+
+.savor-footer-link:hover {
+  color: var(--color-accent);
+}
+
+.savor-footer-link:focus-visible {
+  outline: none;
+  border-radius: 3px;
+  box-shadow: 0 0 0 2px var(--color-accent);
+}

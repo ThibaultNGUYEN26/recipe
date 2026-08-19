@@ -1,13 +1,15 @@
-import { Routes, Route, useParams, Link } from 'react-router-dom';
+import { Routes, Route, useParams, Link, useLocation } from 'react-router-dom';
 import { lazy, Suspense, useRef } from 'react';
 import Header from './components/layout/Header';
 import BottomNav from './components/layout/BottomNav';
+import Footer from './components/layout/Footer';
 import Toast from './components/overlays/Toast';
 import TimerWidget from './components/overlays/TimerWidget';
 import ShareModal from './components/overlays/ShareModal';
 import ReportModal from './components/overlays/ReportModal';
 import CollectionModal from './components/overlays/CollectionModal';
 import NotificationDrawer from './components/overlays/NotificationDrawer';
+import CookieConsentBanner from './components/overlays/CookieConsentBanner';
 import { usePullToRefresh } from './hooks/usePullToRefresh';
 import { LoadingPan } from './components/ui/LoadingPan';
 import { useRecipeSocket } from './hooks/useRecipeSocket';
@@ -29,6 +31,11 @@ const ForgotPassword = lazy(() => import('./components/auth/ForgotPassword'));
 const ResetPassword = lazy(() => import('./components/auth/ResetPassword'));
 const VerifyEmail = lazy(() => import('./components/auth/VerifyEmail'));
 const PrivacyPolicy = lazy(() => import('./components/misc/PrivacyPolicy'));
+const TermsOfService = lazy(() => import('./components/misc/TermsOfService'));
+const CookiePolicy = lazy(() => import('./components/misc/CookiePolicy'));
+const About = lazy(() => import('./components/misc/About'));
+const Contact = lazy(() => import('./components/misc/Contact'));
+const CookieSettings = lazy(() => import('./components/misc/CookieSettings'));
 const CreatorVerification = lazy(() => import('./components/profile/CreatorVerification'));
 const VerificationReview = lazy(() => import('./components/admin/VerificationReview'));
 const CreatorAnalytics = lazy(() => import('./components/profile/CreatorAnalytics'));
@@ -46,9 +53,12 @@ function EditRecipeWrapper() {
   return <AddRecipeFlow editSlug={slug} />;
 }
 
+const AUTH_PATHS = new Set(['/login', '/register', '/forgot-password', '/reset-password', '/verify-email']);
+
 export default function App() {
   const mainRef = useRef<HTMLElement>(null);
   const { user } = useAuth();
+  const location = useLocation();
   const { pulling, pullDistance } = usePullToRefresh(mainRef);
   useRecipeSocket();
 
@@ -89,13 +99,21 @@ export default function App() {
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsOfService />} />
+            <Route path="/cookies" element={<CookiePolicy />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/cookie-settings" element={<CookieSettings />} />
             <Route path="/settings/verification" element={<CreatorVerification />} />
             <Route path="/admin/verifications" element={<VerificationReview />} />
             <Route path="/creator/analytics" element={<CreatorAnalytics />} />
           </Routes>
         </Suspense>
+        {!AUTH_PATHS.has(location.pathname) && <Footer />}
       </main>
       <BottomNav />
+      <CookieConsentBanner />
       {/* Global overlays */}
       <Toast />
       <TimerWidget />
