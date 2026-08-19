@@ -459,7 +459,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
                       </Link>
                       {me && u.id !== me.id && followListModal === 'followers' && (
                         <button onClick={() => toggleFollowInModal(u.id)}
-                          className={`shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full transition-all ${followedInModal[u.id] ? 'profile-secondary border' : 'profile-primary'}`}>
+                          className={`discover-follow-button${followedInModal[u.id] ? ' following' : ''} shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full transition-all`}>
                           {followedInModal[u.id] ? 'Following' : 'Follow'}
                         </button>
                       )}
