@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/sitemap.xml",
-      "destination": "https://api.recipe.thibault-nguyen.dev/sitemap.xml"
+      "destination": "https://recipe-production-4bd0.up.railway.app/sitemap.xml"
     },
     {
       "source": "/(.*)",
