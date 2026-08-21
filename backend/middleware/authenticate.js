@@ -1,8 +1,10 @@
 import jwt from "jsonwebtoken";
+import process from "node:process";
 import { prisma } from "../lib/prisma.js";
+import { SESSION_COOKIE_NAME } from "../lib/session.js";
 
 function extractToken(req) {
-  return req.cookies?.token ?? null;
+  return req.cookies?.[SESSION_COOKIE_NAME] ?? null;
 }
 
 export async function authenticate(req, res, next) {

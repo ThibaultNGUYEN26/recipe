@@ -13,17 +13,9 @@ import { loginRateLimit, registrationRateLimit, usernameCheckRateLimit } from ".
 import { accountEmailRateLimit } from "../middleware/rateLimit.js";
 import { hashAccountToken, newAccountToken } from "../lib/accountTokens.js";
 import { sendPasswordResetEmail, sendVerificationEmail } from "../lib/email.js";
+import { clearSessionCookie, sessionJwtOptions, setSessionCookie } from "../lib/session.js";
 
 const router = Router();
-
-const isProd = process.env.NODE_ENV === "production";
-
-const COOKIE_OPTIONS = {
-  httpOnly: true,
-  secure: isProd,
-  sameSite: isProd ? "none" : "lax",
-  maxAge: 7 * 24 * 60 * 60 * 1000,
-};
 
 function publicUser(user) {
   return {
@@ -44,9 +36,9 @@ function createSession(res, user, status = 200) {
   const token = jwt.sign(
     { id: user.id, email: user.email, username: user.username, name: user.name, sessionVersion: user.sessionVersion },
     process.env.JWT_SECRET,
-    { expiresIn: "7d" },
+    sessionJwtOptions(),
   );
-  res.cookie("token", token, COOKIE_OPTIONS);
+  setSessionCookie(res, token);
   return res.status(status).json({ csrfToken: csrfTokenForSession(token), user: publicUser(user) });
 }
 
@@ -215,7 +207,7 @@ router.post("/google", loginRateLimit, async (req, res) => {
 });
 
 router.post("/logout", (_req, res) => {
-  res.clearCookie("token", COOKIE_OPTIONS);
+  clearSessionCookie(res);
   res.json({ ok: true });
 });
 
@@ -250,7 +242,7 @@ router.post("/reset-password", accountEmailRateLimit, async (req, res) => {
     prisma.user.update({ where: { id: record.userId }, data: { passwordHash, sessionVersion: { increment: 1 } } }),
     prisma.passwordResetToken.deleteMany({ where: { userId: record.userId } }),
   ]);
-  res.clearCookie("token", COOKIE_OPTIONS);
+  clearSessionCookie(res);
   res.json({ ok: true });
 });
 
@@ -286,14 +278,12 @@ router.post("/verify-email", accountEmailRateLimit, async (req, res) => {
 router.get("/me", authenticate, async (req, res) => {
   const user = await prisma.user.findUnique({
     where: { id: req.user.id },
-    select: { id: true, email: true, username: true, name: true, isAdmin: true, isVerified: true, emailVerifiedAt: true, avatarUrl: true, pendingAvatarId: true, preferredLanguage: true },
+    select: { id: true, email: true, username: true, name: true, isAdmin: true, isVerified: true, emailVerifiedAt: true, avatarUrl: true, pendingAvatarId: true, preferredLanguage: true, sessionVersion: true },
   });
   if (!user) return res.status(401).json({ error: "User no longer exists" });
-  const { pendingAvatarId, emailVerifiedAt, ...publicUser } = user;
-  res.json({
-    csrfToken: csrfTokenForSession(req.sessionToken),
-    user: { ...publicUser, emailVerified: Boolean(emailVerifiedAt), avatarUrl: user.avatarUrl || DEFAULT_AVATAR_URL, avatarPending: Boolean(pendingAvatarId) },
-  });
+  // Reissue both the JWT cookie and matching CSRF token whenever an active
+  // client restores its session. This makes the seven-day lifetime rolling.
+  return createSession(res, user);
 });
 
 export default router;

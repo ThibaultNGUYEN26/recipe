@@ -1,5 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { Buffer } from "node:buffer";
 import process from "node:process";
+import { SESSION_COOKIE_NAME } from "../lib/session.js";
 
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 const SESSION_ENDPOINTS = new Set([
@@ -20,7 +22,7 @@ export function csrfTokenForSession(sessionToken) {
 export function csrfProtection(req, res, next) {
   if (SAFE_METHODS.has(req.method) || SESSION_ENDPOINTS.has(req.path)) return next();
 
-  const sessionToken = req.cookies?.token;
+  const sessionToken = req.cookies?.[SESSION_COOKIE_NAME];
   if (!sessionToken) return next();
 
   const provided = req.get("X-CSRF-Token");

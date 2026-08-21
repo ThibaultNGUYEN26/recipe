@@ -1,5 +1,6 @@
 import { Router } from "express";
 import jwt from "jsonwebtoken";
+import { SESSION_COOKIE_NAME } from "../lib/session.js";
 import fs from "fs";
 import process from "node:process";
 import { prisma } from "../lib/prisma.js";
@@ -245,7 +246,7 @@ router.get("/:slug", optionalAuthenticate, async (req, res) => {
     let isSaved = false;
     let savedCategoryId = null;
     let isLiked = false;
-    const token = req.cookies?.token;
+    const token = req.cookies?.[SESSION_COOKIE_NAME];
     if (token) {
       try {
         const payload = jwt.verify(token, process.env.JWT_SECRET);
@@ -569,7 +570,7 @@ router.post("/:slug/save", authenticate, async (req, res) => {
 router.post("/:slug/view", async (req, res) => {
   const visitorId = typeof req.body.visitorId === "string" ? req.body.visitorId.slice(0, 80) : null;
   let viewerId = null;
-  const token = req.cookies?.token;
+  const token = req.cookies?.[SESSION_COOKIE_NAME];
   if (token) {
     try { viewerId = jwt.verify(token, process.env.JWT_SECRET).id; } catch { /* anonymous view */ }
   }

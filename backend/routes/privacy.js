@@ -1,12 +1,10 @@
 import { Router } from "express";
-import process from "node:process";
 import bcrypt from "bcryptjs";
 import { prisma } from "../lib/prisma.js";
 import { authenticate } from "../middleware/authenticate.js";
+import { clearSessionCookie } from "../lib/session.js";
 
 const router = Router();
-const isProd = process.env.NODE_ENV === "production";
-const clearCookieOptions = { httpOnly: true, secure: isProd, sameSite: isProd ? "none" : "lax" };
 
 router.get("/export", authenticate, async (req, res) => {
   try {
@@ -53,7 +51,7 @@ router.delete("/account", authenticate, async (req, res) => {
       if (!valid) return res.status(401).json({ error: "Current password is incorrect" });
     }
     await prisma.user.delete({ where: { id: req.user.id } });
-    res.clearCookie("token", clearCookieOptions);
+    clearSessionCookie(res);
     res.json({ ok: true });
   } catch (error) {
     console.error(error);

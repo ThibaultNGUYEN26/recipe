@@ -20,6 +20,33 @@ Apply the database migration before starting the updated backend:
 npm --prefix backend run db:migrate
 ```
 
+## Production authentication
+
+Authentication is cookie-only. For reliable sign-in on Safari, privacy-focused
+browsers, and mobile webviews, expose the backend on the same site as the
+frontend. For example:
+
+```env
+# Frontend
+VITE_API_URL=https://api.recipe.thibault-nguyen.dev
+
+# Backend
+CORS_ORIGIN=https://recipe.thibault-nguyen.dev
+PUBLIC_APP_URL=https://recipe.thibault-nguyen.dev
+COOKIE_SAME_SITE=lax
+COOKIE_PARTITIONED=false
+SESSION_TTL_DAYS=7
+```
+
+Point `api.recipe.thibault-nguyen.dev` at the backend deployment. Active
+sessions are renewed when the app restores the current user, while accounts
+that remain unused for the configured lifetime expire normally.
+
+If the API must remain on a completely different site, use
+`COOKIE_SAME_SITE=none` and `COOKIE_PARTITIONED=true`. This improves support in
+browsers implementing partitioned cookies, but a same-site API domain remains
+the most compatible setup.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
