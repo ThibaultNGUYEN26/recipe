@@ -64,7 +64,7 @@ export default function App() {
   const mainRef = useRef<HTMLElement>(null);
   const { user } = useAuth();
   const location = useLocation();
-  const { pulling, pullDistance } = usePullToRefresh(mainRef);
+  const { pulling, refreshing, pullDistance } = usePullToRefresh(mainRef);
   useRecipeSocket();
 
   return (
@@ -82,7 +82,7 @@ export default function App() {
           className="flex items-center justify-center transition-all duration-200 overflow-hidden"
           style={{ height: pullDistance > 0 ? pullDistance : 0 }}
         >
-          <div className={`w-6 h-6 rounded-full border-2 border-amber-800 border-t-transparent ${pulling ? 'animate-spin' : ''}`}
+          <div className={`w-6 h-6 rounded-full border-2 border-amber-800 border-t-transparent ${pulling || refreshing ? 'animate-spin' : ''}`}
             style={{ opacity: pullDistance > 10 ? Math.min(pullDistance / 72, 1) : 0 }} />
         </div>
         <Suspense fallback={<LoadingFallback />}>
