@@ -93,11 +93,16 @@ router.post("/register", registrationRateLimit, async (req, res) => {
       return res.status(409).json({ error: "Username already taken", code: "USERNAME_TAKEN", suggestions });
     }
 
-    const passwordHash = await bcrypt.hash(password, 12);
-    const user = await prisma.user.create({ data: { email: normalizedEmail, username, passwordHash, name: name?.trim() || null } });
     const verificationToken = newAccountToken();
-    await prisma.emailVerificationToken.create({
-      data: { userId: user.id, tokenHash: hashAccountToken(verificationToken), expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) },
+    const passwordHash = await bcrypt.hash(password, 12);
+    const user = await prisma.$transaction(async (tx) => {
+      const createdUser = await tx.user.create({
+        data: { email: normalizedEmail, username, passwordHash, name: name?.trim() || null },
+      });
+      await tx.emailVerificationToken.create({
+        data: { userId: createdUser.id, tokenHash: hashAccountToken(verificationToken), expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) },
+      });
+      return createdUser;
     });
     sendVerificationEmail(user.email, verificationToken).catch((error) => console.error("Verification email failed", error));
 

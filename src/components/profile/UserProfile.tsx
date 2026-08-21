@@ -429,7 +429,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 md:grid-cols-4 lg:grid-cols-5">
           {tabContent.map((r) => <RecipeCard key={r.slug} recipe={r} hideAuthor />)}
         </div>
       )}
