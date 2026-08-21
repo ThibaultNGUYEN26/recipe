@@ -1,5 +1,5 @@
 import { Routes, Route, useParams, Link, useLocation } from 'react-router-dom';
-import { lazy, Suspense, useRef } from 'react';
+import { lazy, Suspense } from 'react';
 import Header from './components/layout/Header';
 import BottomNav from './components/layout/BottomNav';
 import Footer from './components/layout/Footer';
@@ -11,7 +11,6 @@ import CollectionModal from './components/overlays/CollectionModal';
 import NotificationDrawer from './components/overlays/NotificationDrawer';
 import CookieConsentBanner from './components/overlays/CookieConsentBanner';
 import RouteSeo from './components/misc/RouteSeo';
-import { usePullToRefresh } from './hooks/usePullToRefresh';
 import { LoadingPan } from './components/ui/LoadingPan';
 import { useRecipeSocket } from './hooks/useRecipeSocket';
 import { useAuth } from './contexts/AuthContext';
@@ -61,14 +60,12 @@ function EditRecipeWrapper() {
 const AUTH_PATHS = new Set(['/login', '/register', '/forgot-password', '/reset-password', '/verify-email']);
 
 export default function App() {
-  const mainRef = useRef<HTMLElement>(null);
   const { user } = useAuth();
   const location = useLocation();
-  const { pulling, refreshing, pullDistance } = usePullToRefresh(mainRef);
   useRecipeSocket();
 
   return (
-    <div className="app-shell flex flex-col h-dvh overflow-hidden" style={{ backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}>
+    <div className="app-shell flex min-h-dvh flex-col" style={{ backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}>
       <RouteSeo />
       <Header />
       {user && !user.emailVerified && (
@@ -76,15 +73,7 @@ export default function App() {
           Verify your email address · Resend email
         </Link>
       )}
-      <main ref={mainRef} className="app-main flex-1 min-h-0 overflow-y-auto flex flex-col" style={{ overflowX: 'clip' }}>
-        {/* Pull-to-refresh indicator */}
-        <div
-          className="flex items-center justify-center transition-all duration-200 overflow-hidden"
-          style={{ height: pullDistance > 0 ? pullDistance : 0 }}
-        >
-          <div className={`w-6 h-6 rounded-full border-2 border-amber-800 border-t-transparent ${pulling || refreshing ? 'animate-spin' : ''}`}
-            style={{ opacity: pullDistance > 10 ? Math.min(pullDistance / 72, 1) : 0 }} />
-        </div>
+      <main className="app-main flex flex-1 flex-col">
         <Suspense fallback={<LoadingFallback />}>
           <Routes>
             <Route path="/" element={<HomeFeed />} />

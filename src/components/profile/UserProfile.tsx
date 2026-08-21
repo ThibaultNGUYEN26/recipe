@@ -318,7 +318,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
               : profile.name?.[0]?.toUpperCase() ?? '?'}
           </div>
 
-          <div className="flex-1 min-w-0 space-y-2">
+          <div className="w-full flex-1 min-w-0 space-y-2">
             <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-3">
               <div>
                 <div className="flex items-center justify-center sm:justify-start gap-1.5">
@@ -327,25 +327,27 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
                 </div>
                 {profile.username && <p className="text-sm font-medium" style={{ color: 'var(--color-muted)' }}>@{profile.username}</p>}
               </div>
-              <div className="flex items-center gap-2">
+              <div className={isOwnProfile
+                ? "grid w-full grid-flow-col auto-cols-fr items-stretch gap-2 sm:w-auto"
+                : "flex items-center gap-2"}>
                 <button onClick={() => openShare({
                   type: 'profile',
                   path: profile.username ? `/u/${encodeURIComponent(profile.username)}` : `/profile/${profile.id}`,
                   title: profile.name ?? (profile.username ? `@${profile.username}` : 'Savor creator'),
                   text: profile.bio ?? `See ${profile.name ?? 'this creator'}'s recipes on Savor.`,
                 })}
-                  className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-2xl border transition-colors"
+                  className="flex min-h-11 w-full items-center justify-center gap-1.5 px-2 py-2 text-center text-xs font-bold rounded-2xl border transition-colors"
                   style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}>
                   <Share2 className="w-3.5 h-3.5" /> Share
                 </button>
                 {isOwnProfile ? (
                   <>
-                    <Link to="/creator/analytics" className="profile-accent-soft flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-2xl border">
+                    <Link to="/creator/analytics" className="profile-accent-soft flex min-h-11 w-full items-center justify-center gap-1.5 px-2 py-2 text-center text-xs font-bold rounded-2xl border">
                       <BarChart3 className="w-3.5 h-3.5" /> Analytics
                     </Link>
-                    {!profile.isVerified && profile.followerCount > 1500 && <Link to="/settings/verification" className="profile-verification text-xs font-bold px-3 py-2 rounded-2xl border">Get verified</Link>}
+                    {!profile.isVerified && profile.followerCount > 1500 && <Link to="/settings/verification" className="profile-verification flex min-h-11 w-full items-center justify-center px-2 py-2 text-center text-xs font-bold rounded-2xl border">Get verified</Link>}
                     <button onClick={() => setIsEditOpen(true)}
-                      className="profile-primary flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-2xl transition-colors shadow-sm">
+                      className="profile-primary flex min-h-11 w-full items-center justify-center gap-1.5 px-2 py-2 text-center text-xs font-bold rounded-2xl transition-colors shadow-sm">
                       <Edit3 className="w-3.5 h-3.5" /> Edit Profile
                     </button>
                   </>
@@ -427,7 +429,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
           )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
           {tabContent.map((r) => <RecipeCard key={r.slug} recipe={r} hideAuthor />)}
         </div>
       )}
