@@ -39,7 +39,7 @@ export default function BottomNav() {
         backdropFilter: 'blur(20px)',
         border: '1px solid rgba(68,64,60,0.5)',
       }}>
-      <div className="flex items-center gap-0.5">
+      <div className="savor-bottom-nav__items flex items-center gap-0.5">
         {NAV.map(({ id, to, labelKey, icon: Icon, authRequired }) => {
           const dest = id === 'profile' && user ? (user.username ? `/u/${encodeURIComponent(user.username)}` : `/profile/${user.id}`) : to;
           const href = (authRequired && !user) ? '/login' : dest;
