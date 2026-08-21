@@ -200,26 +200,26 @@ export default function RecipeCard({ recipe, hideAuthor = false }: Props) {
         )}
 
         {/* Actions row */}
-        <div className="recipe-card__divider flex items-center justify-between pt-4 mt-3 border-t">
-          <div className="flex items-center gap-5">
-            <button onClick={handleLike} className="recipe-card__action flex items-center gap-1.5 text-xs font-bold transition-colors">
-              <Heart className={`w-5 h-5 stroke-[1.8] transition-colors ${isLiked ? 'fill-red-500 text-red-500' : ''}`} />
-              <span>{likeCount}</span>
-            </button>
-            <Link to={`${recipeUrl(recipe.slug, recipe.authorUsername)}#comments`}
-              aria-label={`View ${recipe.commentCount ?? 0} comments for ${recipe.title}`}
-              className="recipe-card__action flex items-center gap-1.5 text-xs font-bold transition-colors">
-              <MessageCircle className="w-5 h-5 stroke-[1.8]" />
-              <span>{recipe.commentCount ?? 0}</span>
-            </Link>
-            <button onClick={handleShare} className="recipe-card__action transition-colors">
-              <Share2 className="w-4 h-4" />
-            </button>
-          </div>
-          <button onClick={handleSave} className="recipe-card__action recipe-card__save p-2 rounded-full transition-all">
+        <div className="recipe-card__divider grid grid-cols-4 items-center pt-3 mt-3 border-t">
+          <button onClick={handleLike} className="recipe-card__action flex min-h-11 min-w-0 items-center justify-center gap-1 text-xs font-bold transition-colors">
+            <Heart className={`h-5 w-5 shrink-0 stroke-[1.8] transition-colors ${isLiked ? 'fill-red-500 text-red-500' : ''}`} />
+            <span>{likeCount}</span>
+          </button>
+          <Link to={`${recipeUrl(recipe.slug, recipe.authorUsername)}#comments`}
+            aria-label={`View ${recipe.commentCount ?? 0} comments for ${recipe.title}`}
+            className="recipe-card__action flex min-h-11 min-w-0 items-center justify-center gap-1 text-xs font-bold transition-colors">
+            <MessageCircle className="h-5 w-5 shrink-0 stroke-[1.8]" />
+            <span>{recipe.commentCount ?? 0}</span>
+          </Link>
+          <button onClick={handleShare} aria-label={`Share ${recipe.title}`}
+            className="recipe-card__action flex min-h-11 min-w-0 items-center justify-center transition-colors">
+            <Share2 className="h-4 w-4 shrink-0" />
+          </button>
+          <button onClick={handleSave} aria-label={isSaved ? `Remove ${recipe.title} from saved recipes` : `Save ${recipe.title}`}
+            className="recipe-card__action recipe-card__save flex min-h-11 min-w-0 items-center justify-center rounded-full transition-all">
             {isSaved
-              ? <BookmarkCheck className="w-5 h-5 fill-amber-800 text-amber-800" />
-              : <Bookmark className="w-5 h-5 stroke-[1.8]" />}
+              ? <BookmarkCheck className="h-5 w-5 shrink-0 fill-amber-800 text-amber-800" />
+              : <Bookmark className="h-5 w-5 shrink-0 stroke-[1.8]" />}
           </button>
         </div>
       </div>
