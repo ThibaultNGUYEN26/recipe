@@ -10,6 +10,7 @@ import {
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { apiFetch } from '../../lib/apiFetch';
+import { slugify } from '../../lib/slugify';
 
 const DRAFT_KEY = 'recipe_draft';
 
@@ -284,10 +285,6 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
         target?.focus({ preventScroll: true });
       });
     });
-  }
-
-  function slugify(s: string) {
-    return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   }
 
   async function importFromTikTok() {
