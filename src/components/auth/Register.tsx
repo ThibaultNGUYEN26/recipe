@@ -114,7 +114,7 @@ export default function Register() {
   }
 
   return (
-    <div className="flex-1 flex items-center justify-center px-4 py-4 overflow-hidden pb-20">
+    <div className="flex-1 flex items-start sm:items-center justify-center px-4 py-4 pb-24">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-5">
           <div className="w-11 h-11 rounded-2xl bg-amber-800 flex items-center justify-center mb-2">

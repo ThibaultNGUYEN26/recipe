@@ -123,7 +123,7 @@ export default function HomeFeed() {
       )}
 
       {activeFilter === 'all' && !showLoader && (
-        <div className="flex items-center justify-between gap-3">
+        <div className="responsive-stack-narrow flex items-center justify-between gap-3">
           <div>
             <h1 className="font-serif text-xl font-bold" style={{ color: 'var(--color-text)' }}>
               {isPersonalized ? t('home.picked') : t('home.discover')}
@@ -132,7 +132,7 @@ export default function HomeFeed() {
               {isPersonalized ? t('home.personalizedDescription') : t('home.communityDescription')}
             </p>
           </div>
-          {!user && <Link to="/login" className="home-accent-text text-xs font-bold whitespace-nowrap">{t('home.signInPersonalize')}</Link>}
+          {!user && <Link to="/login" className="home-accent-text self-start text-xs font-bold">{t('home.signInPersonalize')}</Link>}
         </div>
       )}
 

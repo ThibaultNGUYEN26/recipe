@@ -31,15 +31,15 @@ export default function Header() {
 
   return (
     <header className="savor-header sticky top-0 z-40 px-4 py-3 transition-colors">
-      <div className="max-w-4xl mx-auto flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2">
+      <div className="max-w-4xl mx-auto flex items-center justify-between gap-2 min-w-0">
+        <Link to="/" className="flex items-center gap-2 min-w-0">
           <span className="savor-header__brand font-serif text-2xl font-bold tracking-tight">SAVOR</span>
           <span className="savor-header__tag hidden sm:inline-block text-[10px] font-semibold tracking-widest uppercase px-1.5 py-0.5 rounded-full border">
             SOCIAL RECIPES
           </span>
         </Link>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex shrink-0 items-center gap-1.5">
           {user ? (
             <>
               <button onClick={openNotifDrawer}
@@ -69,7 +69,7 @@ export default function Header() {
                 </button>
 
                 {menuOpen && (
-                  <div className="savor-header__menu absolute right-0 mt-2 w-56 rounded-2xl shadow-xl border py-1.5 z-50 overflow-hidden">
+                  <div className="savor-header__menu absolute right-0 mt-2 w-56 max-w-[calc(100vw-2rem)] rounded-2xl shadow-xl border py-1.5 z-50 overflow-hidden">
                     <div className="savor-header__divider px-4 py-2.5 border-b">
                       <p className="savor-header__primary text-xs font-bold truncate">{user.name ?? t('header.chef')}</p>
                       {user.username && <p className="savor-header__muted text-[10px] truncate">@{user.username}</p>}

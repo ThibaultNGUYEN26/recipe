@@ -60,13 +60,13 @@ export default function SettingsPage() {
             <span className="flex h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: 'var(--color-subtle)' }}><UserRound size={19} /></span>
             <span className="min-w-0 flex-1">
               <span className="block text-sm font-medium">{t('settings.editProfile')}</span>
-              <span className="block truncate text-xs" style={{ color: 'var(--color-muted)' }}>{t('settings.editProfileDescription')}</span>
+              <span className="block text-xs" style={{ color: 'var(--color-muted)' }}>{t('settings.editProfileDescription')}</span>
             </span>
             <ChevronRight size={18} style={{ color: 'var(--color-muted)' }} />
           </Link>
           <Link to="/settings/privacy-safety" className="flex items-center gap-3 border-t px-4 py-4 transition-colors hover:bg-[var(--color-hover)]" style={{ borderColor: 'var(--color-border)' }}>
             <span className="flex h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: 'var(--color-subtle)' }}><Shield size={19} /></span>
-            <span className="min-w-0 flex-1"><span className="block text-sm font-medium">{t('settings.privacySafety')}</span><span className="block truncate text-xs" style={{ color: 'var(--color-muted)' }}>{t('settings.privacySafetyDescription')}</span></span>
+            <span className="min-w-0 flex-1"><span className="block text-sm font-medium">{t('settings.privacySafety')}</span><span className="block text-xs" style={{ color: 'var(--color-muted)' }}>{t('settings.privacySafetyDescription')}</span></span>
             <ChevronRight size={18} style={{ color: 'var(--color-muted)' }} />
           </Link>
         </div>

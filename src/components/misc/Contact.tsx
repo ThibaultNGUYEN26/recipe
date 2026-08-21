@@ -28,7 +28,7 @@ export default function Contact() {
         <p className="text-sm leading-relaxed mb-5" style={{ color: 'var(--color-muted)' }}>{t('contact.email.body')}</p>
         <a
           href={`mailto:${CONTACT_EMAIL}`}
-          className="inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-900"
+          className="inline-flex max-w-full items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-amber-900 [overflow-wrap:anywhere]"
           style={{ backgroundColor: '#92400e' }}
         >
           {CONTACT_EMAIL}

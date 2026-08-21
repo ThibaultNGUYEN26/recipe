@@ -7,7 +7,7 @@ export default function Footer() {
 
   return (
     <footer
-      className="mt-auto px-6 pt-6 pb-24 text-xs text-center"
+      className="savor-footer mt-auto px-6 pt-6 text-xs text-center"
       style={{ borderTop: '1px solid var(--color-border)', color: 'var(--color-muted)', backgroundColor: 'var(--color-bg)' }}
     >
       <nav aria-label="Footer navigation" className="flex flex-wrap justify-center gap-x-5 gap-y-2 mb-3">

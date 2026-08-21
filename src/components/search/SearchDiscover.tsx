@@ -220,7 +220,7 @@ export default function SearchDiscover() {
           <h3 className="font-serif text-lg font-bold flex items-center gap-1.5" style={{ color: 'var(--color-text)' }}>
             <Sparkles className="discover-accent w-4 h-4" /> {t('discover.categories')}
           </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="responsive-single-column-narrow grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             {CATEGORIES.map((cat) => (
               <button key={cat.tag} onClick={() => setQuery(cat.tag)}
                 className="relative h-24 rounded-2xl overflow-hidden cursor-pointer group shadow-sm text-left">
@@ -295,7 +295,7 @@ export default function SearchDiscover() {
             <button onClick={clearAll} className="discover-accent mt-3 text-xs font-semibold underline">{t('discover.reset')}</button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5">
+          <div className="responsive-single-column-narrow grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5">
             {(hasSearch ? searchResults : discoveryRecipes).map((r) => (
               <Link key={r.slug} to={r.authorUsername ? `/${r.authorUsername}/${r.slug}` : `/recipe/${r.slug}`}
                 className="recipe-card__image-placeholder group relative aspect-square rounded-2xl overflow-hidden shadow-sm border"
@@ -307,7 +307,7 @@ export default function SearchDiscover() {
                   <div className="recipe-card__image-placeholder w-full h-full flex items-center justify-center text-3xl">🍽️</div>
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-stone-950/90 via-stone-950/20 to-transparent p-3 flex flex-col justify-end">
-                  <p className="text-xs font-bold text-white line-clamp-1 group-hover:text-amber-300 transition-colors">{r.title}</p>
+                  <p className="text-xs font-bold text-white line-clamp-2 group-hover:text-amber-300 transition-colors">{r.title}</p>
                   {r.authorName && <p className="text-[10px] text-stone-300 truncate">{r.authorName}</p>}
                   <div className="flex items-center justify-between mt-1 text-[10px] text-stone-200 font-medium">
                     {r.avgRating != null && (
@@ -332,9 +332,9 @@ export default function SearchDiscover() {
 
       {/* Filter modal */}
       {showFilterModal && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-stone-900/60 backdrop-blur-sm"
+        <div className="app-modal-backdrop fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-stone-900/60 backdrop-blur-sm"
           onClick={() => setShowFilterModal(false)}>
-          <div className="discover-modal w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl border max-h-[90vh] overflow-y-auto space-y-5"
+          <div className="app-modal-panel discover-modal w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl border space-y-5"
             onClick={(e) => e.stopPropagation()}>
             <div className="discover-divider flex items-center justify-between pb-3 border-b">
               <div className="flex items-center gap-2">

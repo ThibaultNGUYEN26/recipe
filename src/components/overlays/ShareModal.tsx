@@ -37,16 +37,16 @@ export default function ShareModal() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40" onClick={closeShare}>
+    <div className="app-modal-backdrop fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40" onClick={closeShare}>
       <div
-        className="w-full max-w-sm rounded-3xl p-6 space-y-4"
+        className="app-modal-panel w-full max-w-sm rounded-3xl p-5 sm:p-6 space-y-4"
         style={{ backgroundColor: 'var(--color-surface)' }}
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
             <h2 className="font-serif text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Share {label}</h2>
-            <p className="text-xs mt-0.5 truncate max-w-[250px]" style={{ color: 'var(--color-muted)' }}>{shareTarget.title}</p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--color-muted)' }}>{shareTarget.title}</p>
           </div>
           <button onClick={closeShare} aria-label="Close share dialog" style={{ color: 'var(--color-muted)' }}><X size={20} /></button>
         </div>
@@ -55,9 +55,9 @@ export default function ShareModal() {
           style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-muted)' }}
         >
           <Link2 size={14} className="shrink-0" />
-          <span className="flex-1 truncate">{url}</span>
+          <span className="flex-1 [overflow-wrap:anywhere]">{url}</span>
         </div>
-        <div className={`grid gap-2 ${canNativeShare ? 'grid-cols-2' : 'grid-cols-1'}`}>
+        <div className={`responsive-single-column-narrow grid gap-2 ${canNativeShare ? 'grid-cols-2' : 'grid-cols-1'}`}>
           {canNativeShare && (
             <button onClick={share}
               className="flex items-center justify-center gap-2 py-3 rounded-2xl font-medium text-sm text-white bg-amber-800 active:opacity-80">

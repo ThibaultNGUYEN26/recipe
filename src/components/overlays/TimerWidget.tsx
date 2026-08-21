@@ -17,18 +17,18 @@ export default function TimerWidget() {
 
   return (
     <div
-      className="fixed bottom-24 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-lg"
-      style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', minWidth: 200 }}
+      className="app-fixed-widget fixed z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-lg"
+      style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}
     >
       <Timer size={18} className="text-amber-800 shrink-0" />
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-medium truncate" style={{ color: 'var(--color-muted)' }}>{activeTimer.title}</p>
+        <p className="text-xs font-medium" style={{ color: 'var(--color-muted)' }}>{activeTimer.title}</p>
         <p className="text-lg font-semibold tabular-nums" style={{ color: 'var(--color-text)' }}>{fmt(activeTimer.remainingSeconds)}</p>
         <div className="h-1 rounded-full bg-stone-200 mt-1 overflow-hidden">
           <div className="h-full bg-amber-800 rounded-full transition-all duration-1000" style={{ width: `${pct}%` }} />
         </div>
       </div>
-      <button onClick={stopTimer} className="shrink-0" style={{ color: 'var(--color-muted)' }}>
+      <button onClick={stopTimer} className="shrink-0 p-2" aria-label="Stop timer" style={{ color: 'var(--color-muted)' }}>
         <X size={16} />
       </button>
     </div>

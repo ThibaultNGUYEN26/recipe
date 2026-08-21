@@ -107,14 +107,14 @@ export default function NotificationDrawer() {
     <div className="fixed inset-0 z-50 flex justify-end bg-stone-900/50 backdrop-blur-sm"
       onClick={closeNotifDrawer}>
       <div
-        className="w-full max-w-md h-full shadow-2xl flex flex-col border-l"
+        className="w-full max-w-md h-full min-w-0 shadow-2xl flex flex-col border-l pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] pr-[env(safe-area-inset-right)]"
         style={{ backgroundColor: '#FAF8F5', borderColor: 'rgba(214,211,209,0.8)' }}
         onClick={(e) => e.stopPropagation()}>
 
         {/* Header */}
-        <div className="px-5 py-4 flex items-center justify-between"
+        <div className="responsive-stack-narrow px-4 sm:px-5 py-4 flex items-center justify-between gap-2"
           style={{ borderBottom: '1px solid rgba(214,211,209,0.8)', backgroundColor: '#FAF8F5' }}>
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2">
             <Bell className="w-5 h-5 text-amber-700" />
             <h2 className="font-serif text-lg font-bold text-stone-900">{t('notif.title')}</h2>
             {unreadCount > 0 && (
@@ -123,7 +123,7 @@ export default function NotificationDrawer() {
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex self-end items-center gap-2">
             {unreadCount > 0 && (
               <button onClick={markAllRead}
                 className="text-xs font-semibold text-amber-800 hover:text-amber-900 flex items-center gap-1 hover:bg-amber-50 px-2.5 py-1 rounded-xl transition-colors">

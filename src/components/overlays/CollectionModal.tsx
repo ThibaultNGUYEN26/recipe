@@ -84,13 +84,13 @@ export default function CollectionModal() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/40" onClick={closeSaveModal}>
+    <div className="app-modal-backdrop fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40" onClick={closeSaveModal}>
       <div
-        className="w-full max-w-sm rounded-3xl p-6 space-y-4 max-h-[85vh] overflow-y-auto"
+        className="app-modal-panel w-full max-w-sm rounded-3xl p-5 sm:p-6 space-y-4"
         style={{ backgroundColor: 'var(--color-surface)' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <h2 className="font-serif text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Save recipe</h2>
           <button onClick={closeSaveModal} style={{ color: 'var(--color-muted)' }}><X size={20} /></button>
         </div>
@@ -110,7 +110,7 @@ export default function CollectionModal() {
                     style={{ borderColor: selectedCategoryId === null ? '#92400e' : 'var(--color-border)', color: 'var(--color-text)' }}
                   >
                     <BookmarkPlus size={17} className="text-amber-800" />
-                    Favorites
+                    <span className="min-w-0 flex-1 text-left">Favorites</span>
                     {selectedCategoryId === null && <Check size={16} className="ml-auto text-amber-800" />}
                   </button>
                   {categories.map((category) => (
@@ -122,7 +122,7 @@ export default function CollectionModal() {
                       style={{ borderColor: selectedCategoryId === category.id ? '#92400e' : 'var(--color-border)', color: 'var(--color-text)' }}
                     >
                       <Folder size={17} className="text-amber-800" />
-                      <span className="truncate">{category.name}</span>
+                      <span className="min-w-0 flex-1 text-left">{category.name}</span>
                       {selectedCategoryId === category.id && <Check size={16} className="ml-auto text-amber-800" />}
                     </button>
                   ))}

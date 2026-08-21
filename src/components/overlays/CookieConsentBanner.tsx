@@ -19,12 +19,12 @@ export default function CookieConsentBanner() {
   return (
     <aside
       aria-label={t('cookieConsent.title')}
-      className="fixed z-[60] bottom-24 left-1/2 -translate-x-1/2 w-[calc(100%_-_2rem)] max-w-2xl rounded-3xl border p-5 shadow-2xl"
+      className="cookie-consent-banner fixed z-[60] left-1/2 -translate-x-1/2 rounded-3xl border p-4 sm:p-5 shadow-2xl"
       style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}
     >
       <div className="flex items-start gap-3">
         <Cookie className="w-6 h-6 shrink-0 mt-0.5" style={{ color: '#92400e' }} />
-        <div>
+        <div className="min-w-0">
           <h2 className="font-serif text-lg font-semibold" style={{ color: 'var(--color-text)' }}>{t('cookieConsent.title')}</h2>
           <p className="text-xs sm:text-sm leading-relaxed mt-1" style={{ color: 'var(--color-muted)' }}>
             {t('cookieConsent.body')}{' '}
@@ -33,7 +33,7 @@ export default function CookieConsentBanner() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:flex sm:justify-end gap-2 mt-4">
+      <div className="responsive-single-column-narrow grid grid-cols-2 sm:flex sm:flex-wrap sm:justify-end gap-2 mt-4">
         <Link
           to="/cookie-settings"
           className="col-span-2 sm:col-span-1 text-center rounded-full border px-4 py-2.5 text-xs font-semibold"

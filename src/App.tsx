@@ -68,7 +68,7 @@ export default function App() {
   useRecipeSocket();
 
   return (
-    <div className="flex flex-col h-dvh overflow-hidden" style={{ backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}>
+    <div className="app-shell flex flex-col h-dvh overflow-hidden" style={{ backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}>
       <RouteSeo />
       <Header />
       {user && !user.emailVerified && (
@@ -76,7 +76,7 @@ export default function App() {
           Verify your email address · Resend email
         </Link>
       )}
-      <main ref={mainRef} className="flex-1 overflow-y-auto flex flex-col" style={{ overflowX: 'clip' }}>
+      <main ref={mainRef} className="app-main flex-1 min-h-0 overflow-y-auto flex flex-col" style={{ overflowX: 'clip' }}>
         {/* Pull-to-refresh indicator */}
         <div
           className="flex items-center justify-center transition-all duration-200 overflow-hidden"

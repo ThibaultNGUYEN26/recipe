@@ -122,7 +122,7 @@ export default function AdminAnalytics() {
       {error && <div className="analytics-error rounded-2xl border p-4 text-sm">{error}</div>}
 
       {data && <>
-        <section className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+        <section className="responsive-single-column-narrow grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
           {[
             { label: t('adminAnalytics.totalUsers'), value: data.totals.users, trend: data.summary.newUsers, icon: Users },
             { label: t('adminAnalytics.activeUsers'), value: data.summary.activeUsers, icon: Activity },
@@ -150,7 +150,7 @@ export default function AdminAnalytics() {
           <aside className="rounded-3xl border p-5" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
             <h2 className="font-serif text-xl font-bold">{t('adminAnalytics.engagement')}</h2>
             <p className="text-xs mb-5" style={{ color: 'var(--color-muted)' }}>{t('adminAnalytics.engagementDescription')}</p>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="responsive-single-column-narrow grid grid-cols-2 gap-3">
               {[
                 { icon: Bookmark, label: t('adminAnalytics.saves'), value: data.summary.saves },
                 { icon: Heart, label: t('adminAnalytics.likes'), value: data.summary.likes },
@@ -166,7 +166,7 @@ export default function AdminAnalytics() {
         <section className="grid grid-cols-1 xl:grid-cols-[1.5fr_0.8fr] gap-4">
           <article className="rounded-3xl border overflow-hidden" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
             <div className="p-5 border-b" style={{ borderColor: 'var(--color-border)' }}><h2 className="font-serif text-xl font-bold">{t('adminAnalytics.topRecipes')}</h2></div>
-            {data.topRecipes.length ? <div className="overflow-x-auto"><table className="w-full min-w-[650px] text-left"><thead><tr className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--color-muted)', backgroundColor: 'var(--color-bg)' }}><th className="px-5 py-3">{t('adminAnalytics.recipe')}</th><th>{t('adminAnalytics.views')}</th><th>{t('adminAnalytics.saves')}</th><th>{t('adminAnalytics.likes')}</th><th>{t('adminAnalytics.rating')}</th></tr></thead><tbody>{data.topRecipes.map((recipe) => <tr key={recipe.slug} className="border-t" style={{ borderColor: 'var(--color-border)' }}><td className="px-5 py-3"><Link to={recipe.author?.username ? `/${encodeURIComponent(recipe.author.username)}/${encodeURIComponent(recipe.slug)}` : `/recipe/${encodeURIComponent(recipe.slug)}`} className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl overflow-hidden shrink-0" style={{ backgroundColor: 'var(--color-bg)' }}>{recipe.image && <img src={asset(recipe.image)!} alt="" className="w-full h-full object-cover" />}</div><div><p className="text-xs font-bold max-w-52 truncate">{recipe.title}</p><p className="text-[10px]" style={{ color: 'var(--color-muted)' }}>{recipe.author?.name ?? recipe.author?.username ?? '—'}</p></div></Link></td><td className="text-xs font-bold">{number(recipe.views)}</td><td className="text-xs">{number(recipe.saves)}</td><td className="text-xs">{number(recipe.likes)}</td><td className="text-xs">{recipe.avgRating == null ? '—' : `${recipe.avgRating.toFixed(1)} (${recipe.ratingCount})`}</td></tr>)}</tbody></table></div> : <p className="p-8 text-center text-sm" style={{ color: 'var(--color-muted)' }}>{t('adminAnalytics.noRecipes')}</p>}
+            {data.topRecipes.length ? <div className="overflow-x-auto"><table className="w-full min-w-[650px] text-left"><thead><tr className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--color-muted)', backgroundColor: 'var(--color-bg)' }}><th className="px-5 py-3">{t('adminAnalytics.recipe')}</th><th>{t('adminAnalytics.views')}</th><th>{t('adminAnalytics.saves')}</th><th>{t('adminAnalytics.likes')}</th><th>{t('adminAnalytics.rating')}</th></tr></thead><tbody>{data.topRecipes.map((recipe) => <tr key={recipe.slug} className="border-t" style={{ borderColor: 'var(--color-border)' }}><td className="px-5 py-3"><Link to={recipe.author?.username ? `/${encodeURIComponent(recipe.author.username)}/${encodeURIComponent(recipe.slug)}` : `/recipe/${encodeURIComponent(recipe.slug)}`} className="flex items-center gap-3"><div className="w-10 h-10 rounded-xl overflow-hidden shrink-0" style={{ backgroundColor: 'var(--color-bg)' }}>{recipe.image && <img src={asset(recipe.image)!} alt="" className="w-full h-full object-cover" />}</div><div><p className="text-xs font-bold max-w-52">{recipe.title}</p><p className="text-[10px]" style={{ color: 'var(--color-muted)' }}>{recipe.author?.name ?? recipe.author?.username ?? '—'}</p></div></Link></td><td className="text-xs font-bold">{number(recipe.views)}</td><td className="text-xs">{number(recipe.saves)}</td><td className="text-xs">{number(recipe.likes)}</td><td className="text-xs">{recipe.avgRating == null ? '—' : `${recipe.avgRating.toFixed(1)} (${recipe.ratingCount})`}</td></tr>)}</tbody></table></div> : <p className="p-8 text-center text-sm" style={{ color: 'var(--color-muted)' }}>{t('adminAnalytics.noRecipes')}</p>}
           </article>
 
           <div className="space-y-4">

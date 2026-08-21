@@ -147,7 +147,7 @@ export default function CreatorAnalytics() {
       {error && <div className="analytics-error rounded-2xl border p-4 text-sm">{error} <button onClick={() => setRefreshKey((key) => key + 1)} className="font-bold underline ml-1">Try again</button></div>}
 
       {data && <>
-        <section className="grid grid-cols-2 lg:grid-cols-5 gap-3">
+        <section className="responsive-single-column-narrow grid grid-cols-2 lg:grid-cols-5 gap-3">
           {[
             { label: 'Views', trend: data.summary.views, icon: Eye, tone: 'var(--analytics-views)' },
             { label: 'Saves', trend: data.summary.saves, icon: Bookmark, tone: 'var(--analytics-saves)' },
@@ -165,14 +165,14 @@ export default function CreatorAnalytics() {
           <article className="rounded-3xl border p-5 sm:p-6 shadow-sm" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
               <div><h2 className="font-serif text-xl font-bold">Performance</h2><p className="text-xs" style={{ color: 'var(--color-muted)' }}>Daily activity for the selected period</p></div>
-              <div className="flex gap-1">{(Object.keys(metricStyles) as MetricName[]).map((name) => <button key={name} onClick={() => setMetric(name)} className="px-3 py-1.5 rounded-full text-[10px] font-bold border" style={metric === name ? { backgroundColor: metricStyles[name].color, color: 'var(--analytics-active-text)', borderColor: metricStyles[name].color } : { color: 'var(--color-muted)', borderColor: 'var(--color-border)' }}>{metricStyles[name].label}</button>)}</div>
+              <div className="flex flex-wrap gap-1">{(Object.keys(metricStyles) as MetricName[]).map((name) => <button key={name} onClick={() => setMetric(name)} className="px-3 py-1.5 rounded-full text-[10px] font-bold border" style={metric === name ? { backgroundColor: metricStyles[name].color, color: 'var(--analytics-active-text)', borderColor: metricStyles[name].color } : { color: 'var(--color-muted)', borderColor: 'var(--color-border)' }}>{metricStyles[name].label}</button>)}</div>
             </div>
             <LineChart data={data.series} metric={metric} />
           </article>
 
           <aside className="analytics-insight-card rounded-3xl p-6 flex flex-col justify-between min-h-64">
             <div><p className="analytics-insight-eyebrow text-[10px] uppercase tracking-[0.2em] font-bold">At a glance</p><h2 className="font-serif text-xl font-bold mt-2">Audience quality</h2></div>
-            <div className="grid grid-cols-2 gap-3 my-5">
+            <div className="responsive-single-column-narrow grid grid-cols-2 gap-3 my-5">
               <div className="analytics-insight-stat"><p className="text-2xl font-black">{formatNumber(data.summary.uniqueViewers)}</p><p className="analytics-insight-muted text-[10px]">Unique viewers</p></div>
               <div className="analytics-insight-stat"><p className="text-2xl font-black">{data.summary.saveRate.toFixed(1)}%</p><p className="analytics-insight-muted text-[10px]">Save rate</p></div>
               <div className="analytics-insight-stat"><p className="text-2xl font-black">{data.summary.avgRating?.toFixed(1) ?? '—'}</p><p className="analytics-insight-muted text-[10px]">All-time rating</p></div>
@@ -185,7 +185,7 @@ export default function CreatorAnalytics() {
         <section className="grid grid-cols-1 lg:grid-cols-[1.5fr_0.7fr] gap-4">
           <article className="rounded-3xl border overflow-hidden" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
             <div className="p-5 border-b" style={{ borderColor: 'var(--color-border)' }}><h2 className="font-serif text-xl font-bold">Recipe performance</h2><p className="text-xs" style={{ color: 'var(--color-muted)' }}>Ranked by views, then saves</p></div>
-            {data.topRecipes.length ? <div className="overflow-x-auto"><table className="w-full min-w-[620px] text-left"><thead><tr className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--color-muted)', backgroundColor: 'var(--color-bg)' }}><th className="px-5 py-3">Recipe</th><th>Views</th><th>Saves</th><th>Rating</th><th>Followers</th></tr></thead><tbody>{data.topRecipes.map((recipe) => <tr key={recipe.slug} className="border-t" style={{ borderColor: 'var(--color-border)' }}><td className="px-5 py-3"><Link to={`/recipe/${recipe.slug}`} className="flex items-center gap-3 font-bold text-xs"><div className="w-10 h-10 rounded-xl overflow-hidden bg-amber-100 shrink-0">{recipe.image && <img src={imageSrc(recipe.image)!} alt="" className="w-full h-full object-cover" />}</div><span className="max-w-52 truncate">{recipe.title}</span></Link></td><td className="text-xs font-bold">{formatNumber(recipe.views)}</td><td className="text-xs">{formatNumber(recipe.saves)}</td><td className="text-xs">{recipe.avgRating ? `${recipe.avgRating.toFixed(1)} (${recipe.ratings})` : '—'}</td><td className="text-xs">{recipe.followers}</td></tr>)}</tbody></table></div> : <div className="p-10 text-center text-sm" style={{ color: 'var(--color-muted)' }}>Publish your first recipe to see performance.</div>}
+            {data.topRecipes.length ? <div className="overflow-x-auto"><table className="w-full min-w-[620px] text-left"><thead><tr className="text-[10px] uppercase tracking-wider" style={{ color: 'var(--color-muted)', backgroundColor: 'var(--color-bg)' }}><th className="px-5 py-3">Recipe</th><th>Views</th><th>Saves</th><th>Rating</th><th>Followers</th></tr></thead><tbody>{data.topRecipes.map((recipe) => <tr key={recipe.slug} className="border-t" style={{ borderColor: 'var(--color-border)' }}><td className="px-5 py-3"><Link to={`/recipe/${recipe.slug}`} className="flex items-center gap-3 font-bold text-xs"><div className="w-10 h-10 rounded-xl overflow-hidden bg-amber-100 shrink-0">{recipe.image && <img src={imageSrc(recipe.image)!} alt="" className="w-full h-full object-cover" />}</div><span className="max-w-52">{recipe.title}</span></Link></td><td className="text-xs font-bold">{formatNumber(recipe.views)}</td><td className="text-xs">{formatNumber(recipe.saves)}</td><td className="text-xs">{recipe.avgRating ? `${recipe.avgRating.toFixed(1)} (${recipe.ratings})` : '—'}</td><td className="text-xs">{recipe.followers}</td></tr>)}</tbody></table></div> : <div className="p-10 text-center text-sm" style={{ color: 'var(--color-muted)' }}>Publish your first recipe to see performance.</div>}
           </article>
 
           <article className="rounded-3xl border p-5" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>

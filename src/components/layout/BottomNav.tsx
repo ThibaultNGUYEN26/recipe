@@ -33,13 +33,11 @@ export default function BottomNav() {
   }
 
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 py-1.5 px-2 rounded-full shadow-2xl"
+    <nav aria-label="Primary navigation" className="savor-bottom-nav fixed z-40 py-1.5 px-2 rounded-full shadow-2xl"
       style={{
         backgroundColor: 'rgba(28,25,23,0.95)',
         backdropFilter: 'blur(20px)',
         border: '1px solid rgba(68,64,60,0.5)',
-        marginBottom: 'env(safe-area-inset-bottom)',
-        maxWidth: 'calc(100vw - 24px)',
       }}>
       <div className="flex items-center gap-0.5">
         {NAV.map(({ id, to, labelKey, icon: Icon, authRequired }) => {
@@ -52,14 +50,15 @@ export default function BottomNav() {
               : location.pathname.startsWith(to);
           return (
             <Link key={id} to={href}
-              className="flex items-center gap-1 px-2 py-1.5 sm:px-4 sm:py-2 rounded-full text-[10px] sm:text-xs font-semibold transition-all whitespace-nowrap"
+              className="savor-bottom-nav__item flex items-center justify-center gap-1 px-2 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs font-semibold transition-all whitespace-nowrap"
+              aria-current={isActive ? 'page' : undefined}
               style={isActive ? { backgroundColor: '#d97706', color: '#fff' } : { color: '#a8a29e' }}>
               {renderIcon(id, Icon, isActive, 'lg')}
-              <span>{t(labelKey)}</span>
+              <span className="savor-bottom-nav__label">{t(labelKey)}</span>
             </Link>
           );
         })}
       </div>
-    </div>
+    </nav>
   );
 }

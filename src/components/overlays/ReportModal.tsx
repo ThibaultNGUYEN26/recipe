@@ -30,8 +30,8 @@ export default function ReportModal() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center" onClick={closeReport}>
-      <div className="w-full max-w-sm space-y-4 rounded-3xl p-6" style={{ backgroundColor: 'var(--color-surface)' }} onClick={(event) => event.stopPropagation()}>
+    <div className="app-modal-backdrop fixed inset-0 z-50 flex items-end justify-center bg-black/50 sm:items-center" onClick={closeReport}>
+      <div className="app-modal-panel w-full max-w-sm space-y-4 rounded-3xl p-5 sm:p-6" style={{ backgroundColor: 'var(--color-surface)' }} onClick={(event) => event.stopPropagation()}>
         <div className="flex items-center justify-between"><h2 className="font-serif text-lg font-semibold">{t('report.title')}</h2><button onClick={closeReport} aria-label={t('report.close')} style={{ color: 'var(--color-muted)' }}><X size={20} /></button></div>
         <p className="text-xs" style={{ color: 'var(--color-muted)' }}>{t('report.description')}</p>
         <div className="space-y-2">{REASONS.map((item) => <label key={item} className="flex cursor-pointer items-center gap-3"><input type="radio" name="reason" checked={reason === item} onChange={() => setReason(item)} className="accent-amber-800" /><span className="text-sm">{t(`report.reason.${item}`)}</span></label>)}</div>

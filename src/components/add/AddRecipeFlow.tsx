@@ -557,7 +557,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
 
       {/* Draft restored banner */}
       {draftRestored && (
-        <div className="flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200">
+        <div className="responsive-stack-narrow flex items-center justify-between gap-3 px-4 py-3 rounded-2xl bg-amber-50 border border-amber-200">
           <span className="text-xs font-semibold text-amber-800">{t('add.draftRestoredBanner')}</span>
           <button onClick={discardDraft}
             className="text-xs font-bold text-rose-600 hover:text-rose-800 transition-colors shrink-0">
@@ -567,13 +567,13 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
       )}
 
       {/* Header */}
-      <div className="p-5 rounded-3xl border border-stone-200/80 shadow-sm flex items-center justify-between"
+      <div className="responsive-stack-narrow p-5 rounded-3xl border border-stone-200/80 shadow-sm flex items-center justify-between gap-3"
         style={{ backgroundColor: 'var(--color-surface)' }}>
         <div>
           <h1 className="font-serif text-2xl font-bold" style={{ color: 'var(--color-text)' }}>{editSlug ? t('add.headerTitleEdit') : t('add.headerTitleNew')}</h1>
           <p className="text-xs mt-0.5" style={{ color: 'var(--color-muted)' }}>{editSlug ? t('add.headerSubtitleEdit') : t('add.headerSubtitleNew')}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button onClick={() => setShowPreview(true)}
             className="add-recipe-accent-soft flex items-center gap-1.5 text-xs font-bold border px-3 py-2 rounded-2xl transition-colors">
             <Eye className="w-4 h-4" /> {t('add.previewButton')}
@@ -588,7 +588,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
       </div>
 
       {/* Stepper */}
-      <div className="add-recipe-tab-group grid grid-cols-3 gap-2 p-1.5 rounded-2xl border">
+      <div className="add-recipe-tab-group responsive-single-column-narrow grid grid-cols-3 gap-2 p-1.5 rounded-2xl border">
         {([1, 2, 3] as const).map((n) => (
           <button key={n} onClick={() => setStepPage(n)}
             className={`add-recipe-tab py-2 text-xs font-bold rounded-xl transition-all ${stepPage === n ? 'add-recipe-tab--active' : ''}`}>
@@ -790,7 +790,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
           </div>
 
           {/* Metrics */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="responsive-single-column-narrow grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
               { label: t('add.prepTimeLabel'), value: prepTime, onChange: setPrepTime, placeholder: '15' },
               { label: t('add.cookTimeLabel'), value: cookTime, onChange: setCookTime, placeholder: '30' },
@@ -832,7 +832,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
           {/* Ingredients */}
           <section className="p-4 sm:p-6 rounded-3xl border border-stone-200/80 shadow-sm space-y-4"
             style={{ backgroundColor: 'var(--color-surface)' }}>
-            <div className="flex items-center justify-between border-b border-stone-100 pb-3">
+            <div className="responsive-stack-narrow flex items-center justify-between gap-3 border-b border-stone-100 pb-3">
               <div>
                 <h2 className="font-serif text-lg font-bold" style={{ color: 'var(--color-text)' }}>{t('add.ingredientsListHeading')}</h2>
                 <p className="text-xs" style={{ color: 'var(--color-muted)' }}>{t('add.ingredientsSectionHint')}</p>
@@ -898,13 +898,13 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
-                        <div className="pl-7 flex items-center gap-2">
+                        <div className="responsive-stack-narrow pl-7 flex items-center gap-2">
                           <input type="text" value={row.amount} onChange={(e) => updateIngredient(sec.id, row.id, 'amount', e.target.value)}
                             placeholder={t('add.ingredientAmountPlaceholder')}
-                            className="bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 font-bold text-center focus:outline-none w-20 shrink-0" />
+                            className="responsive-full-narrow bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 font-bold text-center focus:outline-none w-20 shrink-0" />
                           <input type="text" placeholder={t('add.ingredientUnitPlaceholder')} value={row.unit}
                             onChange={(e) => updateIngredient(sec.id, row.id, 'unit', e.target.value)}
-                            className="bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 focus:outline-none w-24 shrink-0" />
+                            className="responsive-full-narrow bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 focus:outline-none w-24 shrink-0" />
                         </div>
                       </div>
                     ))}
@@ -970,7 +970,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
             </div>
           </section>
 
-          <div className="flex items-center justify-between pt-2">
+          <div className="responsive-stack-narrow flex items-center justify-between gap-3 pt-2">
             <button onClick={() => navigate(-1)}
               className="add-recipe-secondary flex items-center gap-1.5 font-bold text-xs px-5 py-3 rounded-2xl transition-colors">
               <ArrowLeft className="w-4 h-4" /> {t('add.backButton')}
@@ -1097,7 +1097,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-4 border-t border-stone-100">
+          <div className="responsive-stack-narrow flex items-center justify-between gap-3 pt-4 border-t border-stone-100">
             <button type="button" onClick={() => navigate(-1)}
               className="add-recipe-secondary flex items-center gap-1.5 font-bold text-xs px-5 py-3 rounded-2xl transition-colors">
               <ArrowLeft className="w-4 h-4" /> {t('add.backButton')}
@@ -1113,9 +1113,9 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
 
       {/* Crop Modal */}
       {cropSrc && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/70 backdrop-blur-sm"
+        <div className="app-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-stone-900/70 backdrop-blur-sm"
           onClick={() => setCropSrc(null)}>
-          <div className="add-recipe-modal w-full max-w-2xl rounded-3xl p-6 shadow-2xl border flex flex-col gap-4 max-h-[90vh]"
+          <div className="app-modal-panel add-recipe-modal w-full max-w-2xl rounded-3xl p-6 shadow-2xl border flex flex-col gap-4"
             onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-stone-100 pb-3">
               <div className="flex items-center gap-2">
@@ -1161,9 +1161,9 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
 
       {/* Image Picker Modal */}
       {showImagePicker && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm"
+        <div className="app-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 backdrop-blur-sm"
           onClick={() => setShowImagePicker(false)}>
-          <div className="add-recipe-modal w-full max-w-lg rounded-3xl p-6 shadow-2xl border max-h-[85vh] overflow-y-auto"
+          <div className="app-modal-panel add-recipe-modal w-full max-w-lg rounded-3xl p-6 shadow-2xl border"
             onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between pb-3 border-b border-stone-100 mb-4">
               <h3 className="font-serif text-lg font-bold text-stone-900">{t('add.imagePickerHeading')}</h3>
@@ -1171,7 +1171,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="responsive-single-column-narrow grid grid-cols-2 gap-3">
               {PRESET_IMAGES.map((item) => (
                 <button key={item.url} onClick={() => { setCoverImage(item.url); setImageFile(null); setCoverImageEdited(true); setShowImagePicker(false); }}
                   className="group relative aspect-square rounded-2xl overflow-hidden border border-stone-200 hover:ring-4 hover:ring-amber-700/50 transition-all">
@@ -1188,9 +1188,9 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
 
       {/* Preview Modal */}
       {showPreview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm"
+        <div className="app-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 backdrop-blur-sm"
           onClick={() => setShowPreview(false)}>
-          <div className="add-recipe-modal w-full max-w-2xl rounded-3xl p-6 shadow-2xl border max-h-[90vh] overflow-y-auto space-y-4"
+          <div className="app-modal-panel add-recipe-modal w-full max-w-2xl rounded-3xl p-6 shadow-2xl border space-y-4"
             onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-stone-200 pb-3">
               <span className="text-xs font-bold uppercase tracking-wider text-amber-800">{t('add.previewModalLabel')}</span>

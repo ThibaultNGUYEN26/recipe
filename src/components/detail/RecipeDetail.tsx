@@ -471,7 +471,7 @@ export default function RecipeDetail() {
         {/* ── Sidebar: stats + ingredients + rating (order 2 on mobile, right col on desktop) ── */}
         <aside className="order-2 lg:[grid-column:2] lg:[grid-row:1/span_3] lg:sticky lg:top-10 space-y-4">
           {/* Stats */}
-          <div className="grid grid-cols-4 lg:grid-cols-2 gap-2">
+          <div className="responsive-single-column-narrow grid grid-cols-4 lg:grid-cols-2 gap-2">
             {[
               { icon: <Clock size={16} />, label: 'Total', value: info?.totalTime as string },
               { icon: <Clock size={16} />, label: 'Prep', value: info?.prepTime as string },
@@ -528,7 +528,7 @@ export default function RecipeDetail() {
           {recipe.nutrition && (
             <div className="rounded-2xl p-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
               <h2 className="font-serif text-lg font-semibold mb-3" style={{ color: 'var(--color-text)' }}>Nutrition</h2>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="responsive-single-column-narrow grid grid-cols-2 gap-2">
                 {Object.entries(recipe.nutrition as Record<string, string>).map(([k, v]) => (
                   <div key={k} className="px-3 py-2 rounded-xl" style={{ backgroundColor: 'var(--color-subtle)', border: '1px solid var(--color-border)' }}>
                     <p className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{v}</p>

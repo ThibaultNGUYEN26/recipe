@@ -373,7 +373,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
         </div>
 
         {/* Stats */}
-        <div className="profile-divider grid grid-cols-3 gap-2 pt-4 border-t text-center">
+        <div className="profile-divider responsive-single-column-narrow grid grid-cols-3 gap-2 pt-4 border-t text-center">
           {[
             { label: 'Recipes', value: profile.recipeCount, onClick: undefined },
             { label: 'Followers', value: profile.followerCount, onClick: () => openFollowList('followers') },
@@ -397,7 +397,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
       </section>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 pb-2" style={{ borderBottom: '1px solid var(--color-border)' }}>
+      <div className="flex flex-wrap items-center gap-2 pb-2" style={{ borderBottom: '1px solid var(--color-border)' }}>
         <button onClick={() => setActiveTab('recipes')}
           className={`profile-tab flex items-center gap-2 px-4 py-2.5 rounded-2xl border text-xs font-bold transition-all ${activeTab === 'recipes' ? 'profile-tab--active' : ''}`}>
           <Utensils className="w-4 h-4" />
@@ -434,9 +434,9 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
 
       {/* Followers / Following modal */}
       {followListModal && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-stone-900/60 backdrop-blur-sm"
+        <div className="app-modal-backdrop fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-stone-900/60 backdrop-blur-sm"
           onClick={() => setFollowListModal(null)}>
-          <div className="profile-modal w-full max-w-sm rounded-t-3xl sm:rounded-3xl shadow-2xl border flex flex-col max-h-[80vh] overflow-hidden"
+          <div className="profile-modal w-full max-w-sm rounded-t-3xl sm:rounded-3xl shadow-2xl border flex flex-col max-h-[calc(100dvh-2rem)] overflow-hidden"
             onClick={(e) => e.stopPropagation()}>
             {/* Header */}
             <div className="profile-divider flex items-center justify-between px-5 py-4 border-b shrink-0">
@@ -497,8 +497,8 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
 
       {/* Avatar Crop Modal */}
       {cropSrc && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-stone-900/70 backdrop-blur-sm overflow-y-auto">
-          <div className="profile-modal w-full max-w-sm rounded-3xl p-6 shadow-2xl border space-y-4 my-auto"
+        <div className="app-modal-backdrop fixed inset-0 z-[60] flex items-center justify-center bg-stone-900/70 backdrop-blur-sm">
+          <div className="app-modal-panel profile-modal w-full max-w-sm rounded-3xl p-6 shadow-2xl border space-y-4 my-auto"
             onClick={(e) => e.stopPropagation()}>
             <div className="profile-divider flex items-center justify-between border-b pb-3">
               <div className="flex items-center gap-2">
@@ -545,9 +545,9 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
 
       {/* Edit Profile Modal */}
       {isEditOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-sm"
+        <div className="app-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 backdrop-blur-sm"
           onClick={() => setIsEditOpen(false)}>
-          <div className="profile-modal w-full max-w-md rounded-3xl p-6 shadow-2xl border space-y-4"
+          <div className="app-modal-panel profile-modal w-full max-w-md rounded-3xl p-6 shadow-2xl border space-y-4"
             onClick={(e) => e.stopPropagation()}>
             <div className="profile-divider flex items-center justify-between pb-3 border-b">
               <h3 className="font-serif text-lg font-bold">Edit Profile</h3>
