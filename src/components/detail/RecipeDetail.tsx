@@ -12,6 +12,7 @@ import VerifiedBadge from '../profile/VerifiedBadge';
 import { apiFetch } from '../../lib/apiFetch';
 import { ANALYTICS_VISITOR_KEY, hasAnalyticsConsent } from '../../lib/cookiePreferences';
 import { useSeo } from '../../hooks/useSeo';
+import { recipeStructuredData, serializeStructuredData } from '../../lib/recipeStructuredData';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -214,7 +215,7 @@ export default function RecipeDetail() {
     path: recipe?.authorUsername ? `/${recipe.authorUsername}/${recipe.slug}` : `/recipe/${slug ?? ''}`,
     image: recipe?.image ? imgSrc(recipe.image) : null,
     type: 'article',
-    noIndex: Boolean(recipe && (recipe as { error?: string }).error),
+    noIndex: Boolean(recipe && ((recipe as { error?: string }).error || recipe.isPublic === false)),
   });
 
   const { data: fetchedComments } = useQuery<Comment[]>({
@@ -367,9 +368,18 @@ export default function RecipeDetail() {
 
   const info = recipe.info as Record<string, unknown> | null | undefined;
   const baseServings = (info?.servings as number) ?? 4;
+  const structuredData = recipe.isPublic
+    ? recipeStructuredData(recipe, recipe.image ? imgSrc(recipe.image) : null)
+    : null;
 
   return (
     <>
+      {structuredData && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: serializeStructuredData(structuredData) }}
+        />
+      )}
       {/* Back + actions bar — full viewport width so background doesn't gap at sides */}
       <div className="sticky top-0 z-30" style={{ backgroundColor: 'var(--color-bg)', borderBottom: '1px solid var(--color-border)' }}>
         <div className="max-w-5xl mx-auto px-4 py-2 flex items-center justify-between">

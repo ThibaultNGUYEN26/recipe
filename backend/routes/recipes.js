@@ -294,6 +294,9 @@ router.get("/:slug", optionalAuthenticate, async (req, res) => {
       originalLanguage: selected.originalLanguage,
       availableLanguages: selected.availableLanguages,
       isTranslated: selected.isTranslated,
+      isPublic: recipe.isPublic,
+      createdAt: recipe.createdAt,
+      updatedAt: recipe.updatedAt,
     });
   } catch (err) {
     console.error(err);

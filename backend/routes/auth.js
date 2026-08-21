@@ -281,9 +281,10 @@ router.get("/me", authenticate, async (req, res) => {
     select: { id: true, email: true, username: true, name: true, isAdmin: true, isVerified: true, emailVerifiedAt: true, avatarUrl: true, pendingAvatarId: true, preferredLanguage: true, sessionVersion: true },
   });
   if (!user) return res.status(401).json({ error: "User no longer exists" });
-  // Reissue both the JWT cookie and matching CSRF token whenever an active
-  // client restores its session. This makes the seven-day lifetime rolling.
-  return createSession(res, user);
+  // Keep the current cookie stable. Rotating it here can race with focus or
+  // multi-tab session checks and leave the client holding a CSRF token for a
+  // JWT that has already been replaced by another request.
+  return res.json({ csrfToken: csrfTokenForSession(req.sessionToken), user: publicUser(user) });
 });
 
 export default router;

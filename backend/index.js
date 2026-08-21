@@ -25,6 +25,7 @@ import { createWsServer } from "./lib/ws.js";
 import { selectRecipeTranslation } from "./lib/translations.js";
 import { authenticate, requireAdmin } from "./middleware/authenticate.js";
 import { csrfProtection } from "./middleware/csrf.js";
+import { buildSitemap } from "./lib/sitemap.js";
 
 export const app = express();
 app.set("trust proxy", 1);
@@ -45,6 +46,28 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 app.use(csrfProtection);
+
+app.get("/sitemap.xml", async (_req, res) => {
+  const { prisma } = await import("./lib/prisma.js");
+  try {
+    const recipes = await prisma.recipe.findMany({
+      where: { isPublic: true, translations: { some: {} } },
+      select: {
+        slug: true,
+        updatedAt: true,
+        author: { select: { username: true } },
+      },
+      orderBy: { updatedAt: "desc" },
+    });
+    res
+      .set("Content-Type", "application/xml; charset=utf-8")
+      .set("Cache-Control", "public, max-age=300, s-maxage=3600, stale-while-revalidate=86400")
+      .send(buildSitemap(recipes, process.env.PUBLIC_APP_URL));
+  } catch (err) {
+    console.error(err);
+    res.status(500).type("text/plain").send("Failed to generate sitemap");
+  }
+});
 
 app.use("/uploads", express.static(uploadsDir));
 app.use("/images", express.static(path.join(__dirname, "../src/recipes")));

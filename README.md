@@ -38,9 +38,9 @@ COOKIE_PARTITIONED=false
 SESSION_TTL_DAYS=7
 ```
 
-Point `api.recipe.thibault-nguyen.dev` at the backend deployment. Active
-sessions are renewed when the app restores the current user, while accounts
-that remain unused for the configured lifetime expire normally.
+Point `api.recipe.thibault-nguyen.dev` at the backend deployment. Sessions
+expire after the configured lifetime; restoring the current user keeps the
+session cookie stable so concurrent tabs retain a matching CSRF token.
 
 If the API must remain on a completely different site, use
 `COOKIE_SAME_SITE=none` and `COOKIE_PARTITIONED=true`. This improves support in

@@ -47,6 +47,9 @@ export interface RecipeListItem {
 }
 
 export interface RecipeDetail extends RecipeListItem {
+  isPublic: boolean;
+  createdAt: string;
+  updatedAt: string;
   videoUrl?: string | null;
   sourcePlatform?: 'tiktok' | null;
   sourceUrl?: string | null;
