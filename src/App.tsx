@@ -62,7 +62,7 @@ const AUTH_PATHS = new Set(['/login', '/register', '/forgot-password', '/reset-p
 export default function App() {
   const { user } = useAuth();
   const location = useLocation();
-  useRecipeSocket();
+  useRecipeSocket(user?.id);
 
   return (
     <div className="app-shell flex min-h-dvh flex-col" style={{ backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}>

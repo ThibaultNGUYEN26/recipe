@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import process from 'node:process';
 import { WebSocketServer } from 'ws';
 import { SESSION_COOKIE_NAME } from './session.js';
+import { prisma } from './prisma.js';
 
 let wss = null;
 const userSockets = new Map(); // userId -> Set<WebSocket>
@@ -19,6 +20,11 @@ export function createWsServer(server) {
         ws.userId = payload.id;
         if (!userSockets.has(payload.id)) userSockets.set(payload.id, new Set());
         userSockets.get(payload.id).add(ws);
+        prisma.notification.count({ where: { userId: payload.id, read: false } })
+          .then((count) => {
+            if (ws.readyState === 1) ws.send(JSON.stringify({ type: 'notification:unread-count', count }));
+          })
+          .catch(() => {});
       } catch { /* anonymous socket */ }
     }
     ws.on('error', () => { /* close/reconnect is handled by the client */ });

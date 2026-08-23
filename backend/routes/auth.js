@@ -211,7 +211,7 @@ router.post("/google", loginRateLimit, async (req, res) => {
   }
 });
 
-router.post("/logout", (_req, res) => {
+router.post("/logout", (req, res) => {
   clearSessionCookie(res, req);
   res.json({ ok: true });
 });

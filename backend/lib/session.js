@@ -20,6 +20,9 @@ function sameSitePolicy() {
 
 export function isCrossOriginSessionRequest(req) {
   if (process.env.NODE_ENV !== "production") return false;
+  const fetchSite = req?.get?.("sec-fetch-site") || req?.headers?.["sec-fetch-site"];
+  if (fetchSite === "cross-site") return true;
+  if (["same-origin", "same-site", "none"].includes(fetchSite)) return false;
   const origin = req?.get?.("origin") || req?.headers?.origin;
   const forwardedHost = req?.get?.("x-forwarded-host") || req?.get?.("host") || req?.headers?.["x-forwarded-host"] || req?.headers?.host;
   if (!origin || !forwardedHost) return false;
@@ -52,9 +55,21 @@ export function sessionJwtOptions() {
 }
 
 export function setSessionCookie(res, token, req) {
-  res.cookie(SESSION_COOKIE_NAME, token, sessionCookieOptions({ crossOrigin: isCrossOriginSessionRequest(req) }));
+  const crossOrigin = isCrossOriginSessionRequest(req);
+  const options = sessionCookieOptions({ crossOrigin });
+  const deletionOptions = sessionCookieOptions({ persistent: false, crossOrigin });
+  // Remove the cookie variant used by a previous deployment. Partitioned and
+  // unpartitioned cookies can coexist under the same name in some browsers.
+  res.clearCookie(SESSION_COOKIE_NAME, deletionOptions.partitioned
+    ? { ...deletionOptions, partitioned: false }
+    : { ...deletionOptions, secure: true, sameSite: "none", partitioned: true });
+  res.cookie(SESSION_COOKIE_NAME, token, options);
 }
 
 export function clearSessionCookie(res, req) {
-  res.clearCookie(SESSION_COOKIE_NAME, sessionCookieOptions({ persistent: false, crossOrigin: isCrossOriginSessionRequest(req) }));
+  const options = sessionCookieOptions({ persistent: false, crossOrigin: isCrossOriginSessionRequest(req) });
+  res.clearCookie(SESSION_COOKIE_NAME, options);
+  res.clearCookie(SESSION_COOKIE_NAME, options.partitioned
+    ? { ...options, partitioned: false }
+    : { ...options, secure: true, sameSite: "none", partitioned: true });
 }

@@ -63,6 +63,18 @@ export default function NotificationDrawer() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (!user) {
+      setNotifications([]);
+      setUnreadNotifCount(0);
+      return;
+    }
+    apiFetch('/api/notifications/unread-count')
+      .then((response) => response.ok ? response.json() : null)
+      .then((data) => { if (typeof data?.count === 'number') setUnreadNotifCount(data.count); })
+      .catch(console.error);
+  }, [user?.id, setUnreadNotifCount]);
+
+  useEffect(() => {
     if (!notifDrawerOpen || !user) return;
     setLoading(true);
     apiFetch('/api/notifications')
@@ -82,11 +94,16 @@ export default function NotificationDrawer() {
     if (!user) return;
     const handler = (e: Event) => {
       const n = (e as CustomEvent).detail as Notification;
-      setNotifications((prev) => [n, ...prev]);
-      setUnreadNotifCount((c) => c + 1);
+      setNotifications((prev) => prev.some((item) => item.id === n.id) ? prev : [n, ...prev]);
+      if (!n.read) setUnreadNotifCount((c) => c + 1);
     };
     window.addEventListener('ws:notification', handler);
-    return () => window.removeEventListener('ws:notification', handler);
+    const countHandler = (event: Event) => setUnreadNotifCount((event as CustomEvent<number>).detail);
+    window.addEventListener('ws:notification-count', countHandler);
+    return () => {
+      window.removeEventListener('ws:notification', handler);
+      window.removeEventListener('ws:notification-count', countHandler);
+    };
   }, [user?.id]);
 
   async function markAllRead() {

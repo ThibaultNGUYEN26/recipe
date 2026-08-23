@@ -82,7 +82,7 @@ describe("session cookies", () => {
     process.env.COOKIE_SAME_SITE = "lax";
     process.env.COOKIE_PARTITIONED = "false";
     const req = { get: (name) => ({ origin: "https://recipe.thibault-nguyen.dev", host: "recipe-production-4bd0.up.railway.app" })[name] };
-    const res = { cookie: vi.fn() };
+    const res = { cookie: vi.fn(), clearCookie: vi.fn() };
 
     setSessionCookie(res, "signed-token", req);
 
@@ -91,5 +91,20 @@ describe("session cookies", () => {
       sameSite: "none",
       partitioned: true,
     }));
+    expect(res.clearCookie).toHaveBeenCalledWith("token", expect.objectContaining({
+      partitioned: false,
+      sameSite: "none",
+    }));
+  });
+
+  it("does not partition requests the browser identifies as same-site", () => {
+    process.env.NODE_ENV = "production";
+    const req = { get: (name) => ({
+      "sec-fetch-site": "same-site",
+      origin: "https://recipe.thibault-nguyen.dev",
+      host: "api.recipe.thibault-nguyen.dev",
+    })[name] };
+
+    expect(isCrossOriginSessionRequest(req)).toBe(false);
   });
 });

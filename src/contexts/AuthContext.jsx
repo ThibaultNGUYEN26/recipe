@@ -21,15 +21,34 @@ export function AuthProvider({ children }) {
         }
         return null;
       }
-      if (!res.ok) return null;
+      if (!res.ok) {
+        if (clearOnError) {
+          setCsrfToken(null);
+          setUser(null);
+        }
+        return null;
+      }
       const data = await res.json();
       setCsrfToken(data.csrfToken ?? null);
       setUser(data.user);
       return data.user;
     } catch {
+      if (clearOnError) {
+        setCsrfToken(null);
+        setUser(null);
+      }
       return null;
     }
   }, []);
+
+  const acceptNewSession = useCallback(async (data) => {
+    setCsrfToken(data.csrfToken ?? null);
+    const restoredUser = await refreshUser({ clearOnError: true });
+    if (!restoredUser) {
+      throw new Error("Sign-in succeeded, but this browser blocked the session cookie. Allow cookies for Savor and try again.");
+    }
+    return restoredUser;
+  }, [refreshUser]);
 
   useEffect(() => {
     // Remove JWTs saved by versions prior to cookie-only authentication.
@@ -75,9 +94,7 @@ export function AuthProvider({ children }) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Login failed");
-    setCsrfToken(data.csrfToken ?? null);
-    setUser(data.user);
-    return data.user;
+    return acceptNewSession(data);
   }
 
   async function register(email, password, name, username) {
@@ -89,9 +106,7 @@ export function AuthProvider({ children }) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Registration failed");
-    setCsrfToken(data.csrfToken ?? null);
-    setUser(data.user);
-    return data.user;
+    return acceptNewSession(data);
   }
 
   async function loginWithGoogle(credential) {
@@ -103,15 +118,17 @@ export function AuthProvider({ children }) {
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "Google sign-in failed");
-    setCsrfToken(data.csrfToken ?? null);
-    setUser(data.user);
-    return data.user;
+    return acceptNewSession(data);
   }
 
   async function logout() {
-    await apiFetch("/api/auth/logout", {
+    const response = await apiFetch("/api/auth/logout", {
       method: "POST",
     });
+    if (!response.ok) {
+      const data = await response.json().catch(() => null);
+      throw new Error(data?.error || "Could not sign out. Please try again.");
+    }
     setCsrfToken(null);
     setUser(null);
   }

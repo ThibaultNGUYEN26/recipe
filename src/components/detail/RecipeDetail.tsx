@@ -456,7 +456,9 @@ export default function RecipeDetail() {
           <>
             <img src={imgSrc(recipe.image)!} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full scale-110 object-cover blur-2xl opacity-35" />
             <div className="absolute inset-0 bg-black/5" />
-            <img src={imgSrc(recipe.image)!} alt={recipe.title} className="relative z-10 h-full w-full object-contain object-center" />
+            <div className="absolute inset-0 z-10 flex items-center justify-center">
+              <img src={imgSrc(recipe.image)!} alt={recipe.title} className="block h-auto max-h-full w-auto max-w-full" />
+            </div>
           </>
         ) : (
           <div className="w-full h-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 40%, #d97706 100%)' }}>
