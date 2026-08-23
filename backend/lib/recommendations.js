@@ -5,14 +5,21 @@ function logBoost(value) {
 export function scoreRecommendation(recipe, preferences = {}, now = new Date()) {
   const ageDays = Math.max(0, (now.getTime() - new Date(recipe.createdAt).getTime()) / 86400000);
   const ratingQuality = recipe.ratingCount ? (recipe.avgRating / 5) * logBoost(recipe.ratingCount) * 2 : 0;
-  const popularity = logBoost(recipe.saveCount) * 2.2 + logBoost(recipe.recentViews) * 0.7;
-  const freshness = Math.max(0, 4 - ageDays / 7);
+  // Recent, high-intent actions matter most; views are deliberately a weak signal.
+  const engagement = logBoost(
+    (recipe.recentSaveCount ?? recipe.saveCount ?? 0) * 3
+    + (recipe.recentCommentCount ?? recipe.commentCount ?? 0) * 2
+    + (recipe.recentLikeCount ?? recipe.likeCount ?? 0)
+    + (recipe.recentMakeCount ?? recipe.makeCount ?? 0) * 2
+  ) * 2.5;
+  const discovery = logBoost(recipe.recentViews || 0) * 0.5 + logBoost(recipe.followerCount || 0) * 0.6;
+  const freshness = Math.max(0, 5 * (1 - ageDays / 30));
   const categoryAffinity = preferences.categories?.get(recipe.categorySlug) || 0;
   const matchingTags = recipe.tags.filter((tag) => preferences.tags?.has(tag));
   const tagAffinity = matchingTags.reduce((sum, tag) => sum + (preferences.tags.get(tag) || 0), 0);
   const followsAuthor = Boolean(recipe.authorId && preferences.following?.has(recipe.authorId));
   const seenPenalty = preferences.viewed?.has(recipe.id) ? 1.5 : 0;
-  const score = popularity + ratingQuality + freshness + categoryAffinity * 2 + tagAffinity + (followsAuthor ? 6 : 0) - seenPenalty;
+  const score = engagement + discovery + ratingQuality + freshness + categoryAffinity * 2 + tagAffinity + (followsAuthor ? 6 : 0) - seenPenalty;
 
   let reasonCode = 'popular';
   let reasonValue = undefined;

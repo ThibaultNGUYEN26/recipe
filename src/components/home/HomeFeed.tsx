@@ -12,9 +12,7 @@ import { useMinLoading } from '../../hooks/useMinLoading';
 
 const API = import.meta.env.VITE_API_URL;
 
-const FEED_FILTERS = [
-  { key: 'all', labelKey: 'home.forYou', Icon: Sparkles },
-  { key: 'following', labelKey: 'home.following', Icon: UtensilsCrossed },
+const DISCOVERY_FILTERS = [
   { key: 'trending', labelKey: 'home.trending', Icon: Flame },
   { key: 'quick', labelKey: 'home.quick', Icon: Clock },
   { key: 'vegetarian', labelKey: 'home.vegetarian', Icon: Leaf },
@@ -31,7 +29,7 @@ function HeroCard({ recipe }: { recipe: RecipeListItem }) {
   return (
     <Link to={recipe.authorUsername ? `/${recipe.authorUsername}/${recipe.slug}` : `/recipe/${recipe.slug}`}
       className="relative rounded-3xl overflow-hidden bg-stone-900 text-white cursor-pointer shadow-xl group border border-stone-800 block">
-      <div className="relative aspect-[16/9] sm:aspect-[21/9] w-full">
+      <div className="relative h-[240px] sm:h-[300px] lg:h-[340px] w-full">
         {recipe.image ? (
           <img src={imgSrc(recipe.image)!} alt={recipe.title ?? ''}
             className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700 ease-out" />
@@ -117,29 +115,41 @@ export default function HomeFeed() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-4 space-y-6 pb-24 w-full">
+      {/* Primary feeds */}
+      <div className="grid grid-cols-2 rounded-2xl p-1" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+        {[
+          { key: 'all' as const, labelKey: 'home.forYou', Icon: Sparkles },
+          { key: 'following' as const, labelKey: 'home.following', Icon: UtensilsCrossed },
+        ].map(({ key, labelKey, Icon }) => (
+          <button key={key} onClick={() => setActiveFilter(key)} className="flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all" style={(activeFilter === key || (key === 'all' && activeFilter !== 'following')) ? { backgroundColor: '#92400e', color: '#fff', boxShadow: '0 2px 8px rgba(146,64,14,.2)' } : { color: 'var(--color-muted)' }}>
+            <Icon className="w-4 h-4" /> {t(labelKey)}
+          </button>
+        ))}
+      </div>
+
       {/* Featured hero */}
       {featuredRecipe && activeFilter === 'all' && !showLoader && (
         <HeroCard recipe={featuredRecipe} />
       )}
 
-      {activeFilter === 'all' && !showLoader && (
+      {(activeFilter === 'all' || activeFilter === 'following') && !showLoader && (
         <div className="responsive-stack-narrow flex items-center justify-between gap-3">
           <div>
             <h1 className="font-serif text-xl font-bold" style={{ color: 'var(--color-text)' }}>
-              {isPersonalized ? t('home.picked') : t('home.discover')}
+              {activeFilter === 'following' ? t('home.followingTitle') : isPersonalized ? t('home.picked') : t('home.discover')}
             </h1>
             <p className="text-xs mt-0.5" style={{ color: 'var(--color-muted)' }}>
-              {isPersonalized ? t('home.personalizedDescription') : t('home.communityDescription')}
+              {activeFilter === 'following' ? t('home.followingDescription') : isPersonalized ? t('home.personalizedDescription') : t('home.communityDescription')}
             </p>
           </div>
-          {!user && <Link to="/login" className="home-accent-text self-start text-xs font-bold">{t('home.signInPersonalize')}</Link>}
+          {!user && activeFilter === 'all' && <Link to="/login" className="home-accent-text self-start text-xs font-bold">{t('home.signInPersonalize')}</Link>}
         </div>
       )}
 
-      {/* Feed filter bar */}
-      <div className="-mx-4 px-4 flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none border-b pt-2"
+      {/* Discovery shortcuts */}
+      <div className="-mx-4 px-4 flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none border-b"
         style={{ borderColor: 'var(--color-border)' }}>
-        {FEED_FILTERS.map(({ key, labelKey, Icon }) => (
+        {DISCOVERY_FILTERS.map(({ key, labelKey, Icon }) => (
           <button key={key} onClick={() => setActiveFilter(key)}
             className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all shrink-0"
             style={activeFilter === key
@@ -160,12 +170,15 @@ export default function HomeFeed() {
         <div className="rounded-3xl p-12 text-center border"
           style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
           <UtensilsCrossed className="w-12 h-12 mx-auto mb-3" style={{ color: 'var(--color-border)' }} />
-          <h3 className="font-serif text-lg font-bold" style={{ color: 'var(--color-text)' }}>{t('home.noRecipes')}</h3>
-          <p className="text-xs mt-1" style={{ color: 'var(--color-muted)' }}>{t('home.switchFilters')}</p>
-          <button onClick={() => setActiveFilter('all')}
-            className="mt-4 bg-amber-800 text-white text-xs font-semibold px-5 py-2.5 rounded-full hover:bg-amber-900 transition-colors">
-            {t('home.showAll')}
-          </button>
+          <h3 className="font-serif text-lg font-bold" style={{ color: 'var(--color-text)' }}>{activeFilter === 'following' ? t('home.followingEmpty') : t('home.noRecipes')}</h3>
+          <p className="text-xs mt-1" style={{ color: 'var(--color-muted)' }}>{activeFilter === 'following' ? t(user ? 'home.followingEmptyHint' : 'home.followingSignInHint') : t('home.switchFilters')}</p>
+          {activeFilter === 'following' ? (
+            <Link to={user ? '/search' : '/login'} className="inline-block mt-4 bg-amber-800 text-white text-xs font-semibold px-5 py-2.5 rounded-full hover:bg-amber-900 transition-colors">
+              {t(user ? 'home.findCreators' : 'home.signIn')}
+            </Link>
+          ) : (
+            <button onClick={() => setActiveFilter('all')} className="mt-4 bg-amber-800 text-white text-xs font-semibold px-5 py-2.5 rounded-full hover:bg-amber-900 transition-colors">{t('home.showAll')}</button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -99,11 +99,14 @@ router.get("/recommended", optionalAuthenticate, async (req, res) => {
           category: true,
           images: { where: { isMain: true }, take: 1 },
           translations: true,
-          author: { select: { id: true, username: true, name: true, avatarUrl: true, isVerified: true } },
+          author: { select: { id: true, username: true, name: true, avatarUrl: true, isVerified: true, _count: { select: { followers: true } } } },
           ratings: { select: { score: true } },
-          savedBy: { select: { userId: true } },
+          savedBy: { where: { savedAt: { gte: recentFrom } }, select: { userId: true } },
+          likes: { where: { createdAt: { gte: recentFrom } }, select: { id: true } },
+          comments: { where: { createdAt: { gte: recentFrom } }, select: { id: true } },
+          makes: { where: { createdAt: { gte: recentFrom } }, select: { id: true } },
           views: { where: { viewedAt: { gte: recentFrom } }, select: { id: true } },
-          _count: { select: { likes: true } },
+          _count: { select: { savedBy: true, comments: true, likes: true, makes: true } },
         },
       }),
       userId ? prisma.savedRecipe.findMany({ where: { userId }, select: { recipeId: true, recipe: { select: { category: { select: { slug: true } }, tags: true } } } }) : [],
@@ -141,8 +144,16 @@ router.get("/recommended", optionalAuthenticate, async (req, res) => {
         createdAt: recipe.createdAt,
         avgRating,
         ratingCount: scores.length,
-        saveCount: recipe.savedBy.length,
+        saveCount: recipe._count.savedBy,
+        commentCount: recipe._count.comments,
+        likeCount: recipe._count.likes,
+        makeCount: recipe._count.makes,
+        recentSaveCount: recipe.savedBy.length,
+        recentCommentCount: recipe.comments.length,
+        recentLikeCount: recipe.likes.length,
+        recentMakeCount: recipe.makes.length,
         recentViews: recipe.views.length,
+        followerCount: recipe.author?._count.followers ?? 0,
         categorySlug: recipe.category.slug,
         categoryLabel: recipe.category.label,
         tags: (Array.isArray(recipe.tags) ? recipe.tags : []).map((tag) => String(tag).toLowerCase()),
@@ -156,6 +167,8 @@ router.get("/recommended", optionalAuthenticate, async (req, res) => {
         avgRating: scores.length ? avgRating : null,
         ratingCount: scores.length,
         likeCount: recipe._count.likes,
+        commentCount: recipe._count.comments,
+        makeCount: recipe._count.makes,
         score: ranking.score,
         recommendationReason: ranking.reasonCode,
         recommendationReasonValue: ranking.reasonValue,
@@ -184,8 +197,9 @@ router.get("/recommended", optionalAuthenticate, async (req, res) => {
       ...ranked.filter((recipe) => !savedIds.has(recipe.id)),
       ...ranked.filter((recipe) => savedIds.has(recipe.id)),
     ];
-    const trending = [...formatted].sort((a, b) => (b.recentViews * 0.7 + b.saveCount * 2 + b.ratingCount) - (a.recentViews * 0.7 + a.saveCount * 2 + a.ratingCount)).slice(0, 20).map((recipe) => ({ ...recipe, recommendationReason: 'trending' }));
-    const following = formatted.filter((recipe) => preferences.following.has(recipe.authorId)).sort((a, b) => b.score - a.score).map((recipe) => ({ ...recipe, recommendationReason: 'follow' }));
+    const trendingScore = (recipe) => recipe.recentSaveCount * 3 + recipe.recentCommentCount * 2 + recipe.recentLikeCount + recipe.recentMakeCount * 2 + recipe.recentViews * 0.25;
+    const trending = [...formatted].sort((a, b) => trendingScore(b) - trendingScore(a) || new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 20).map((recipe) => ({ ...recipe, recommendationReason: 'trending' }));
+    const following = formatted.filter((recipe) => preferences.following.has(recipe.authorId)).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map((recipe) => ({ ...recipe, recommendationReason: 'follow' }));
     res.json({
       personalized: diversifyRecommendations(byScore, 20),
       trending,

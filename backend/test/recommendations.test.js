@@ -19,6 +19,18 @@ describe("recipe recommendation ranking", () => {
     expect(result).toMatchObject({ reasonCode: "category", reasonValue: "Cakes" });
   });
 
+  it("rewards recent high-intent community activity", () => {
+    const quiet = scoreRecommendation({ ...base, recentSaveCount: 0, recentCommentCount: 0, recentLikeCount: 0, recentMakeCount: 0 }, {}, new Date("2026-08-01T00:00:00.000Z"));
+    const active = scoreRecommendation({ ...base, recentSaveCount: 3, recentCommentCount: 4, recentLikeCount: 8, recentMakeCount: 2 }, {}, new Date("2026-08-01T00:00:00.000Z"));
+    expect(active.score).toBeGreaterThan(quiet.score);
+  });
+
+  it("gives fresh recipes and established creators a discovery boost", () => {
+    const oldUnknown = scoreRecommendation({ ...base, createdAt: "2025-01-01T00:00:00.000Z", followerCount: 0 }, {}, new Date("2026-08-01T00:00:00.000Z"));
+    const freshPopular = scoreRecommendation({ ...base, createdAt: "2026-07-31T00:00:00.000Z", followerCount: 100 }, {}, new Date("2026-08-01T00:00:00.000Z"));
+    expect(freshPopular.score).toBeGreaterThan(oldUnknown.score);
+  });
+
   it("avoids letting one category fill the beginning of a feed", () => {
     const items = [1, 2, 3, 4].map((id) => ({ id, categorySlug: id < 4 ? "cakes" : "mains" }));
     expect(diversifyRecommendations(items, 4).map((item) => item.id)).toEqual([1, 2, 4, 3]);
