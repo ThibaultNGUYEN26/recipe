@@ -3,14 +3,14 @@ import { Link } from 'react-router-dom';
 import { useUI } from '../../contexts/UIContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { X, Bell, Heart, MessageSquare, UserPlus, Star, CheckCheck } from 'lucide-react';
+import { X, Bell, ChefHat, Heart, MessageSquare, UserPlus, Star, CheckCheck } from 'lucide-react';
 import { apiFetch } from '../../lib/apiFetch';
 
 const API = import.meta.env.VITE_API_URL;
 
 interface Notification {
   id: number;
-  type: 'follow' | 'comment' | 'rating';
+  type: 'follow' | 'comment' | 'rating' | 'like' | 'made_it';
   read: boolean;
   message: string | null;
   createdAt: string;
@@ -26,6 +26,7 @@ const TYPE_ICON: Record<string, React.ReactNode> = {
   comment: <MessageSquare className="w-3.5 h-3.5 text-sky-500" />,
   rating: <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />,
   like: <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />,
+  made_it: <ChefHat className="w-3.5 h-3.5 text-amber-700" />,
 };
 
 function TYPE_MESSAGE(t: TFn, type: string, actorName: string | null, recipeTitle: string | null) {
@@ -34,6 +35,7 @@ function TYPE_MESSAGE(t: TFn, type: string, actorName: string | null, recipeTitl
     case 'follow': return t('notif.follow', { name });
     case 'comment': return recipeTitle ? t('notif.comment', { name, title: recipeTitle }) : t('notif.commentNoRecipe', { name });
     case 'rating': return recipeTitle ? t('notif.rating', { name, title: recipeTitle }) : t('notif.ratingNoRecipe', { name });
+    case 'made_it': return recipeTitle ? t('notif.madeIt', { name, title: recipeTitle }) : t('notif.madeItNoRecipe', { name });
     default: return recipeTitle ? t('notif.other', { name, title: recipeTitle }) : t('notif.otherNoRecipe', { name });
   }
 }

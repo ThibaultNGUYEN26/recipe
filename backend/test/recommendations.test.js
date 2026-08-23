@@ -11,12 +11,12 @@ describe("recipe recommendation ranking", () => {
     const regular = scoreRecommendation(base, {}, new Date("2026-08-01T00:00:00.000Z"));
     const followed = scoreRecommendation(base, { following: new Set([2]) }, new Date("2026-08-01T00:00:00.000Z"));
     expect(followed.score).toBeGreaterThan(regular.score);
-    expect(followed.reason).toBe("From a creator you follow");
+    expect(followed).toMatchObject({ reasonCode: "follow", reasonValue: undefined });
   });
 
   it("uses category preferences for an explainable boost", () => {
     const result = scoreRecommendation(base, { categories: new Map([["cakes", 3]]) }, new Date("2026-08-01T00:00:00.000Z"));
-    expect(result.reason).toBe("Because you enjoy Cakes");
+    expect(result).toMatchObject({ reasonCode: "category", reasonValue: "Cakes" });
   });
 
   it("avoids letting one category fill the beginning of a feed", () => {

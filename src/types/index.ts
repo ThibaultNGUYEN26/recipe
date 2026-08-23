@@ -37,6 +37,7 @@ export interface RecipeListItem {
   ratingCount?: number;
   likeCount?: number;
   commentCount?: number;
+  makeCount?: number;
   savedCategory?: SavedCategory | null;
   recommendationReason?: string;
   recommendationReasonValue?: string;
@@ -81,6 +82,29 @@ export interface Comment {
   isLiked: boolean;
   author: { id: number; name: string | null; avatarUrl: string | null; isVerified: boolean };
   replies: Comment[];
+}
+
+export interface CommunityMake {
+  id: number;
+  rating: number | null;
+  note: string | null;
+  changes: string[];
+  imageUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
+  author: {
+    id: number;
+    username: string | null;
+    name: string | null;
+    avatarUrl: string | null;
+    isVerified: boolean;
+  };
+}
+
+export interface CommunityMakesResponse {
+  count: number;
+  entries: CommunityMake[];
+  myEntry: CommunityMake | null;
 }
 
 export interface UserProfile {

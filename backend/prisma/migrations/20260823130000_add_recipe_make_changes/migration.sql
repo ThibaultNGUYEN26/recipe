@@ -1,0 +1,1 @@
+ALTER TABLE "RecipeMake" ADD COLUMN "changes" TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[];

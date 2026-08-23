@@ -5,7 +5,7 @@ import fs from "fs";
 import process from "node:process";
 import { prisma } from "../lib/prisma.js";
 import { authenticate, optionalAuthenticate } from "../middleware/authenticate.js";
-import { recipeUpload } from "../lib/upload.js";
+import { makePhotoUpload, recipeUpload, uploadsDir } from "../lib/upload.js";
 import { createNotification } from "../lib/notify.js";
 import { diversifyRecommendations, scoreRecommendation } from "../lib/recommendations.js";
 import { normalizeLanguage, selectRecipeTranslation } from "../lib/translations.js";
@@ -13,6 +13,7 @@ import { fetchTikTokImport, validateTikTokUrl } from "../lib/tiktokImport.js";
 import { broadcastRecipeEvent } from "../lib/ws.js";
 import { likeRateLimit } from "../middleware/rateLimit.js";
 import { blockedUserIds, usersAreBlocked } from "../lib/blocks.js";
+import { normalizeMakeInput } from "../lib/makes.js";
 
 const router = Router();
 const uploadRecipeMedia = recipeUpload.fields([
@@ -250,16 +251,23 @@ router.get("/:slug", optionalAuthenticate, async (req, res) => {
     if (token) {
       try {
         const payload = jwt.verify(token, process.env.JWT_SECRET);
-        const [ratingRow, savedRow] = await Promise.all([
+        const [ratingRow, savedRow, likeRow] = await Promise.all([
           prisma.rating.findUnique({ where: { userId_recipeId: { userId: payload.id, recipeId: recipe.id } } }),
           prisma.savedRecipe.findUnique({ where: { userId_recipeId: { userId: payload.id, recipeId: recipe.id } } }),
+          prisma.recipeLike.findUnique({ where: { userId_recipeId: { userId: payload.id, recipeId: recipe.id } } }),
         ]);
         myRating = ratingRow?.score ?? null;
         isSaved = !!savedRow;
         savedCategoryId = savedRow?.savedCategoryId ?? null;
-        isLiked = myRating !== null;
+        isLiked = !!likeRow;
       } catch { /* invalid token */ }
     }
+
+    const [likeCount, commentCount, makeCount] = await Promise.all([
+      prisma.recipeLike.count({ where: { recipeId: recipe.id } }),
+      prisma.comment.count({ where: { recipeId: recipe.id } }),
+      prisma.recipeMake.count({ where: { recipeId: recipe.id } }),
+    ]);
 
     res.json({
       slug: recipe.slug,
@@ -290,6 +298,9 @@ router.get("/:slug", optionalAuthenticate, async (req, res) => {
       isSaved,
       savedCategoryId,
       isLiked,
+      likeCount,
+      commentCount,
+      makeCount,
       contentLanguage: selected.contentLanguage,
       originalLanguage: selected.originalLanguage,
       availableLanguages: selected.availableLanguages,
@@ -671,6 +682,109 @@ router.delete("/:slug/like", authenticate, likeRateLimit, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message || "Failed to unlike recipe" });
+  }
+});
+
+const formatMake = (entry) => ({
+  id: entry.id,
+  rating: entry.rating,
+  note: entry.note,
+  changes: entry.changes,
+  imageUrl: entry.imageUrl,
+  createdAt: entry.createdAt,
+  updatedAt: entry.updatedAt,
+  author: {
+    id: entry.user.id,
+    username: entry.user.username,
+    name: entry.user.name,
+    avatarUrl: entry.user.avatarUrl,
+    isVerified: entry.user.isVerified,
+  },
+});
+
+// GET /api/recipes/:slug/makes
+router.get("/:slug/makes", optionalAuthenticate, async (req, res) => {
+  try {
+    const recipe = await prisma.recipe.findUnique({ where: { slug: req.params.slug }, select: { id: true } });
+    if (!recipe) return res.status(404).json({ error: "Recipe not found" });
+    const excludedUsers = await blockedUserIds(req.user?.id);
+    const entries = await prisma.recipeMake.findMany({
+      where: { recipeId: recipe.id, ...(excludedUsers.length && { userId: { notIn: excludedUsers } }) },
+      include: { user: { select: { id: true, username: true, name: true, avatarUrl: true, isVerified: true } } },
+      orderBy: { createdAt: "desc" },
+    });
+    const myEntry = req.user ? entries.find((entry) => entry.userId === req.user.id) : null;
+    res.json({
+      count: entries.length,
+      entries: entries.map(formatMake),
+      myEntry: myEntry ? formatMake(myEntry) : null,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message || "Failed to fetch community makes" });
+  }
+});
+
+// POST /api/recipes/:slug/makes — mark a recipe as made, or update the user's entry.
+router.post("/:slug/makes", authenticate, (req, res, next) => {
+  makePhotoUpload.single("photo")(req, res, (err) => {
+    if (!err) return next();
+    const message = err.code === "LIMIT_FILE_SIZE" ? "Photo must be under 5 MB" : err.message;
+    return res.status(400).json({ error: message });
+  });
+}, async (req, res) => {
+  const uploadedPath = req.file?.path;
+  try {
+    const recipe = await prisma.recipe.findUnique({ where: { slug: req.params.slug }, select: { id: true, authorId: true } });
+    if (!recipe) {
+      if (uploadedPath) fs.unlink(uploadedPath, () => {});
+      return res.status(404).json({ error: "Recipe not found" });
+    }
+    if (recipe.authorId && await usersAreBlocked(req.user.id, recipe.authorId)) {
+      if (uploadedPath) fs.unlink(uploadedPath, () => {});
+      return res.status(403).json({ error: "This interaction is not allowed" });
+    }
+
+    const input = normalizeMakeInput(req.body);
+    const existing = await prisma.recipeMake.findUnique({
+      where: { userId_recipeId: { userId: req.user.id, recipeId: recipe.id } },
+    });
+    const imageUrl = req.file ? `/uploads/${req.file.filename}` : existing?.imageUrl ?? null;
+    const entry = await prisma.recipeMake.upsert({
+      where: { userId_recipeId: { userId: req.user.id, recipeId: recipe.id } },
+      update: { ...input, imageUrl },
+      create: { userId: req.user.id, recipeId: recipe.id, ...input, imageUrl },
+      include: { user: { select: { id: true, username: true, name: true, avatarUrl: true, isVerified: true } } },
+    });
+
+    if (req.file && existing?.imageUrl?.startsWith("/uploads/")) {
+      fs.unlink(`${uploadsDir}/${existing.imageUrl.slice("/uploads/".length)}`, () => {});
+    }
+    const count = await prisma.recipeMake.count({ where: { recipeId: recipe.id } });
+    res.status(existing ? 200 : 201).json({ entry: formatMake(entry), count });
+    if (!existing && recipe.authorId && recipe.authorId !== req.user.id) {
+      createNotification({ userId: recipe.authorId, actorId: req.user.id, type: "made_it", recipeId: recipe.id });
+    }
+  } catch (err) {
+    if (uploadedPath) fs.unlink(uploadedPath, () => {});
+    console.error(err);
+    res.status(err.status || 500).json({ error: err.message || "Failed to save your make" });
+  }
+});
+
+// DELETE /api/recipes/:slug/makes
+router.delete("/:slug/makes", authenticate, async (req, res) => {
+  try {
+    const recipe = await prisma.recipe.findUnique({ where: { slug: req.params.slug }, select: { id: true } });
+    if (!recipe) return res.status(404).json({ error: "Recipe not found" });
+    const entry = await prisma.recipeMake.findUnique({ where: { userId_recipeId: { userId: req.user.id, recipeId: recipe.id } } });
+    if (entry) await prisma.recipeMake.delete({ where: { id: entry.id } });
+    if (entry?.imageUrl?.startsWith("/uploads/")) fs.unlink(`${uploadsDir}/${entry.imageUrl.slice("/uploads/".length)}`, () => {});
+    const count = await prisma.recipeMake.count({ where: { recipeId: recipe.id } });
+    res.json({ count });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message || "Failed to remove your make" });
   }
 });
 

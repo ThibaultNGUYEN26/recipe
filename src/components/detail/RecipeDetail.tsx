@@ -7,12 +7,13 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUI } from '../../contexts/UIContext';
 import type { RecipeDetail as RecipeDetailType, Comment, IngredientSection, InstructionStep } from '../../types';
-import { ArrowLeft, Star, StarHalf, Bookmark, BookmarkCheck, Share2, Clock, Users, ChefHat, Timer, Check, Heart, Send, Flag, Trash2, Languages, ExternalLink, Pencil } from 'lucide-react';
+import { ArrowLeft, Star, StarHalf, Bookmark, BookmarkCheck, Share2, Clock, Users, ChefHat, Timer, Check, Heart, MessageCircle, Send, Flag, Trash2, Languages, ExternalLink, Pencil } from 'lucide-react';
 import VerifiedBadge from '../profile/VerifiedBadge';
 import { apiFetch } from '../../lib/apiFetch';
 import { ANALYTICS_VISITOR_KEY, hasAnalyticsConsent } from '../../lib/cookiePreferences';
 import { useSeo } from '../../hooks/useSeo';
 import { recipeStructuredData, serializeStructuredData } from '../../lib/recipeStructuredData';
+import MadeItSection from './MadeItSection';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -288,6 +289,23 @@ export default function RecipeDetail() {
     }
   }
 
+  async function toggleRecipeLike() {
+    if (!user) { showToast('Sign in to like recipes', undefined, 'info'); return; }
+    if (!recipe) return;
+    const response = await apiFetch(`/api/recipes/${slug}/like`, { method: recipe.isLiked ? 'DELETE' : 'POST' });
+    if (!response.ok) return;
+    const result = await response.json();
+    queryClient.setQueryData<RecipeDetailType>(['recipe', slug, contentLanguage ?? language], (old) =>
+      old ? { ...old, isLiked: !old.isLiked, likeCount: result.likeCount } : old
+    );
+  }
+
+  function updateMakeCount(makeCount: number) {
+    queryClient.setQueryData<RecipeDetailType>(['recipe', slug, contentLanguage ?? language], (old) =>
+      old ? { ...old, makeCount } : old
+    );
+  }
+
   async function postComment() {
     if (!commentText.trim() || !user) return;
     setSubmittingComment(true);
@@ -299,6 +317,9 @@ export default function RecipeDetail() {
       if (res.ok) {
         const c: Comment = await res.json();
         setComments((prev) => [c, ...prev]);
+        queryClient.setQueryData<RecipeDetailType>(['recipe', slug, contentLanguage ?? language], (old) =>
+          old ? { ...old, commentCount: (old.commentCount ?? 0) + 1 } : old
+        );
         setCommentText('');
         queryClient.invalidateQueries({ queryKey: ['comments', slug] });
       }
@@ -324,6 +345,9 @@ export default function RecipeDetail() {
     apiFetch(`/api/recipes/${slug}/comments/${id}`, { method: 'DELETE' })
       .then(() => {
         setComments((prev) => prev.filter((c) => c.id !== id));
+        queryClient.setQueryData<RecipeDetailType>(['recipe', slug, contentLanguage ?? language], (old) =>
+          old ? { ...old, commentCount: Math.max(0, (old.commentCount ?? 1) - 1) } : old
+        );
         queryClient.invalidateQueries({ queryKey: ['comments', slug] });
       });
   }
@@ -476,6 +500,20 @@ export default function RecipeDetail() {
               {recipe.authorIsVerified && <VerifiedBadge className="w-4 h-4" />}
             </Link>
           )}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-4 text-sm" style={{ color: 'var(--color-muted)' }}>
+            <button onClick={toggleRecipeLike} className="flex items-center gap-1.5" style={{ color: recipe.isLiked ? '#e11d48' : 'var(--color-muted)' }}>
+              <Heart size={17} className={recipe.isLiked ? 'fill-rose-600' : ''} />
+              <span>{(recipe.likeCount ?? 0).toLocaleString()}</span>
+            </button>
+            <span aria-hidden="true">·</span>
+            <a href="#comments" className="flex items-center gap-1.5">
+              <MessageCircle size={17} /> <span>{(recipe.commentCount ?? comments.length).toLocaleString()}</span>
+            </a>
+            <span aria-hidden="true">·</span>
+            <a href="#community-makes" className="flex items-center gap-1.5">
+              <ChefHat size={17} /> <span>{(recipe.makeCount ?? 0).toLocaleString()} made it</span>
+            </a>
+          </div>
         </div>
 
         {/* ── Sidebar: stats + ingredients + rating (order 2 on mobile, right col on desktop) ── */}
@@ -638,7 +676,15 @@ export default function RecipeDetail() {
         </div>
 
         {/* ── Comments (order 4 on mobile, left col row 3 on desktop) ── */}
-        <div id="comments" className="order-4 lg:[grid-column:1] lg:[grid-row:3] pb-6 scroll-mt-20">
+        <MadeItSection
+          slug={recipe.slug}
+          recipeTitle={recipe.title}
+          authorId={recipe.authorId}
+          initialCount={recipe.makeCount ?? 0}
+          onCountChange={updateMakeCount}
+        />
+
+        <div id="comments" className="order-5 lg:[grid-column:1] lg:[grid-row:4] pb-6 scroll-mt-20">
           <h2 className="font-serif text-lg font-semibold mb-4" style={{ color: 'var(--color-text)' }}>
             Comments {comments.length > 0 && <span className="text-base font-normal" style={{ color: 'var(--color-muted)' }}>({comments.length})</span>}
           </h2>

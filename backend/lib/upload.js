@@ -24,6 +24,15 @@ export const upload = multer({
   },
 });
 
+export const makePhotoUpload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024, files: 1 },
+  fileFilter: (_req, file, cb) => {
+    const ok = ["image/jpeg", "image/png", "image/webp"].includes(file.mimetype);
+    cb(ok ? null : new Error("Photo must be jpeg, png, or webp"), ok);
+  },
+});
+
 export const recipeUpload = multer({
   storage,
   limits: { fileSize: 100 * 1024 * 1024, files: 2 },
