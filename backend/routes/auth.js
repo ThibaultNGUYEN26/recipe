@@ -32,13 +32,13 @@ function publicUser(user) {
   };
 }
 
-function createSession(res, user, status = 200) {
+function createSession(req, res, user, status = 200) {
   const token = jwt.sign(
     { id: user.id, email: user.email, username: user.username, name: user.name, sessionVersion: user.sessionVersion },
     process.env.JWT_SECRET,
     sessionJwtOptions(),
   );
-  setSessionCookie(res, token);
+  setSessionCookie(res, token, req);
   return res.status(status).json({ csrfToken: csrfTokenForSession(token), user: publicUser(user) });
 }
 
@@ -106,7 +106,7 @@ router.post("/register", registrationRateLimit, async (req, res) => {
     });
     sendVerificationEmail(user.email, verificationToken).catch((error) => console.error("Verification email failed", error));
 
-    return createSession(res, user, 201);
+    return createSession(req, res, user, 201);
   } catch (err) {
     if (err.code === "P2002") {
       const target = Array.isArray(err.meta?.target) ? err.meta.target.join(" ") : String(err.meta?.target ?? "");
@@ -159,7 +159,7 @@ router.post("/login", loginRateLimit, async (req, res) => {
       return res.status(401).json({ error: "Invalid username, email, or password" });
     }
 
-    return createSession(res, user);
+    return createSession(req, res, user);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message || "Login failed" });
@@ -201,7 +201,7 @@ router.post("/google", loginRateLimit, async (req, res) => {
       });
     }
 
-    return createSession(res, user);
+    return createSession(req, res, user);
   } catch (err) {
     console.error("Google authentication failed", err);
     const configurationError = err.message === "Google authentication is not configured";
@@ -212,7 +212,7 @@ router.post("/google", loginRateLimit, async (req, res) => {
 });
 
 router.post("/logout", (_req, res) => {
-  clearSessionCookie(res);
+  clearSessionCookie(res, req);
   res.json({ ok: true });
 });
 
@@ -247,7 +247,7 @@ router.post("/reset-password", accountEmailRateLimit, async (req, res) => {
     prisma.user.update({ where: { id: record.userId }, data: { passwordHash, sessionVersion: { increment: 1 } } }),
     prisma.passwordResetToken.deleteMany({ where: { userId: record.userId } }),
   ]);
-  clearSessionCookie(res);
+  clearSessionCookie(res, req);
   res.json({ ok: true });
 });
 

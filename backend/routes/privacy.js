@@ -51,7 +51,7 @@ router.delete("/account", authenticate, async (req, res) => {
       if (!valid) return res.status(401).json({ error: "Current password is incorrect" });
     }
     await prisma.user.delete({ where: { id: req.user.id } });
-    clearSessionCookie(res);
+    clearSessionCookie(res, req);
     res.json({ ok: true });
   } catch (error) {
     console.error(error);

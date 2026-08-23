@@ -38,6 +38,15 @@ export function AuthProvider({ children }) {
       .finally(() => setLoading(false));
   }, [refreshUser]);
 
+  useEffect(() => {
+    const clearInvalidSession = () => {
+      setCsrfToken(null);
+      setUser(null);
+    };
+    window.addEventListener("auth:unauthorized", clearInvalidSession);
+    return () => window.removeEventListener("auth:unauthorized", clearInvalidSession);
+  }, []);
+
   const authenticatedUserId = user?.id;
   const avatarPending = Boolean(user?.avatarPending);
 

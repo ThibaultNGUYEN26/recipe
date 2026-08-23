@@ -451,9 +451,13 @@ export default function RecipeDetail() {
 
       <div className="w-full max-w-5xl mx-auto pb-24">
       {/* Hero image — always rendered; gradient placeholder when no image */}
-      <div className="mx-4 mt-4 rounded-3xl overflow-hidden aspect-[4/3] lg:aspect-[21/9] mb-6">
+      <div className="relative mx-4 mt-4 rounded-3xl overflow-hidden aspect-[4/3] lg:aspect-[21/9] mb-6" style={{ backgroundColor: 'var(--color-subtle)' }}>
         {recipe.image ? (
-          <img src={imgSrc(recipe.image)!} alt={recipe.title} className="w-full h-full object-cover" />
+          <>
+            <img src={imgSrc(recipe.image)!} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full scale-110 object-cover blur-2xl opacity-35" />
+            <div className="absolute inset-0 bg-black/5" />
+            <img src={imgSrc(recipe.image)!} alt={recipe.title} className="relative z-10 h-full w-full object-contain object-center" />
+          </>
         ) : (
           <div className="w-full h-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 40%, #d97706 100%)' }}>
             <ChefHat size={56} className="opacity-30" style={{ color: '#78350f' }} />

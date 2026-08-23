@@ -18,10 +18,24 @@ function sameSitePolicy() {
   return process.env.NODE_ENV === "production" ? "none" : "lax";
 }
 
-export function sessionCookieOptions({ persistent = true } = {}) {
-  const sameSite = sameSitePolicy();
+export function isCrossOriginSessionRequest(req) {
+  if (process.env.NODE_ENV !== "production") return false;
+  const origin = req?.get?.("origin") || req?.headers?.origin;
+  const forwardedHost = req?.get?.("x-forwarded-host") || req?.get?.("host") || req?.headers?.["x-forwarded-host"] || req?.headers?.host;
+  if (!origin || !forwardedHost) return false;
+  try {
+    const originHost = new URL(origin).host.toLowerCase();
+    const requestHost = String(forwardedHost).split(",")[0].trim().toLowerCase();
+    return originHost !== requestHost;
+  } catch {
+    return false;
+  }
+}
+
+export function sessionCookieOptions({ persistent = true, crossOrigin = false } = {}) {
+  const sameSite = crossOrigin ? "none" : sameSitePolicy();
   const secure = process.env.NODE_ENV === "production" || sameSite === "none";
-  const partitioned = sameSite === "none" && process.env.COOKIE_PARTITIONED !== "false";
+  const partitioned = sameSite === "none" && (crossOrigin || process.env.COOKIE_PARTITIONED !== "false");
 
   return {
     httpOnly: true,
@@ -37,10 +51,10 @@ export function sessionJwtOptions() {
   return { expiresIn: Math.floor(sessionDays() * 24 * 60 * 60) };
 }
 
-export function setSessionCookie(res, token) {
-  res.cookie(SESSION_COOKIE_NAME, token, sessionCookieOptions());
+export function setSessionCookie(res, token, req) {
+  res.cookie(SESSION_COOKIE_NAME, token, sessionCookieOptions({ crossOrigin: isCrossOriginSessionRequest(req) }));
 }
 
-export function clearSessionCookie(res) {
-  res.clearCookie(SESSION_COOKIE_NAME, sessionCookieOptions({ persistent: false }));
+export function clearSessionCookie(res, req) {
+  res.clearCookie(SESSION_COOKIE_NAME, sessionCookieOptions({ persistent: false, crossOrigin: isCrossOriginSessionRequest(req) }));
 }

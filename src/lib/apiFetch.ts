@@ -51,5 +51,8 @@ export async function apiFetch(path: string, options: RequestInit = {}): Promise
       if (await refreshCsrfToken()) response = await send();
     }
   }
+  if (response.status === 401) {
+    window.dispatchEvent(new Event('auth:unauthorized'));
+  }
   return response;
 }

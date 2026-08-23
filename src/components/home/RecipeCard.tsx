@@ -29,6 +29,9 @@ export default function RecipeCard({ recipe, hideAuthor = false }: Props) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const info = recipe.info as Record<string, string> | null | undefined;
+  const creatorProfileUrl = recipe.authorUsername
+    ? `/u/${encodeURIComponent(recipe.authorUsername)}`
+    : recipe.authorId ? `/profile/${recipe.authorId}` : null;
 
   const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
@@ -108,7 +111,12 @@ export default function RecipeCard({ recipe, hideAuthor = false }: Props) {
       {/* Creator header */}
       {!hideAuthor && (
       <div className="flex items-center justify-between p-3.5 sm:p-4">
-        <div className="flex items-center gap-3 min-w-0">
+        <Link
+          to={creatorProfileUrl ?? '#'}
+          onClick={(event) => { if (!creatorProfileUrl) event.preventDefault(); }}
+          aria-label={`View ${recipe.authorName ?? 'creator'}'s profile`}
+          className="flex items-center gap-3 min-w-0 rounded-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-700"
+        >
           <div className="w-10 h-10 rounded-full bg-amber-800 text-white flex items-center justify-center text-sm font-bold shrink-0 ring-2 ring-amber-700 avatar-ring overflow-hidden">
             {recipe.authorAvatar
               ? <img src={imgSrc(recipe.authorAvatar)!} alt="" className="w-full h-full object-cover" />
@@ -120,7 +128,7 @@ export default function RecipeCard({ recipe, hideAuthor = false }: Props) {
               {recipe.authorIsVerified && <VerifiedBadge className="w-3.5 h-3.5" />}
             </div>
           </div>
-        </div>
+        </Link>
         {recipe.authorId && recipe.authorId !== user?.id && (
           <button onClick={handleFollow} disabled={followLoading}
             className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-amber-800 text-white hover:bg-amber-900 transition-all shadow-sm disabled:opacity-60">
