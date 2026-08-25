@@ -5,9 +5,10 @@ const messages = { en };
 const localeLoaders = {
   fr: () => import('./locales/fr'),
   es: () => import('./locales/es'),
+  vi: () => import('./locales/vi'),
 };
 
-export const supportedLanguages = ['en', 'fr', 'es'];
+export const supportedLanguages = ['en', 'fr', 'es', 'vi'];
 
 export async function loadLanguage(language) {
   if (messages[language] || !localeLoaders[language]) return;

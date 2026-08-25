@@ -24,7 +24,7 @@ function imgSrc(url: string | null) {
 }
 
 function languageName(language: string | undefined) {
-  return language === 'fr' ? 'French' : language === 'en' ? 'English' : language === 'es' ? 'Spanish' : language?.toUpperCase() || 'original';
+  return language === 'fr' ? 'French' : language === 'en' ? 'English' : language === 'es' ? 'Spanish' : language === 'vi' ? 'Vietnamese' : language?.toUpperCase() || 'original';
 }
 
 function StarRow({ value, onChange, readonly }: { value: number; onChange?: (v: number) => void; readonly?: boolean }) {

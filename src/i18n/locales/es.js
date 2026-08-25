@@ -99,6 +99,7 @@ const messages = {
   'language.englishDescription': 'Usar Savor en inglés',
   'language.frenchDescription': 'Usar Savor en francés',
   'language.spanishDescription': 'Usar Savor en español',
+  'language.vietnameseDescription': 'Usar Savor en vietnamita',
   'home.forYou': 'Para ti',
   'home.following': 'Chefs que sigues',
   'home.followingTitle': 'De los chefs que sigues',

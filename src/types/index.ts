@@ -131,7 +131,7 @@ export interface AuthUser {
   emailVerified: boolean;
   name: string | null;
   avatarUrl?: string | null;
-  preferredLanguage?: 'fr' | 'en' | 'es' | null;
+  preferredLanguage?: 'fr' | 'en' | 'es' | 'vi' | null;
 }
 
 export interface ToastData {

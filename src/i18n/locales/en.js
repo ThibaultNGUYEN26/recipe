@@ -99,6 +99,7 @@ const messages = {
   'language.englishDescription': 'Use Savor in English',
   'language.frenchDescription': 'Use Savor in French',
   'language.spanishDescription': 'Use Savor in Spanish',
+  'language.vietnameseDescription': 'Use Savor in Vietnamese',
   'home.forYou': 'For You',
   'home.following': 'Following',
   'home.followingTitle': 'From cooks you follow',
