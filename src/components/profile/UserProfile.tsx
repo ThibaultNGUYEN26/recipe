@@ -157,7 +157,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
       if (res.ok) {
         setIsFollowing(!isFollowing);
         queryClient.invalidateQueries({ queryKey: ['feed'] });
-        showToast(isFollowing ? 'Unfollowed' : 'Following!');
+        showToast(t(isFollowing ? 'profile.unfollowedToast' : 'profile.followedToast'));
       }
     } finally {
       setFollowLoading(false);
@@ -322,7 +322,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
             <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-3">
               <div>
                 <div className="flex items-center justify-center sm:justify-start gap-1.5">
-                  <h1 className="font-serif text-2xl font-black" style={{ color: 'var(--color-text)' }}>{profile.name ?? 'Anonymous Chef'}</h1>
+                  <h1 className="font-serif text-2xl font-black" style={{ color: 'var(--color-text)' }}>{profile.name ?? t('profile.anonymousChef')}</h1>
                   {profile.isVerified && <VerifiedBadge className="w-5 h-5" />}
                 </div>
                 {profile.username && <p className="text-sm font-medium" style={{ color: 'var(--color-muted)' }}>@{profile.username}</p>}
@@ -333,29 +333,29 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
                 <button onClick={() => openShare({
                   type: 'profile',
                   path: profile.username ? `/u/${encodeURIComponent(profile.username)}` : `/profile/${profile.id}`,
-                  title: profile.name ?? (profile.username ? `@${profile.username}` : 'Savor creator'),
-                  text: profile.bio ?? `See ${profile.name ?? 'this creator'}'s recipes on Savor.`,
+                  title: profile.name ?? (profile.username ? `@${profile.username}` : t('profile.creator')),
+                  text: profile.bio ?? t('profile.shareText', { name: profile.name ?? profile.username ?? t('profile.creator') }),
                 })}
                   className="flex min-h-11 w-full items-center justify-center gap-1.5 px-2 py-2 text-center text-xs font-bold rounded-2xl border transition-colors"
                   style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)', color: 'var(--color-text)' }}>
-                  <Share2 className="w-3.5 h-3.5" /> Share
+                  <Share2 className="w-3.5 h-3.5" /> {t('profile.share')}
                 </button>
                 {isOwnProfile ? (
                   <>
                     <Link to="/creator/analytics" className="profile-accent-soft flex min-h-11 w-full items-center justify-center gap-1.5 px-2 py-2 text-center text-xs font-bold rounded-2xl border">
-                      <BarChart3 className="w-3.5 h-3.5" /> Analytics
+                      <BarChart3 className="w-3.5 h-3.5" /> {t('profile.analytics')}
                     </Link>
-                    {!profile.isVerified && profile.followerCount > 1500 && <Link to="/settings/verification" className="profile-verification flex min-h-11 w-full items-center justify-center px-2 py-2 text-center text-xs font-bold rounded-2xl border">Get verified</Link>}
+                    {!profile.isVerified && profile.followerCount > 1500 && <Link to="/settings/verification" className="profile-verification flex min-h-11 w-full items-center justify-center px-2 py-2 text-center text-xs font-bold rounded-2xl border">{t('profile.getVerified')}</Link>}
                     <button onClick={() => setIsEditOpen(true)}
                       className="profile-primary flex min-h-11 w-full items-center justify-center gap-1.5 px-2 py-2 text-center text-xs font-bold rounded-2xl transition-colors shadow-sm">
-                      <Edit3 className="w-3.5 h-3.5" /> Edit Profile
+                      <Edit3 className="w-3.5 h-3.5" /> {t('profile.editProfile')}
                     </button>
                   </>
                 ) : (
                   <><button onClick={toggleFollow} disabled={followLoading}
                     className={`${isFollowing ? 'profile-secondary border' : 'profile-primary'} flex min-h-11 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap px-2 py-2 text-xs font-bold rounded-2xl transition-colors shadow-sm`}>
                     {isFollowing ? <UserMinus className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}
-                    {isFollowing ? 'Following' : 'Follow'}
+                    {t(isFollowing ? 'profile.following' : 'profile.follow')}
                   </button>{me && <div className="relative"><button onClick={() => setSafetyMenuOpen((open) => !open)} className="flex h-11 w-11 items-center justify-center rounded-2xl border" aria-label={t('safety.moreActions')} aria-expanded={safetyMenuOpen} style={{ borderColor: 'var(--color-border)' }}><MoreHorizontal className="h-4 w-4" /></button>{safetyMenuOpen && <><button className="fixed inset-0 z-10 cursor-default" aria-label={t('safety.closeMenu')} onClick={() => setSafetyMenuOpen(false)} /><div className="absolute right-0 top-full z-20 mt-2 w-44 overflow-hidden rounded-2xl border py-1 text-left shadow-xl" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}><button onClick={() => { setSafetyMenuOpen(false); openReport(String(profile.id), 'user'); }} className="flex w-full items-center gap-2 px-4 py-3 text-xs font-semibold hover:bg-[var(--color-hover)]"><Flag className="h-4 w-4" />{t('safety.reportUser')}</button><button onClick={blockUser} className="flex w-full items-center gap-2 px-4 py-3 text-xs font-semibold text-rose-700 hover:bg-rose-50"><ShieldBan className="h-4 w-4" />{t('safety.blockUser')}</button></div></>}</div>}</>
                 )}
               </div>
@@ -368,7 +368,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
             {profile.createdAt && (
               <div className="flex items-center justify-center sm:justify-start gap-1 text-xs font-medium" style={{ color: 'var(--color-muted)' }}>
                 <MapPin className="profile-accent w-3.5 h-3.5" />
-                Joined {new Date(profile.createdAt).toLocaleDateString('en', { month: 'long', year: 'numeric' })}
+                {t('profile.joined', { date: new Date(profile.createdAt).toLocaleDateString(language, { month: 'long', year: 'numeric' }) })}
               </div>
             )}
           </div>
@@ -377,9 +377,9 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
         {/* Stats */}
         <div className="profile-divider responsive-single-column-narrow grid grid-cols-3 gap-2 pt-4 border-t text-center">
           {[
-            { label: 'Recipes', value: profile.recipeCount, onClick: undefined },
-            { label: 'Followers', value: profile.followerCount, onClick: () => openFollowList('followers') },
-            { label: 'Following', value: profile.followingCount, onClick: () => openFollowList('following') },
+            { label: t('profile.recipes'), value: profile.recipeCount, onClick: undefined },
+            { label: t('profile.followers'), value: profile.followerCount, onClick: () => openFollowList('followers') },
+            { label: t('profile.following'), value: profile.followingCount, onClick: () => openFollowList('following') },
           ].map(({ label, value, onClick }) => (
             onClick ? (
               <button key={label} onClick={onClick}
@@ -403,13 +403,13 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
         <button onClick={() => setActiveTab('recipes')}
           className={`profile-tab flex items-center gap-2 px-4 py-2.5 rounded-2xl border text-xs font-bold transition-all ${activeTab === 'recipes' ? 'profile-tab--active' : ''}`}>
           <Utensils className="w-4 h-4" />
-          My Recipes ({recipes.length})
+          {t('profile.myRecipes', { count: recipes.length })}
         </button>
         {isOwnProfile && (
           <button onClick={() => setActiveTab('saved')}
             className={`profile-tab flex items-center gap-2 px-4 py-2.5 rounded-2xl border text-xs font-bold transition-all ${activeTab === 'saved' ? 'profile-tab--active' : ''}`}>
             <Bookmark className="w-4 h-4" />
-            Saved ({savedRecipes.length})
+            {t('profile.saved', { count: savedRecipes.length })}
           </button>
         )}
       </div>
@@ -419,13 +419,13 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
         <div className="rounded-3xl p-12 text-center border" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
           <Utensils className="w-12 h-12 mx-auto mb-3" style={{ color: 'var(--color-border)' }} />
           <h3 className="font-serif text-lg font-bold" style={{ color: 'var(--color-text)' }}>
-            {activeTab === 'recipes' ? 'No recipes yet' : 'No saved recipes'}
+            {t(activeTab === 'recipes' ? 'profile.noRecipes' : 'profile.noSavedRecipes')}
           </h3>
           <p className="text-xs mt-1" style={{ color: 'var(--color-muted)' }}>
-            {activeTab === 'recipes' && isOwnProfile ? 'Share your first recipe with the community!' : ''}
+            {activeTab === 'recipes' && isOwnProfile ? t('profile.shareFirst') : ''}
           </p>
           {activeTab === 'recipes' && isOwnProfile && (
-            <Link to="/add-recipe" className="profile-accent mt-4 inline-block text-xs font-semibold underline">Add a recipe</Link>
+            <Link to="/add-recipe" className="profile-accent mt-4 inline-block text-xs font-semibold underline">{t('profile.addRecipe')}</Link>
           )}
         </div>
       ) : (
@@ -443,7 +443,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
             {/* Header */}
             <div className="profile-divider flex items-center justify-between px-5 py-4 border-b shrink-0">
               <h3 className="font-serif text-base font-bold" style={{ color: 'var(--color-text)' }}>
-                {followListModal === 'followers' ? 'Followers' : 'Following'}
+                {t(followListModal === 'followers' ? 'profile.followers' : 'profile.following')}
               </h3>
               <button onClick={() => setFollowListModal(null)} className="profile-icon-button p-1 rounded-full transition-colors">
                 <X className="w-5 h-5" />
@@ -457,7 +457,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
                 </div>
               ) : followList.length === 0 ? (
                 <p className="text-center text-xs py-12" style={{ color: 'var(--color-muted)' }}>
-                  {followListModal === 'followers' ? 'No followers yet' : 'Not following anyone yet'}
+                  {t(followListModal === 'followers' ? 'profile.noFollowers' : 'profile.notFollowingAnyone')}
                 </p>
               ) : (
                 <ul className="divide-y" style={{ borderColor: 'var(--color-border)' }}>
@@ -474,7 +474,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
                         onClick={() => setFollowListModal(null)}
                         className="flex-1 min-w-0">
                         <div className="flex items-center gap-1">
-                          <p className="text-xs font-bold truncate" style={{ color: 'var(--color-text)' }}>{u.name ?? u.username ?? 'Creator'}</p>
+                          <p className="text-xs font-bold truncate" style={{ color: 'var(--color-text)' }}>{u.name ?? u.username ?? t('profile.creator')}</p>
                           {u.isVerified && <VerifiedBadge className="w-3.5 h-3.5 shrink-0" />}
                         </div>
                         {u.username && <p className="text-[10px] truncate" style={{ color: 'var(--color-muted)' }}>@{u.username}</p>}
@@ -485,7 +485,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
                           {followedInModal[u.id]
                             ? <UserMinus className="w-3.5 h-3.5" />
                             : <UserPlus className="w-3.5 h-3.5" />}
-                          {followedInModal[u.id] ? 'Following' : 'Follow'}
+                          {t(followedInModal[u.id] ? 'profile.following' : 'profile.follow')}
                         </button>
                       )}
                     </li>
@@ -505,13 +505,13 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
             <div className="profile-divider flex items-center justify-between border-b pb-3">
               <div className="flex items-center gap-2">
                 <CropIcon className="profile-accent w-5 h-5" />
-                <h3 className="font-serif text-lg font-bold">Crop Profile Photo</h3>
+                <h3 className="font-serif text-lg font-bold">{t('profile.cropPhoto')}</h3>
               </div>
               <button onClick={() => setCropSrc(null)} className="profile-icon-button p-1 rounded-full transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <p className="profile-muted text-xs">Drag the circle to choose your profile area.</p>
+            <p className="profile-muted text-xs">{t('profile.cropInstruction')}</p>
             <div className="flex justify-center max-h-[65vh] overflow-auto rounded-2xl" style={{ backgroundColor: 'var(--color-subtle)' }}>
               <ReactCrop
                 crop={crop}
@@ -534,11 +534,11 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
             <div className="flex gap-3 pt-1">
               <button onClick={() => setCropSrc(null)}
                 className="profile-secondary flex-1 py-3 text-xs font-semibold rounded-xl transition-colors">
-                Cancel
+                {t('profile.cancel')}
               </button>
               <button onClick={applyCrop} disabled={!completedCrop}
                 className="profile-primary flex-1 py-3 text-xs font-semibold rounded-xl transition-colors disabled:opacity-40 flex items-center justify-center gap-1.5">
-                <CropIcon className="w-3.5 h-3.5" /> Apply
+                <CropIcon className="w-3.5 h-3.5" /> {t('profile.apply')}
               </button>
             </div>
           </div>
@@ -552,7 +552,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
           <div className="app-modal-panel profile-modal w-full max-w-md rounded-3xl p-6 shadow-2xl border space-y-4"
             onClick={(e) => e.stopPropagation()}>
             <div className="profile-divider flex items-center justify-between pb-3 border-b">
-              <h3 className="font-serif text-lg font-bold">Edit Profile</h3>
+              <h3 className="font-serif text-lg font-bold">{t('profile.editProfile')}</h3>
               <button onClick={() => setIsEditOpen(false)} className="profile-icon-button p-1 rounded-full transition-colors">
                 <X className="w-5 h-5" />
               </button>
@@ -573,11 +573,11 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
                   </div>
                 </div>
                 <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={pickAvatar} />
-                <button type="button" onClick={() => fileRef.current?.click()} className="profile-accent text-xs underline">Change photo</button>
+                <button type="button" onClick={() => fileRef.current?.click()} className="profile-accent text-xs underline">{t('profile.changePhoto')}</button>
               </div>
 
               <div className="space-y-1">
-                <label className="profile-muted text-xs font-bold uppercase tracking-wider">Username</label>
+                <label className="profile-muted text-xs font-bold uppercase tracking-wider">{t('profile.username')}</label>
                 <div className="relative">
                   <span className="profile-muted absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold">@</span>
                   <input type="text" required minLength={3} maxLength={30} value={editUsername}
@@ -588,26 +588,26 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
               </div>
 
               <div className="space-y-1">
-                <label className="profile-muted text-xs font-bold uppercase tracking-wider">Display Name</label>
+                <label className="profile-muted text-xs font-bold uppercase tracking-wider">{t('profile.displayName')}</label>
                 <input type="text" required value={editName} onChange={(e) => setEditName(e.target.value)}
                   className="w-full bg-stone-50 border border-stone-200 text-xs font-bold rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-amber-800/30" />
               </div>
 
               <div className="space-y-1">
-                <label className="profile-muted text-xs font-bold uppercase tracking-wider">Biography</label>
+                <label className="profile-muted text-xs font-bold uppercase tracking-wider">{t('profile.biography')}</label>
                 <textarea rows={3} value={editBio} onChange={(e) => setEditBio(e.target.value)}
-                  placeholder="Tell the community about yourself…"
+                  placeholder={t('profile.bioPlaceholder')}
                   className="w-full bg-stone-50 border border-stone-200 text-xs rounded-xl p-3 focus:outline-none resize-none focus:ring-2 focus:ring-amber-800/30" />
               </div>
 
               <div className="flex items-center gap-3 pt-2">
                 <button type="button" onClick={() => setIsEditOpen(false)}
                   className="profile-secondary flex-1 py-2.5 text-xs font-bold rounded-xl transition-colors">
-                  Cancel
+                  {t('profile.cancel')}
                 </button>
                 <button type="submit" disabled={saving}
                   className="profile-primary flex-1 py-2.5 text-xs font-bold rounded-xl shadow-sm disabled:opacity-50 transition-colors">
-                  {saving ? 'Saving…' : 'Save Changes'}
+                  {t(saving ? 'profile.saving' : 'profile.saveChanges')}
                 </button>
               </div>
             </form>
@@ -615,7 +615,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
             {isOwnProfile && (
               <button onClick={async () => { await logout(); navigate('/'); }}
                 className="profile-danger w-full pt-2 text-xs font-semibold transition-colors">
-                Sign out
+                {t('profile.signOut')}
               </button>
             )}
           </div>

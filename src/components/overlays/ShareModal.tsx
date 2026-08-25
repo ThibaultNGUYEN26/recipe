@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useUI } from '../../contexts/UIContext';
 import { X, Link2, Check, Share2 } from 'lucide-react';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 export default function ShareModal() {
   const { shareTarget, closeShare, showToast } = useUI();
+  const { t } = useLanguage();
   const [copied, setCopied] = useState(false);
 
   useEffect(() => setCopied(false), [shareTarget]);
@@ -12,7 +14,6 @@ export default function ShareModal() {
 
   const appBaseUrl = new URL(import.meta.env.BASE_URL, window.location.origin);
   const url = new URL(shareTarget.path.replace(/^\//, ''), appBaseUrl).toString();
-  const label = shareTarget.type === 'profile' ? 'profile' : 'recipe';
   const canNativeShare = typeof navigator.share === 'function';
 
   async function copy() {
@@ -21,7 +22,7 @@ export default function ShareModal() {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
-      showToast('Could not copy link', undefined, 'error');
+      showToast(t('share.copyError'), undefined, 'error');
     }
   }
 
@@ -31,7 +32,7 @@ export default function ShareModal() {
       closeShare();
     } catch (error) {
       if (!(error instanceof DOMException && error.name === 'AbortError')) {
-        showToast('Could not open sharing', undefined, 'error');
+        showToast(t('share.openError'), undefined, 'error');
       }
     }
   }
@@ -45,10 +46,10 @@ export default function ShareModal() {
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="font-serif text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Share {label}</h2>
+            <h2 className="font-serif text-lg font-semibold" style={{ color: 'var(--color-text)' }}>{t(shareTarget.type === 'profile' ? 'share.profileTitle' : 'share.recipeTitle')}</h2>
             <p className="text-xs mt-0.5" style={{ color: 'var(--color-muted)' }}>{shareTarget.title}</p>
           </div>
-          <button onClick={closeShare} aria-label="Close share dialog" style={{ color: 'var(--color-muted)' }}><X size={20} /></button>
+          <button onClick={closeShare} aria-label={t('share.close')} style={{ color: 'var(--color-muted)' }}><X size={20} /></button>
         </div>
         <div
           className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm"
@@ -61,13 +62,13 @@ export default function ShareModal() {
           {canNativeShare && (
             <button onClick={share}
               className="flex items-center justify-center gap-2 py-3 rounded-2xl font-medium text-sm text-white bg-amber-800 active:opacity-80">
-              <Share2 size={16} /> Share
+              <Share2 size={16} /> {t('share.action')}
             </button>
           )}
           <button onClick={copy}
             className="flex items-center justify-center gap-2 py-3 rounded-2xl font-medium text-sm text-white bg-stone-900 active:opacity-80">
             {copied ? <Check size={16} /> : <Link2 size={16} />}
-            {copied ? 'Copied!' : 'Copy link'}
+            {t(copied ? 'share.copied' : 'share.copyLink')}
           </button>
         </div>
       </div>

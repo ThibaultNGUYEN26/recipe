@@ -898,10 +898,10 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                         <div className="responsive-stack-narrow pl-7 flex items-center gap-2">
                           <input type="text" value={row.amount} onChange={(e) => updateIngredient(sec.id, row.id, 'amount', e.target.value)}
                             placeholder={t('add.ingredientAmountPlaceholder')}
-                            className="responsive-full-narrow bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 font-bold text-center focus:outline-none w-20 shrink-0" />
+                            className="responsive-full-narrow bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 font-bold text-center focus:outline-none w-32 shrink-0" />
                           <input type="text" placeholder={t('add.ingredientUnitPlaceholder')} value={row.unit}
                             onChange={(e) => updateIngredient(sec.id, row.id, 'unit', e.target.value)}
-                            className="responsive-full-narrow bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 focus:outline-none w-24 shrink-0" />
+                            className="responsive-full-narrow bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 focus:outline-none w-48 shrink-0" />
                         </div>
                       </div>
                     ))}

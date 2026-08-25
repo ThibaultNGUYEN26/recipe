@@ -33,6 +33,15 @@ const DIFFICULTY_LABEL_KEYS: Record<string, string> = {
   Difficile: 'discover.diff.hard',
 };
 const TIME_OPTS = [15, 30, 60, 'Any'] as const;
+const DIETARY_OPTS = [
+  { value: 'vegetarian', labelKey: 'discover.diet.vegetarian' },
+  { value: 'vegan', labelKey: 'discover.diet.vegan' },
+  { value: 'gluten-free', labelKey: 'discover.diet.glutenFree' },
+  { value: 'dairy-free', labelKey: 'discover.diet.dairyFree' },
+  { value: 'low-carb', labelKey: 'discover.diet.lowCarb' },
+  { value: 'nut-free', labelKey: 'discover.diet.nutFree' },
+  { value: 'keto', labelKey: 'discover.diet.keto' },
+] as const;
 
 interface UserResult { id: number; username: string | null; name: string | null; avatarUrl: string | null; isVerified: boolean; isFollowing?: boolean }
 
@@ -190,12 +199,12 @@ export default function SearchDiscover() {
         <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
           {dietary && (
             <span className="discover-chip flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full border">
-              {dietary} <X className="w-3.5 h-3.5 cursor-pointer" onClick={() => setDietary(null)} />
+              {t(DIETARY_OPTS.find((option) => option.value === dietary)?.labelKey ?? dietary)} <X className="w-3.5 h-3.5 cursor-pointer" onClick={() => setDietary(null)} />
             </span>
           )}
           {difficulty !== 'All' && (
             <span className="discover-chip flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full border">
-              {difficulty} <X className="w-3.5 h-3.5 cursor-pointer" onClick={() => setDifficulty('All')} />
+              {t(DIFFICULTY_LABEL_KEYS[difficulty])} <X className="w-3.5 h-3.5 cursor-pointer" onClick={() => setDifficulty('All')} />
             </span>
           )}
           {maxTime !== 'Any' && (
@@ -353,10 +362,10 @@ export default function SearchDiscover() {
                   className={`discover-option px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${!dietary ? 'discover-option--active' : ''}`}>
                   {t('discover.all')}
                 </button>
-                {['vegetarian', 'vegan', 'gluten-free', 'dairy-free', 'low-carb', 'nut-free', 'keto'].map((d) => (
-                  <button key={d} onClick={() => setDietary(dietary === d ? null : d)}
-                    className={`discover-option px-3 py-1.5 rounded-xl text-xs font-semibold transition-all capitalize ${dietary === d ? 'discover-option--active' : ''}`}>
-                    {d}
+                {DIETARY_OPTS.map(({ value, labelKey }) => (
+                  <button key={value} onClick={() => setDietary(dietary === value ? null : value)}
+                    className={`discover-option px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${dietary === value ? 'discover-option--active' : ''}`}>
+                    {t(labelKey)}
                   </button>
                 ))}
               </div>
