@@ -14,6 +14,7 @@ import { ANALYTICS_VISITOR_KEY, hasAnalyticsConsent } from '../../lib/cookiePref
 import { useSeo } from '../../hooks/useSeo';
 import { recipeStructuredData, serializeStructuredData } from '../../lib/recipeStructuredData';
 import MadeItSection from './MadeItSection';
+import { formatCompactCount } from '../../lib/formatCompactCount';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -500,18 +501,18 @@ export default function RecipeDetail() {
               {recipe.authorIsVerified && <VerifiedBadge className="w-4 h-4" />}
             </Link>
           )}
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 mt-4 text-sm" style={{ color: 'var(--color-muted)' }}>
+          <div className="flex flex-wrap items-center gap-x-1.5 sm:gap-x-3 gap-y-2 mt-4 text-sm" style={{ color: 'var(--color-muted)' }}>
             <button onClick={toggleRecipeLike} className="flex items-center gap-1.5" style={{ color: recipe.isLiked ? '#e11d48' : 'var(--color-muted)' }}>
               <Heart size={17} className={recipe.isLiked ? 'fill-rose-600' : ''} />
-              <span>{(recipe.likeCount ?? 0).toLocaleString()}</span>
+              <span>{formatCompactCount(recipe.likeCount ?? 0, language)}</span>
             </button>
             <span aria-hidden="true">·</span>
             <a href="#comments" className="flex items-center gap-1.5">
-              <MessageCircle size={17} /> <span>{(recipe.commentCount ?? comments.length).toLocaleString()}</span>
+              <MessageCircle size={17} /> <span>{formatCompactCount(recipe.commentCount ?? comments.length, language)}</span>
             </a>
             <span aria-hidden="true">·</span>
             <a href="#community-makes" className="flex items-center gap-1.5">
-              <ChefHat size={17} /> <span>{(recipe.makeCount ?? 0).toLocaleString()} made it</span>
+              <ChefHat size={17} /> <span>{formatCompactCount(recipe.makeCount ?? 0, language)} made it</span>
             </a>
           </div>
         </div>

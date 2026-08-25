@@ -12,6 +12,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { apiFetch } from '../../lib/apiFetch';
 import { useLanguage } from '../../contexts/LanguageContext';
 import VerifiedBadge from '../profile/VerifiedBadge';
+import { formatCompactCount } from '../../lib/formatCompactCount';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -30,7 +31,7 @@ function imgSrc(url: string | null | undefined) {
 export default function RecipeCard({ recipe, hideAuthor = false, isFollowingAuthor = false, onAuthorFollowed }: Props) {
   const { openSaveModal, openShare, openComments, showToast } = useUI();
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const info = recipe.info as Record<string, string> | null | undefined;
@@ -227,13 +228,13 @@ export default function RecipeCard({ recipe, hideAuthor = false, isFollowingAuth
         <div className="recipe-card__divider grid grid-cols-4 items-center pt-3 mt-3 border-t">
           <button onClick={handleLike} className="recipe-card__action flex min-h-11 min-w-0 items-center justify-center gap-1 text-xs font-bold transition-colors">
             <Heart className={`h-5 w-5 shrink-0 stroke-[1.8] transition-colors ${isLiked ? 'fill-red-500 text-red-500' : ''}`} />
-            <span>{likeCount}</span>
+            <span>{formatCompactCount(likeCount, language)}</span>
           </button>
           <button onClick={(event) => { event.preventDefault(); event.stopPropagation(); openComments({ slug: recipe.slug, title: recipe.title, authorUsername: recipe.authorUsername }); }}
             aria-label={`View ${recipe.commentCount ?? 0} comments for ${recipe.title}`}
             className="recipe-card__action flex min-h-11 min-w-0 items-center justify-center gap-1 text-xs font-bold transition-colors">
             <MessageCircle className="h-5 w-5 shrink-0 stroke-[1.8]" />
-            <span>{recipe.commentCount ?? 0}</span>
+            <span>{formatCompactCount(recipe.commentCount ?? 0, language)}</span>
           </button>
           <button onClick={handleShare} aria-label={`Share ${recipe.title}`}
             className="recipe-card__action flex min-h-11 min-w-0 items-center justify-center transition-colors">

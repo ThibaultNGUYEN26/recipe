@@ -9,6 +9,7 @@ import { apiFetch } from '../../lib/apiFetch';
 import type { Comment } from '../../types';
 import VerifiedBadge from '../profile/VerifiedBadge';
 import { LoadingPan } from '../ui/LoadingPan';
+import { formatCompactCount } from '../../lib/formatCompactCount';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -44,7 +45,7 @@ function CommentRow({ comment, slug, onChanged, nested = false }: { comment: Com
           <p className="mt-0.5 text-sm leading-relaxed break-words">{comment.text}</p>
           <button onClick={toggleLike} className="mt-1.5 flex items-center gap-1 text-xs" style={{ color: comment.isLiked ? '#e11d48' : 'var(--color-muted)' }}>
             <Heart className={`h-3.5 w-3.5 ${comment.isLiked ? 'fill-rose-600' : ''}`} />
-            {comment.likesCount > 0 && comment.likesCount}
+            {comment.likesCount > 0 && formatCompactCount(comment.likesCount, language)}
           </button>
         </div>
       </div>

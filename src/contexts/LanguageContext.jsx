@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
-import { translate } from '../i18n/translations';
+import { loadLanguage, supportedLanguages, translate } from '../i18n/translations';
 import { apiFetch } from '../lib/apiFetch';
 
 const LanguageContext = createContext();
@@ -17,12 +17,20 @@ export const LanguageProvider = ({ children }) => {
   const { user, updateUser } = useAuth();
   const [language, setLanguage] = useState(() => {
     const savedLanguage = localStorage.getItem('savorAppLanguage') || localStorage.getItem('recipeLanguage');
-    if (savedLanguage === 'fr' || savedLanguage === 'en' || savedLanguage === 'es') return savedLanguage;
-    const browserLanguage = navigator.language?.toLowerCase();
-    if (browserLanguage?.startsWith('fr')) return 'fr';
-    if (browserLanguage?.startsWith('es')) return 'es';
+    if (supportedLanguages.includes(savedLanguage)) return savedLanguage;
+    const browserLanguage = navigator.language?.toLowerCase().split('-')[0];
+    if (supportedLanguages.includes(browserLanguage)) return browserLanguage;
     return 'en';
   });
+  const [, setLocaleVersion] = useState(0);
+
+  useEffect(() => {
+    let active = true;
+    loadLanguage(language).then(() => {
+      if (active) setLocaleVersion((version) => version + 1);
+    });
+    return () => { active = false; };
+  }, [language]);
 
   useEffect(() => {
     localStorage.setItem('savorAppLanguage', language);
@@ -31,7 +39,7 @@ export const LanguageProvider = ({ children }) => {
 
   useEffect(() => {
     if (!user) return;
-    if (user.preferredLanguage === 'fr' || user.preferredLanguage === 'en' || user.preferredLanguage === 'es') {
+    if (supportedLanguages.includes(user.preferredLanguage)) {
       setLanguage(user.preferredLanguage);
       return;
     }
@@ -45,7 +53,7 @@ export const LanguageProvider = ({ children }) => {
   }, [user?.id, user?.preferredLanguage]);
 
   const setPreferredLanguage = async (nextLanguage) => {
-    if (nextLanguage !== 'fr' && nextLanguage !== 'en' && nextLanguage !== 'es') return;
+    if (!supportedLanguages.includes(nextLanguage)) return;
     setLanguage(nextLanguage);
     if (!user) return;
 
@@ -62,8 +70,7 @@ export const LanguageProvider = ({ children }) => {
   };
 
   const toggleLanguage = () => {
-    const languages = ['en', 'fr', 'es'];
-    setPreferredLanguage(languages[(languages.indexOf(language) + 1) % languages.length]);
+    setPreferredLanguage(supportedLanguages[(supportedLanguages.indexOf(language) + 1) % supportedLanguages.length]);
   };
 
   const value = {
