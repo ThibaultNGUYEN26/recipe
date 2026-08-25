@@ -28,7 +28,7 @@ function imgSrc(url: string | null | undefined) {
 }
 
 export default function RecipeCard({ recipe, hideAuthor = false, isFollowingAuthor = false, onAuthorFollowed }: Props) {
-  const { openSaveModal, openShare, showToast } = useUI();
+  const { openSaveModal, openShare, openComments, showToast } = useUI();
   const { user } = useAuth();
   const { t } = useLanguage();
   const queryClient = useQueryClient();
@@ -229,12 +229,12 @@ export default function RecipeCard({ recipe, hideAuthor = false, isFollowingAuth
             <Heart className={`h-5 w-5 shrink-0 stroke-[1.8] transition-colors ${isLiked ? 'fill-red-500 text-red-500' : ''}`} />
             <span>{likeCount}</span>
           </button>
-          <Link to={`${recipeUrl(recipe.slug, recipe.authorUsername)}#comments`}
+          <button onClick={(event) => { event.preventDefault(); event.stopPropagation(); openComments({ slug: recipe.slug, title: recipe.title, authorUsername: recipe.authorUsername }); }}
             aria-label={`View ${recipe.commentCount ?? 0} comments for ${recipe.title}`}
             className="recipe-card__action flex min-h-11 min-w-0 items-center justify-center gap-1 text-xs font-bold transition-colors">
             <MessageCircle className="h-5 w-5 shrink-0 stroke-[1.8]" />
             <span>{recipe.commentCount ?? 0}</span>
-          </Link>
+          </button>
           <button onClick={handleShare} aria-label={`Share ${recipe.title}`}
             className="recipe-card__action flex min-h-11 min-w-0 items-center justify-center transition-colors">
             <Share2 className="h-4 w-4 shrink-0" />

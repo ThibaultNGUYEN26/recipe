@@ -9,6 +9,7 @@ import ShareModal from './components/overlays/ShareModal';
 import ReportModal from './components/overlays/ReportModal';
 import CollectionModal from './components/overlays/CollectionModal';
 import NotificationDrawer from './components/overlays/NotificationDrawer';
+import CommentsModal from './components/overlays/CommentsModal';
 import CookieConsentBanner from './components/overlays/CookieConsentBanner';
 import RouteSeo from './components/misc/RouteSeo';
 import { LoadingPan } from './components/ui/LoadingPan';
@@ -117,6 +118,7 @@ export default function App() {
       <Toast />
       <TimerWidget />
       <ShareModal />
+      <CommentsModal />
       <ReportModal />
       <CollectionModal />
       <NotificationDrawer />
