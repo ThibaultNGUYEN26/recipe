@@ -450,16 +450,10 @@ export default function RecipeDetail() {
       </div>
 
       <div className="w-full max-w-5xl mx-auto pb-24">
-      {/* Hero image — always rendered; gradient placeholder when no image */}
-      <div className="relative mx-4 mt-4 rounded-3xl overflow-hidden aspect-[4/3] lg:aspect-[21/9] mb-6" style={{ backgroundColor: 'var(--color-subtle)' }}>
+      {/* The upload flow stores an 800×800 crop; display that crop directly. */}
+      <div className="relative mx-auto mt-4 w-[calc(100%-2rem)] max-w-2xl rounded-3xl overflow-hidden aspect-square mb-6">
         {recipe.image ? (
-          <>
-            <img src={imgSrc(recipe.image)!} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full scale-110 object-cover blur-2xl opacity-35" />
-            <div className="absolute inset-0 bg-black/5" />
-            <div className="absolute inset-0 z-10 flex items-center justify-center">
-              <img src={imgSrc(recipe.image)!} alt={recipe.title} className="block h-auto max-h-full w-auto max-w-full" />
-            </div>
-          </>
+          <img src={imgSrc(recipe.image)!} alt={recipe.title} className="h-full w-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 40%, #d97706 100%)' }}>
             <ChefHat size={56} className="opacity-30" style={{ color: '#78350f' }} />

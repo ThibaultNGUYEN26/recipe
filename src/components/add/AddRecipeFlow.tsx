@@ -1110,8 +1110,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
 
       {/* Crop Modal */}
       {cropSrc && (
-        <div className="app-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-stone-900/70 backdrop-blur-sm"
-          onClick={() => setCropSrc(null)}>
+        <div className="app-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-stone-900/70 backdrop-blur-sm">
           <div className="app-modal-panel add-recipe-modal w-full max-w-2xl rounded-3xl p-6 shadow-2xl border flex flex-col gap-4"
             onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-stone-100 pb-3">
@@ -1123,7 +1122,6 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <p className="text-xs text-stone-500">{t('add.cropInstruction')}</p>
             <div className="flex justify-center overflow-hidden rounded-2xl bg-stone-100">
               <ReactCrop
                 crop={crop}

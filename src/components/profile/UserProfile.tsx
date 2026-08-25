@@ -329,7 +329,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
               </div>
               <div className={isOwnProfile
                 ? "grid w-full grid-flow-col auto-cols-fr items-stretch gap-2 sm:w-auto"
-                : "flex items-center gap-2"}>
+                : `grid w-full ${me ? 'grid-cols-[minmax(0,1fr)_minmax(0,1fr)_2.75rem]' : 'grid-cols-2'} items-stretch gap-2 sm:w-auto`}>
                 <button onClick={() => openShare({
                   type: 'profile',
                   path: profile.username ? `/u/${encodeURIComponent(profile.username)}` : `/profile/${profile.id}`,
@@ -353,10 +353,10 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
                   </>
                 ) : (
                   <><button onClick={toggleFollow} disabled={followLoading}
-                    className={`${isFollowing ? 'profile-secondary border' : 'profile-primary'} flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-2xl transition-colors shadow-sm`}>
+                    className={`${isFollowing ? 'profile-secondary border' : 'profile-primary'} flex min-h-11 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap px-2 py-2 text-xs font-bold rounded-2xl transition-colors shadow-sm`}>
                     {isFollowing ? <UserMinus className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}
                     {isFollowing ? 'Following' : 'Follow'}
-                  </button>{me && <div className="relative"><button onClick={() => setSafetyMenuOpen((open) => !open)} className="rounded-2xl border p-2" aria-label={t('safety.moreActions')} aria-expanded={safetyMenuOpen} style={{ borderColor: 'var(--color-border)' }}><MoreHorizontal className="h-4 w-4" /></button>{safetyMenuOpen && <><button className="fixed inset-0 z-10 cursor-default" aria-label={t('safety.closeMenu')} onClick={() => setSafetyMenuOpen(false)} /><div className="absolute right-0 top-full z-20 mt-2 w-44 overflow-hidden rounded-2xl border py-1 text-left shadow-xl" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}><button onClick={() => { setSafetyMenuOpen(false); openReport(String(profile.id), 'user'); }} className="flex w-full items-center gap-2 px-4 py-3 text-xs font-semibold hover:bg-[var(--color-hover)]"><Flag className="h-4 w-4" />{t('safety.reportUser')}</button><button onClick={blockUser} className="flex w-full items-center gap-2 px-4 py-3 text-xs font-semibold text-rose-700 hover:bg-rose-50"><ShieldBan className="h-4 w-4" />{t('safety.blockUser')}</button></div></>}</div>}</>
+                  </button>{me && <div className="relative"><button onClick={() => setSafetyMenuOpen((open) => !open)} className="flex h-11 w-11 items-center justify-center rounded-2xl border" aria-label={t('safety.moreActions')} aria-expanded={safetyMenuOpen} style={{ borderColor: 'var(--color-border)' }}><MoreHorizontal className="h-4 w-4" /></button>{safetyMenuOpen && <><button className="fixed inset-0 z-10 cursor-default" aria-label={t('safety.closeMenu')} onClick={() => setSafetyMenuOpen(false)} /><div className="absolute right-0 top-full z-20 mt-2 w-44 overflow-hidden rounded-2xl border py-1 text-left shadow-xl" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}><button onClick={() => { setSafetyMenuOpen(false); openReport(String(profile.id), 'user'); }} className="flex w-full items-center gap-2 px-4 py-3 text-xs font-semibold hover:bg-[var(--color-hover)]"><Flag className="h-4 w-4" />{t('safety.reportUser')}</button><button onClick={blockUser} className="flex w-full items-center gap-2 px-4 py-3 text-xs font-semibold text-rose-700 hover:bg-rose-50"><ShieldBan className="h-4 w-4" />{t('safety.blockUser')}</button></div></>}</div>}</>
                 )}
               </div>
             </div>
@@ -383,15 +383,15 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
           ].map(({ label, value, onClick }) => (
             onClick ? (
               <button key={label} onClick={onClick}
-                className="p-3 rounded-2xl border text-center hover:opacity-80 transition-opacity"
+                className="min-w-0 px-1 py-3 sm:p-3 rounded-2xl border text-center hover:opacity-80 transition-opacity"
                 style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }}>
                 <p className="font-serif text-xl font-bold" style={{ color: 'var(--color-text)' }}>{value}</p>
-                <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--color-muted)' }}>{label}</p>
+                <p className="whitespace-nowrap text-[9px] sm:text-[10px] font-bold uppercase leading-none tracking-normal sm:tracking-wider" style={{ color: 'var(--color-muted)', whiteSpace: 'nowrap' }}>{label}</p>
               </button>
             ) : (
-              <div key={label} className="p-3 rounded-2xl border" style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }}>
+              <div key={label} className="min-w-0 px-1 py-3 sm:p-3 rounded-2xl border" style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }}>
                 <p className="font-serif text-xl font-bold" style={{ color: 'var(--color-text)' }}>{value}</p>
-                <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--color-muted)' }}>{label}</p>
+                <p className="whitespace-nowrap text-[9px] sm:text-[10px] font-bold uppercase leading-none tracking-normal sm:tracking-wider" style={{ color: 'var(--color-muted)', whiteSpace: 'nowrap' }}>{label}</p>
               </div>
             )
           ))}
