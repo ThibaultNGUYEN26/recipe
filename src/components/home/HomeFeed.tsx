@@ -75,6 +75,7 @@ export default function HomeFeed() {
   const { language, t } = useLanguage();
   const { user } = useAuth();
   const [activeFilter, setActiveFilter] = useState<'all' | 'following' | 'trending' | 'quick' | 'vegetarian'>('all');
+  const [followedAuthorIds, setFollowedAuthorIds] = useState<Set<number>>(new Set());
 
   const { data, isLoading: loading } = useQuery({
     queryKey: ['feed', language, user?.id],
@@ -183,7 +184,12 @@ export default function HomeFeed() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {(activeFilter === 'all' ? gridRecipes : filteredRecipes).map((r) => (
-            <RecipeCard key={r.slug} recipe={r} />
+            <RecipeCard
+              key={r.slug}
+              recipe={r}
+              isFollowingAuthor={Boolean(r.isFollowing || (r.authorId != null && followedAuthorIds.has(r.authorId)))}
+              onAuthorFollowed={(authorId) => setFollowedAuthorIds((current) => new Set(current).add(authorId))}
+            />
           ))}
         </div>
       )}

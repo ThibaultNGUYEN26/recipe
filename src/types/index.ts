@@ -33,9 +33,11 @@ export interface RecipeListItem {
   authorIsVerified?: boolean;
   authorName?: string | null;
   authorAvatar?: string | null;
+  isFollowing?: boolean;
   avgRating?: number | null;
   ratingCount?: number;
   likeCount?: number;
+  isLiked?: boolean;
   commentCount?: number;
   makeCount?: number;
   savedCategory?: SavedCategory | null;

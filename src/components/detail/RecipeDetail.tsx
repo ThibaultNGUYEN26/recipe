@@ -296,7 +296,7 @@ export default function RecipeDetail() {
     if (!response.ok) return;
     const result = await response.json();
     queryClient.setQueryData<RecipeDetailType>(['recipe', slug, contentLanguage ?? language], (old) =>
-      old ? { ...old, isLiked: !old.isLiked, likeCount: result.likeCount } : old
+      old ? { ...old, isLiked: Boolean(result.isLiked), likeCount: result.likeCount } : old
     );
   }
 

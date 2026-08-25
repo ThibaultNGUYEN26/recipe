@@ -28,7 +28,10 @@ export function useRecipeSocket(userId?: number) {
 
       ws.onmessage = (e) => {
         try {
-          const msg = JSON.parse(e.data) as { type: string; slug?: string; notification?: unknown; count?: number };
+          const msg = JSON.parse(e.data) as {
+            type: string; slug?: string; notification?: unknown; count?: number; likeCount?: number;
+            commentCount?: number; makeCount?: number; avgRating?: number | null; ratingCount?: number; interaction?: string;
+          };
           if (msg.type === 'recipe:created' || msg.type === 'recipe:updated' || msg.type === 'recipe:deleted') {
             queryClient.invalidateQueries({ queryKey: ['feed'] });
             queryClient.invalidateQueries({ queryKey: ['discover'] });
@@ -40,6 +43,27 @@ export function useRecipeSocket(userId?: number) {
             window.dispatchEvent(new CustomEvent('ws:notification-count', { detail: msg.count }));
           } else if (msg.type === 'user:follow') {
             window.dispatchEvent(new CustomEvent('ws:user-follow', { detail: msg }));
+          } else if (msg.type === 'recipe:like' && msg.slug && typeof msg.likeCount === 'number') {
+            queryClient.setQueriesData({ queryKey: ['recipe', msg.slug] }, (old: unknown) => (
+              old && typeof old === 'object' ? { ...old, likeCount: msg.likeCount } : old
+            ));
+            window.dispatchEvent(new CustomEvent('ws:recipe-like', { detail: msg }));
+          } else if (msg.type === 'recipe:stats' && msg.slug) {
+            queryClient.setQueriesData({ queryKey: ['recipe', msg.slug] }, (old: unknown) => {
+              if (!old || typeof old !== 'object') return old;
+              return {
+                ...old,
+                ...(typeof msg.commentCount === 'number' && { commentCount: msg.commentCount }),
+                ...(typeof msg.makeCount === 'number' && { makeCount: msg.makeCount }),
+                ...(msg.avgRating !== undefined && { avgRating: msg.avgRating }),
+                ...(typeof msg.ratingCount === 'number' && { ratingCount: msg.ratingCount }),
+              };
+            });
+            if (msg.interaction === 'comments') queryClient.invalidateQueries({ queryKey: ['comments', msg.slug] });
+            if (msg.interaction === 'makes') queryClient.invalidateQueries({ queryKey: ['recipe-makes', msg.slug] });
+            queryClient.invalidateQueries({ queryKey: ['feed'] });
+            queryClient.invalidateQueries({ queryKey: ['discover'] });
+            window.dispatchEvent(new CustomEvent('ws:recipe-stats', { detail: msg }));
           }
         } catch {}
       };

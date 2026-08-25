@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Heart, MessageCircle, Bookmark, BookmarkCheck, Star, Clock, ChefHat, Share2, UserPlus, UserMinus, Sparkles } from 'lucide-react';
+import { Heart, MessageCircle, Bookmark, BookmarkCheck, Star, Clock, ChefHat, Share2, UserPlus, Sparkles } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { RecipeListItem } from '../../types';
 
@@ -15,14 +15,19 @@ import VerifiedBadge from '../profile/VerifiedBadge';
 
 const API = import.meta.env.VITE_API_URL;
 
-interface Props { recipe: RecipeListItem; hideAuthor?: boolean }
+interface Props {
+  recipe: RecipeListItem;
+  hideAuthor?: boolean;
+  isFollowingAuthor?: boolean;
+  onAuthorFollowed?: (authorId: number) => void;
+}
 
 function imgSrc(url: string | null | undefined) {
   if (!url) return null;
   return url.startsWith('/') ? `${API}${url}` : url;
 }
 
-export default function RecipeCard({ recipe, hideAuthor = false }: Props) {
+export default function RecipeCard({ recipe, hideAuthor = false, isFollowingAuthor = false, onAuthorFollowed }: Props) {
   const { openSaveModal, openShare, showToast } = useUI();
   const { user } = useAuth();
   const { t } = useLanguage();
@@ -33,21 +38,32 @@ export default function RecipeCard({ recipe, hideAuthor = false }: Props) {
     ? `/u/${encodeURIComponent(recipe.authorUsername)}`
     : recipe.authorId ? `/profile/${recipe.authorId}` : null;
 
-  const [isFollowing, setIsFollowing] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
-  const [isLiked, setIsLiked] = useState(false);
+  const [isLiked, setIsLiked] = useState(Boolean(recipe.isLiked));
   const [likeCount, setLikeCount] = useState(recipe.likeCount ?? 0);
+
+  useEffect(() => {
+    setIsLiked(Boolean(recipe.isLiked));
+  }, [recipe.isLiked]);
+
+  useEffect(() => {
+    function handleLiveLike(event: Event) {
+      const detail = (event as CustomEvent<{ slug: string; likeCount: number }>).detail;
+      if (detail.slug === recipe.slug) setLikeCount(detail.likeCount);
+    }
+    window.addEventListener('ws:recipe-like', handleLiveLike);
+    return () => window.removeEventListener('ws:recipe-like', handleLiveLike);
+  }, [recipe.slug]);
 
   async function handleFollow(e: React.MouseEvent) {
     e.preventDefault(); e.stopPropagation();
     if (!user) { navigate('/login'); return; }
     setFollowLoading(true);
     try {
-      const method = isFollowing ? 'DELETE' : 'POST';
-      const res = await apiFetch(`/api/users/${recipe.authorId}/follow`, { method });
-      if (res.ok) {
-        setIsFollowing(!isFollowing);
-        showToast(isFollowing ? 'Unfollowed' : 'Following!');
+      const res = await apiFetch(`/api/users/${recipe.authorId}/follow`, { method: 'POST' });
+      if (res.ok || res.status === 409) {
+        onAuthorFollowed?.(recipe.authorId!);
+        showToast('Following!');
       }
     } finally {
       setFollowLoading(false);
@@ -61,7 +77,7 @@ export default function RecipeCard({ recipe, hideAuthor = false }: Props) {
     const res = await apiFetch(`/api/recipes/${recipe.slug}/like`, { method });
     if (res.ok) {
       const data = await res.json();
-      setIsLiked(!isLiked);
+      setIsLiked(Boolean(data.isLiked));
       setLikeCount(data.likeCount);
     }
   }
@@ -129,11 +145,11 @@ export default function RecipeCard({ recipe, hideAuthor = false }: Props) {
             </div>
           </div>
         </Link>
-        {recipe.authorId && recipe.authorId !== user?.id && (
+        {recipe.authorId && recipe.authorId !== user?.id && !isFollowingAuthor && (
           <button onClick={handleFollow} disabled={followLoading}
             className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-amber-800 text-white hover:bg-amber-900 transition-all shadow-sm disabled:opacity-60">
-            {isFollowing ? <UserMinus className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}
-            <span>{isFollowing ? 'Following' : 'Follow'}</span>
+            <UserPlus className="w-3.5 h-3.5" />
+            <span>Follow</span>
           </button>
         )}
       </div>

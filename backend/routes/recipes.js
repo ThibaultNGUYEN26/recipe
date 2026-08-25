@@ -10,7 +10,7 @@ import { createNotification } from "../lib/notify.js";
 import { diversifyRecommendations, scoreRecommendation } from "../lib/recommendations.js";
 import { normalizeLanguage, selectRecipeTranslation } from "../lib/translations.js";
 import { fetchTikTokImport, validateTikTokUrl } from "../lib/tiktokImport.js";
-import { broadcastRecipeEvent } from "../lib/ws.js";
+import { broadcastRecipeEvent, broadcastRecipeLikeEvent, broadcastRecipeStatsEvent } from "../lib/ws.js";
 import { likeRateLimit } from "../middleware/rateLimit.js";
 import { blockedUserIds, usersAreBlocked } from "../lib/blocks.js";
 import { normalizeMakeInput } from "../lib/makes.js";
@@ -48,6 +48,18 @@ router.get("/", optionalAuthenticate, async (req, res) => {
       },
       orderBy: { createdAt: "desc" },
     });
+    const followedAuthorIds = new Set(req.user
+      ? (await prisma.follow.findMany({
+          where: { followerId: req.user.id, followingId: { in: recipes.map((recipe) => recipe.authorId).filter(Boolean) } },
+          select: { followingId: true },
+        })).map((follow) => follow.followingId)
+      : []);
+    const likedRecipeIds = new Set(req.user
+      ? (await prisma.recipeLike.findMany({
+          where: { userId: req.user.id, recipeId: { in: recipes.map((recipe) => recipe.id) } },
+          select: { recipeId: true },
+        })).map((like) => like.recipeId)
+      : []);
 
     const formatted = recipes.map((r) => {
       const selected = selectRecipeTranslation(r, lang);
@@ -66,6 +78,8 @@ router.get("/", optionalAuthenticate, async (req, res) => {
         authorIsVerified: r.author?.isVerified ?? false,
         authorName: r.author?.name ?? null,
         authorAvatar: r.author?.avatarUrl ?? null,
+        isFollowing: followedAuthorIds.has(r.authorId),
+        isLiked: likedRecipeIds.has(r.id),
         avgRating,
         ratingCount: r.ratings.length,
         likeCount: r._count.likes,
@@ -92,7 +106,7 @@ router.get("/recommended", optionalAuthenticate, async (req, res) => {
 
   try {
     const excludedAuthors = await blockedUserIds(userId);
-    const [recipes, saved, rated, viewed, follows] = await Promise.all([
+    const [recipes, saved, rated, viewed, follows, likedRecipes] = await Promise.all([
       prisma.recipe.findMany({
         where: { isPublic: true, ...(userId ? { authorId: { not: userId, notIn: excludedAuthors } } : {}) },
         include: {
@@ -113,6 +127,7 @@ router.get("/recommended", optionalAuthenticate, async (req, res) => {
       userId ? prisma.rating.findMany({ where: { userId, score: { gte: 4 } }, select: { recipeId: true, score: true, recipe: { select: { category: { select: { slug: true } }, tags: true } } } }) : [],
       userId ? prisma.recipeView.findMany({ where: { viewerId: userId, viewedAt: { gte: recentFrom } }, select: { recipeId: true, recipe: { select: { category: { select: { slug: true } }, tags: true } } } }) : [],
       userId ? prisma.follow.findMany({ where: { followerId: userId }, select: { followingId: true } }) : [],
+      userId ? prisma.recipeLike.findMany({ where: { userId }, select: { recipeId: true } }) : [],
     ]);
 
     const categories = new Map();
@@ -129,6 +144,7 @@ router.get("/recommended", optionalAuthenticate, async (req, res) => {
     for (const item of rated) addPreference(item.recipe, 2);
     for (const item of viewed) addPreference(item.recipe, 0.35);
     const savedIds = new Set(saved.map((item) => item.recipeId));
+    const likedRecipeIds = new Set(likedRecipes.map((item) => item.recipeId));
     const preferences = {
       categories,
       tags,
@@ -183,6 +199,8 @@ router.get("/recommended", optionalAuthenticate, async (req, res) => {
         authorIsVerified: recipe.author?.isVerified ?? false,
         authorName: recipe.author?.name ?? null,
         authorAvatar: recipe.author?.avatarUrl ?? null,
+        isFollowing: preferences.following.has(recipe.authorId),
+        isLiked: likedRecipeIds.has(recipe.id),
         contentLanguage: selected.contentLanguage,
         originalLanguage: selected.originalLanguage,
         availableLanguages: selected.availableLanguages,
@@ -564,6 +582,7 @@ router.post("/:slug/rate", authenticate, async (req, res) => {
     });
 
     res.json({ avgRating: agg._avg.score, ratingCount: agg._count.score, myRating: score });
+    broadcastRecipeStatsEvent(recipe.slug, { avgRating: agg._avg.score, ratingCount: agg._count.score, interaction: 'rating' });
     if (recipe.authorId) createNotification({ userId: recipe.authorId, actorId: req.user.id, type: "rating", recipeId: recipe.id });
   } catch (err) {
     console.error(err);
@@ -675,7 +694,8 @@ router.post("/:slug/like", authenticate, likeRateLimit, async (req, res) => {
       create: { userId: req.user.id, recipeId: recipe.id },
     });
     const likeCount = await prisma.recipeLike.count({ where: { recipeId: recipe.id } });
-    res.json({ likeCount });
+    res.json({ likeCount, isLiked: true });
+    broadcastRecipeLikeEvent(recipe.slug, likeCount);
     if (recipe.authorId && recipe.authorId !== req.user.id) {
       createNotification({ userId: recipe.authorId, actorId: req.user.id, type: "like", recipeId: recipe.id });
     }
@@ -692,7 +712,8 @@ router.delete("/:slug/like", authenticate, likeRateLimit, async (req, res) => {
     if (!recipe) return res.status(404).json({ error: "Recipe not found" });
     await prisma.recipeLike.deleteMany({ where: { userId: req.user.id, recipeId: recipe.id } });
     const likeCount = await prisma.recipeLike.count({ where: { recipeId: recipe.id } });
-    res.json({ likeCount });
+    res.json({ likeCount, isLiked: false });
+    broadcastRecipeLikeEvent(recipe.slug, likeCount);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message || "Failed to unlike recipe" });
@@ -776,6 +797,7 @@ router.post("/:slug/makes", authenticate, (req, res, next) => {
     }
     const count = await prisma.recipeMake.count({ where: { recipeId: recipe.id } });
     res.status(existing ? 200 : 201).json({ entry: formatMake(entry), count });
+    broadcastRecipeStatsEvent(req.params.slug, { makeCount: count, interaction: 'makes' });
     if (!existing && recipe.authorId && recipe.authorId !== req.user.id) {
       createNotification({ userId: recipe.authorId, actorId: req.user.id, type: "made_it", recipeId: recipe.id });
     }
@@ -796,6 +818,7 @@ router.delete("/:slug/makes", authenticate, async (req, res) => {
     if (entry?.imageUrl?.startsWith("/uploads/")) fs.unlink(`${uploadsDir}/${entry.imageUrl.slice("/uploads/".length)}`, () => {});
     const count = await prisma.recipeMake.count({ where: { recipeId: recipe.id } });
     res.json({ count });
+    broadcastRecipeStatsEvent(req.params.slug, { makeCount: count, interaction: 'makes' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message || "Failed to remove your make" });

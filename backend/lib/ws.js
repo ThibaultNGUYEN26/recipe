@@ -51,6 +51,22 @@ export function broadcastRecipeEvent(type, slug) {
   }
 }
 
+export function broadcastRecipeLikeEvent(slug, likeCount) {
+  if (!wss) return;
+  const msg = JSON.stringify({ type: 'recipe:like', slug, likeCount });
+  for (const client of wss.clients) {
+    if (client.readyState === 1) { try { client.send(msg); } catch { /* ignore failed socket sends */ } }
+  }
+}
+
+export function broadcastRecipeStatsEvent(slug, stats) {
+  if (!wss) return;
+  const msg = JSON.stringify({ type: 'recipe:stats', slug, ...stats });
+  for (const client of wss.clients) {
+    if (client.readyState === 1) { try { client.send(msg); } catch { /* ignore failed socket sends */ } }
+  }
+}
+
 export function pushNotificationToUser(userId, payload) {
   const sockets = userSockets.get(userId);
   if (!sockets) return;

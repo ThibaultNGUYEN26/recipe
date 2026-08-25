@@ -446,7 +446,8 @@ router.get("/:id/recipes", optionalAuthenticate, async (req, res) => {
         images: { where: { isMain: true } },
         translations: true,
         author: { select: { id: true, name: true, username: true, avatarUrl: true, isVerified: true } },
-        _count: { select: { ratings: true, comments: true } },
+        ...(req.user && { likes: { where: { userId: req.user.id }, select: { id: true } } }),
+        _count: { select: { ratings: true, comments: true, likes: true } },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -471,6 +472,8 @@ router.get("/:id/recipes", optionalAuthenticate, async (req, res) => {
         authorIsVerified: r.author.isVerified,
         ratingCount: r._count.ratings,
         commentCount: r._count.comments,
+        likeCount: r._count.likes,
+        isLiked: Boolean(r.likes?.length),
       };
     }));
   } catch (err) {

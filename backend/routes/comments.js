@@ -4,6 +4,7 @@ import { authenticate, optionalAuthenticate } from "../middleware/authenticate.j
 import { createNotification } from "../lib/notify.js";
 import { commentRateLimit, likeRateLimit } from "../middleware/rateLimit.js";
 import { blockedUserIds, usersAreBlocked } from "../lib/blocks.js";
+import { broadcastRecipeStatsEvent } from "../lib/ws.js";
 
 const router = Router({ mergeParams: true });
 
@@ -84,7 +85,9 @@ router.post("/", authenticate, commentRateLimit, async (req, res) => {
       },
     });
 
+    const commentCount = await prisma.comment.count({ where: { recipeId: recipe.id } });
     res.status(201).json(formatComment(comment, req.user.id));
+    broadcastRecipeStatsEvent(req.params.slug, { commentCount, interaction: 'comments' });
 
     // Notify recipe author and parent comment author
     if (recipe.authorId) createNotification({ userId: recipe.authorId, actorId: req.user.id, type: "comment", recipeId: recipe.id });
@@ -107,7 +110,9 @@ router.delete("/:id", authenticate, async (req, res) => {
     if (comment.userId !== req.user.id) return res.status(403).json({ error: "Not your comment" });
 
     await prisma.comment.delete({ where: { id: commentId } });
+    const commentCount = await prisma.comment.count({ where: { recipeId: comment.recipeId } });
     res.json({ ok: true });
+    broadcastRecipeStatsEvent(req.params.slug, { commentCount, interaction: 'comments' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message || "Failed to delete comment" });
@@ -128,12 +133,14 @@ router.post("/:id/like", authenticate, likeRateLimit, async (req, res) => {
     if (existing) {
       await prisma.commentLike.delete({ where: { commentId_userId: { commentId, userId: req.user.id } } });
       const count = await prisma.commentLike.count({ where: { commentId } });
+      broadcastRecipeStatsEvent(req.params.slug, { interaction: 'comments' });
       return res.json({ isLiked: false, likesCount: count });
     }
 
     await prisma.commentLike.create({ data: { commentId, userId: req.user.id } });
     const count = await prisma.commentLike.count({ where: { commentId } });
     res.json({ isLiked: true, likesCount: count });
+    broadcastRecipeStatsEvent(req.params.slug, { interaction: 'comments' });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message || "Failed to toggle like" });
