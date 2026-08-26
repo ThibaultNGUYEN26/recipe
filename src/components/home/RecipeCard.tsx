@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Heart, MessageCircle, Bookmark, BookmarkCheck, Star, Clock, ChefHat, Share2, UserPlus, Sparkles } from 'lucide-react';
+import { Heart, MessageCircle, Bookmark, BookmarkCheck, Star, Clock, ChefHat, Share2, UserPlus, Sparkles, Users } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { RecipeListItem } from '../../types';
 
@@ -42,10 +42,15 @@ export default function RecipeCard({ recipe, hideAuthor = false, isFollowingAuth
   const [followLoading, setFollowLoading] = useState(false);
   const [isLiked, setIsLiked] = useState(Boolean(recipe.isLiked));
   const [likeCount, setLikeCount] = useState(recipe.likeCount ?? 0);
+  const [makeCount, setMakeCount] = useState(recipe.makeCount ?? 0);
 
   useEffect(() => {
     setIsLiked(Boolean(recipe.isLiked));
   }, [recipe.isLiked]);
+
+  useEffect(() => {
+    setMakeCount(recipe.makeCount ?? 0);
+  }, [recipe.makeCount]);
 
   useEffect(() => {
     function handleLiveLike(event: Event) {
@@ -54,6 +59,15 @@ export default function RecipeCard({ recipe, hideAuthor = false, isFollowingAuth
     }
     window.addEventListener('ws:recipe-like', handleLiveLike);
     return () => window.removeEventListener('ws:recipe-like', handleLiveLike);
+  }, [recipe.slug]);
+
+  useEffect(() => {
+    function handleLiveStats(event: Event) {
+      const detail = (event as CustomEvent<{ slug: string; makeCount?: number }>).detail;
+      if (detail.slug === recipe.slug && typeof detail.makeCount === 'number') setMakeCount(detail.makeCount);
+    }
+    window.addEventListener('ws:recipe-stats', handleLiveStats);
+    return () => window.removeEventListener('ws:recipe-stats', handleLiveStats);
   }, [recipe.slug]);
 
   async function handleFollow(e: React.MouseEvent) {
@@ -207,7 +221,7 @@ export default function RecipeCard({ recipe, hideAuthor = false, isFollowingAuth
         </Link>
 
         {/* Time & difficulty */}
-        {(info?.totalTime || info?.difficulty) && (
+        {(info?.totalTime || info?.difficulty || recipe.makeCount != null) && (
         <div className="recipe-card__muted recipe-card__divider flex items-center gap-4 text-xs font-semibold mt-3 pt-3 border-t">
           {info?.totalTime && (
             <div className="flex items-center gap-1">
@@ -221,6 +235,10 @@ export default function RecipeCard({ recipe, hideAuthor = false, isFollowingAuth
               <span>{info.difficulty}</span>
             </div>
           )}
+          <div className="flex items-center gap-1 whitespace-nowrap">
+            <Users className="recipe-card__accent w-3.5 h-3.5" />
+            <span>{t('recipeCard.madeIt', { count: formatCompactCount(makeCount, language) })}</span>
+          </div>
         </div>
         )}
 

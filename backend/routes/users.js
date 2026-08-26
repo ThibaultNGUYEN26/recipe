@@ -447,7 +447,7 @@ router.get("/:id/recipes", optionalAuthenticate, async (req, res) => {
         translations: true,
         author: { select: { id: true, name: true, username: true, avatarUrl: true, isVerified: true } },
         ...(req.user && { likes: { where: { userId: req.user.id }, select: { id: true } } }),
-        _count: { select: { ratings: true, comments: true, likes: true } },
+        _count: { select: { ratings: true, comments: true, likes: true, makes: true } },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -461,6 +461,7 @@ router.get("/:id/recipes", optionalAuthenticate, async (req, res) => {
         description: t?.description,
         image: r.images[0]?.url || r.sourceThumbnailUrl || null,
         category: { slug: r.category.slug, label: r.category.label },
+        info: r.info,
         contentLanguage: selected.contentLanguage,
         originalLanguage: selected.originalLanguage,
         availableLanguages: selected.availableLanguages,
@@ -473,6 +474,7 @@ router.get("/:id/recipes", optionalAuthenticate, async (req, res) => {
         ratingCount: r._count.ratings,
         commentCount: r._count.comments,
         likeCount: r._count.likes,
+        makeCount: r._count.makes,
         isLiked: Boolean(r.likes?.length),
       };
     }));

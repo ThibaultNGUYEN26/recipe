@@ -170,7 +170,7 @@ function CommentItem({ comment, recipeSlug, onDelete, onLike }: {
 export default function RecipeDetail() {
   const { slug: slugParam, recipeSlug } = useParams<{ slug?: string; recipeSlug?: string }>();
   const slug = slugParam ?? recipeSlug;
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const { user } = useAuth();
   const { openShare, openSaveModal, openReport, startTimer, showToast } = useUI();
   const navigate = useNavigate();
@@ -454,7 +454,7 @@ export default function RecipeDetail() {
       {/* The upload flow stores an 800×800 crop; display that crop directly. */}
       <div className="relative mx-auto mt-4 w-[calc(100%-2rem)] max-w-2xl lg:max-w-none rounded-3xl overflow-hidden aspect-square lg:aspect-[21/9] mb-6">
         {recipe.image ? (
-          <img src={imgSrc(recipe.image)!} alt={recipe.title} className="h-full w-full object-cover object-center" />
+          <img src={imgSrc(recipe.image)!} alt={recipe.title} className="h-full w-full object-cover object-center lg:object-[center_65%]" />
         ) : (
           <div className="w-full h-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 40%, #d97706 100%)' }}>
             <ChefHat size={56} className="opacity-30" style={{ color: '#78350f' }} />
@@ -520,12 +520,13 @@ export default function RecipeDetail() {
         {/* ── Sidebar: stats + ingredients + rating (order 2 on mobile, right col on desktop) ── */}
         <aside className="order-2 lg:[grid-column:2] lg:[grid-row:1/span_3] lg:sticky lg:top-10 space-y-4">
           {/* Stats */}
-          <div className="responsive-single-column-narrow grid grid-cols-4 lg:grid-cols-2 gap-2">
+          <div className="responsive-single-column-narrow grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-2 gap-2">
             {[
-              { icon: <Clock size={16} />, label: 'Total', value: info?.totalTime as string },
-              { icon: <Clock size={16} />, label: 'Prep', value: info?.prepTime as string },
-              { icon: <ChefHat size={16} />, label: 'Level', value: info?.difficulty as string },
-              { icon: <Star size={16} />, label: 'Rating', value: recipe.avgRating ? recipe.avgRating.toFixed(1) : '—' },
+              { icon: <Clock size={16} />, label: t('detail.totalTime'), value: info?.totalTime as string },
+              { icon: <Clock size={16} />, label: t('detail.prepTime'), value: info?.prepTime as string },
+              { icon: <Clock size={16} />, label: t('detail.cookTime'), value: info?.cookTime as string },
+              { icon: <ChefHat size={16} />, label: t('detail.level'), value: info?.difficulty as string },
+              { icon: <Star size={16} />, label: t('detail.rating'), value: recipe.avgRating ? recipe.avgRating.toFixed(1) : '—' },
             ].map(({ icon, label, value }) => value ? (
               <div key={label} className="flex flex-col items-center gap-1 py-3 rounded-2xl" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
                 <span className="text-amber-800">{icon}</span>

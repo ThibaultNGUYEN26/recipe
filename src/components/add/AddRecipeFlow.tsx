@@ -276,7 +276,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
   function showValidationErrors(errors: string[]) {
     setValidationErrors(new Set(errors));
     const firstError = errors[0];
-    const targetPage = ['title', 'slug', 'category'].includes(firstError) ? 1 : 2;
+    const targetPage = ['title', 'slug', 'category', 'prepTime', 'cookTime'].includes(firstError) ? 1 : 2;
     setStepPage(targetPage);
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
@@ -441,6 +441,8 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
     if (!originalTranslation.title.trim()) errors.push('title');
     if (!slug.trim()) errors.push('slug');
     if (!categoryId) errors.push('category');
+    if (!prepTime || Number(prepTime) <= 0) errors.push('prepTime');
+    if (!cookTime || Number(cookTime) <= 0) errors.push('cookTime');
     if (tr.ingredients.length > 1) {
       tr.ingredients.forEach((section) => {
         if (!section.section.trim()) errors.push(`section:${section.id}`);
@@ -789,13 +791,17 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
           {/* Metrics */}
           <div className="responsive-single-column-narrow grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { label: t('add.prepTimeLabel'), value: prepTime, onChange: setPrepTime, placeholder: '15' },
-              { label: t('add.cookTimeLabel'), value: cookTime, onChange: setCookTime, placeholder: '30' },
-            ].map(({ label, value, onChange, placeholder }) => (
+              { key: 'prepTime', label: t('add.prepTimeLabel'), value: prepTime, onChange: setPrepTime, placeholder: '15' },
+              { key: 'cookTime', label: t('add.cookTimeLabel'), value: cookTime, onChange: setCookTime, placeholder: '30' },
+            ].map(({ key, label, value, onChange, placeholder }) => (
               <div key={label} className="space-y-1">
                 <label className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">{label}</label>
-                <input type="number" min={0} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
-                  className="w-full bg-stone-50 border border-stone-200 text-stone-900 text-xs font-bold rounded-xl px-3 py-2 focus:outline-none text-center" />
+                <input type="number" min={1} required value={value} onChange={(e) => {
+                  onChange(e.target.value);
+                  if (Number(e.target.value) > 0) clearValidationError(key);
+                }} placeholder={placeholder} aria-invalid={validationErrors.has(key)} data-validation-key={key}
+                  className={`w-full bg-stone-50 border text-stone-900 text-xs font-bold rounded-xl px-3 py-2 focus:outline-none text-center ${validationErrors.has(key) ? 'border-rose-500 ring-2 ring-rose-200' : 'border-stone-200'}`} />
+                {validationErrors.has(key) && <p className="text-[10px] font-semibold text-rose-600">{t('add.timeRequired')}</p>}
               </div>
             ))}
             <div className="space-y-1">

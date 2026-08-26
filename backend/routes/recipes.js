@@ -31,6 +31,11 @@ function handleRecipeMedia(req, res, next) {
   });
 }
 
+function hasRequiredRecipeTimes(info) {
+  const minutes = (value) => Number.parseFloat(String(value ?? "").replace(/[^0-9.]/g, ""));
+  return minutes(info?.prepTime) > 0 && minutes(info?.cookTime) > 0;
+}
+
 // GET /api/recipes
 router.get("/", optionalAuthenticate, async (req, res) => {
   const { lang = "fr", category } = req.query;
@@ -44,7 +49,7 @@ router.get("/", optionalAuthenticate, async (req, res) => {
         translations: true,
         author: { select: { id: true, username: true, name: true, avatarUrl: true, isVerified: true } },
         ratings: { select: { score: true } },
-        _count: { select: { likes: true } },
+        _count: { select: { likes: true, comments: true, makes: true } },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -83,6 +88,8 @@ router.get("/", optionalAuthenticate, async (req, res) => {
         avgRating,
         ratingCount: r.ratings.length,
         likeCount: r._count.likes,
+        commentCount: r._count.comments,
+        makeCount: r._count.makes,
         contentLanguage: selected.contentLanguage,
         originalLanguage: selected.originalLanguage,
         availableLanguages: selected.availableLanguages,
@@ -386,6 +393,12 @@ router.post("/", authenticate, handleRecipeMedia, async (req, res) => {
   }
 
   try {
+    const parsedInfo = info ? JSON.parse(info) : null;
+    if (!hasRequiredRecipeTimes(parsedInfo)) {
+      removeUploadedFiles();
+      return res.status(400).json({ error: "Preparation and cooking times are required" });
+    }
+
     // Support both multi-translation JSON payload and legacy single-lang fields
     let translationRows = [];
     if (rawTranslations) {
@@ -413,7 +426,7 @@ router.post("/", authenticate, handleRecipeMedia, async (req, res) => {
           categoryId: parseInt(categoryId),
           isPublic: isPublic === "true",
           authorId: req.user.id,
-          info: info ? JSON.parse(info) : null,
+          info: parsedInfo,
           tags: tags ? JSON.parse(tags) : null,
           videoUrl,
           sourcePlatform: validatedSourceUrl ? "tiktok" : null,
@@ -503,12 +516,18 @@ router.put("/:slug", authenticate, handleRecipeMedia, async (req, res) => {
       translationRows = JSON.parse(rawTranslations);
     }
 
+    const parsedInfo = info ? JSON.parse(info) : null;
+    if (info && !hasRequiredRecipeTimes(parsedInfo)) {
+      removeUploadedFiles();
+      return res.status(400).json({ error: "Preparation and cooking times are required" });
+    }
+
     await prisma.$transaction(async (tx) => {
       await tx.recipe.update({
         where: { slug },
         data: {
           ...(categoryId ? { categoryId: parseInt(categoryId) } : {}),
-          ...(info ? { info: JSON.parse(info) } : {}),
+          ...(info ? { info: parsedInfo } : {}),
           ...(tags ? { tags: JSON.parse(tags) } : {}),
           ...(rawOriginalLanguage ? { originalLanguage: normalizeLanguage(rawOriginalLanguage) } : {}),
           ...(isPublic !== undefined ? { isPublic: isPublic === "true" } : {}),
