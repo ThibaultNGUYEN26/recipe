@@ -87,8 +87,16 @@ export function useRecipeSocket(userId?: number) {
       disposed = true;
       clearTimeout(reconnectTimer);
       clearInterval(heartbeatTimer);
-      if (ws) ws.onclose = null;
-      ws?.close();
+      if (ws) {
+        ws.onopen = null;
+        ws.onmessage = null;
+        ws.onerror = null;
+        ws.onclose = null;
+        if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+          ws.close(1000, 'Client cleanup');
+        }
+        ws = null;
+      }
     };
   }, [queryClient, userId]);
 }

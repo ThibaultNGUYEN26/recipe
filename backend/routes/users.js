@@ -393,12 +393,15 @@ router.get("/by-username/:username", optionalAuthenticate, async (req, res) => {
     if (!user) return res.status(404).json({ error: "User not found" });
     if (await usersAreBlocked(req.user?.id, user.id)) return res.status(404).json({ error: "User not found" });
 
-    const [followerCount, followingCount, recipeCount] = await Promise.all([
+    const [followerCount, followingCount, recipeCount, viewerFollow] = await Promise.all([
       prisma.follow.count({ where: { followingId: user.id } }),
       prisma.follow.count({ where: { followerId: user.id } }),
       prisma.recipe.count({ where: { authorId: user.id, isPublic: true } }),
+      req.user?.id
+        ? prisma.follow.findUnique({ where: { followerId_followingId: { followerId: req.user.id, followingId: user.id } }, select: { id: true } })
+        : null,
     ]);
-    res.json({ ...user, avatarUrl: user.avatarUrl || DEFAULT_AVATAR_URL, followerCount, followingCount, recipeCount });
+    res.json({ ...user, avatarUrl: user.avatarUrl || DEFAULT_AVATAR_URL, followerCount, followingCount, recipeCount, isFollowing: Boolean(viewerFollow) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message || "Failed to fetch user" });
@@ -418,13 +421,16 @@ router.get("/:id", optionalAuthenticate, async (req, res) => {
     if (!user) return res.status(404).json({ error: "User not found" });
     if (await usersAreBlocked(req.user?.id, user.id)) return res.status(404).json({ error: "User not found" });
 
-    const [followerCount, followingCount, recipeCount] = await Promise.all([
+    const [followerCount, followingCount, recipeCount, viewerFollow] = await Promise.all([
       prisma.follow.count({ where: { followingId: userId } }),
       prisma.follow.count({ where: { followerId: userId } }),
       prisma.recipe.count({ where: { authorId: userId, isPublic: true } }),
+      req.user?.id
+        ? prisma.follow.findUnique({ where: { followerId_followingId: { followerId: req.user.id, followingId: userId } }, select: { id: true } })
+        : null,
     ]);
 
-    res.json({ ...user, avatarUrl: user.avatarUrl || DEFAULT_AVATAR_URL, followerCount, followingCount, recipeCount });
+    res.json({ ...user, avatarUrl: user.avatarUrl || DEFAULT_AVATAR_URL, followerCount, followingCount, recipeCount, isFollowing: Boolean(viewerFollow) });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message || "Failed to fetch user" });
@@ -506,7 +512,7 @@ router.post("/:id/follow", authenticate, followRateLimit, async (req, res) => {
     await prisma.follow.create({ data: { followerId: req.user.id, followingId, sourceRecipeId } });
     createNotification({ userId: followingId, actorId: req.user.id, type: "follow" });
     broadcastFollowEvent(followingId, req.user.id, 1);
-    res.status(201).json({ ok: true });
+    res.status(201).json({ ok: true, isFollowing: true });
   } catch (err) {
     if (err.code === "P2002") return res.status(409).json({ error: "Already following" });
     console.error(err);
@@ -518,9 +524,9 @@ router.post("/:id/follow", authenticate, followRateLimit, async (req, res) => {
 router.delete("/:id/follow", authenticate, followRateLimit, async (req, res) => {
   const followingId = parseInt(req.params.id);
   try {
-    await prisma.follow.deleteMany({ where: { followerId: req.user.id, followingId } });
-    broadcastFollowEvent(followingId, req.user.id, -1);
-    res.json({ ok: true });
+    const deleted = await prisma.follow.deleteMany({ where: { followerId: req.user.id, followingId } });
+    if (deleted.count) broadcastFollowEvent(followingId, req.user.id, -1);
+    res.json({ ok: true, isFollowing: false });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message || "Failed to unfollow" });

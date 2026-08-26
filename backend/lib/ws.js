@@ -1,15 +1,25 @@
 import jwt from 'jsonwebtoken';
 import process from 'node:process';
-import { WebSocketServer } from 'ws';
+import { WebSocket, WebSocketServer } from 'ws';
 import { SESSION_COOKIE_NAME } from './session.js';
 import { prisma } from './prisma.js';
 
 let wss = null;
 const userSockets = new Map(); // userId -> Set<WebSocket>
 
+function removeUserSocket(ws) {
+  if (ws.userId == null) return;
+  const sockets = userSockets.get(ws.userId);
+  if (!sockets) return;
+  sockets.delete(ws);
+  if (sockets.size === 0) userSockets.delete(ws.userId);
+}
+
 export function createWsServer(server) {
   wss = new WebSocketServer({ server });
   wss.on('connection', (ws, request) => {
+    ws.isAlive = true;
+    ws.on('pong', () => { ws.isAlive = true; });
     const sessionToken = request.headers.cookie
       ?.split(';')
       .map((part) => part.trim().split('='))
@@ -27,20 +37,35 @@ export function createWsServer(server) {
           .catch(() => {});
       } catch { /* anonymous socket */ }
     }
-    ws.on('error', () => { /* close/reconnect is handled by the client */ });
+    ws.on('error', () => removeUserSocket(ws));
     ws.on('message', (data) => {
+      ws.isAlive = true;
       try {
         const msg = JSON.parse(data);
         if (msg.type === 'ping') ws.send(JSON.stringify({ type: 'pong' }));
       } catch { /* ignore malformed client messages */ }
     });
-    ws.on('close', () => {
-      if (ws.userId) {
-        userSockets.get(ws.userId)?.delete(ws);
-        if (userSockets.get(ws.userId)?.size === 0) userSockets.delete(ws.userId);
-      }
-    });
+    ws.on('close', () => removeUserSocket(ws));
   });
+
+  const heartbeat = setInterval(() => {
+    for (const client of wss.clients) {
+      if (client.readyState !== WebSocket.OPEN) {
+        removeUserSocket(client);
+        if (client.readyState !== WebSocket.CLOSED) client.terminate();
+        continue;
+      }
+      if (client.isAlive === false) {
+        removeUserSocket(client);
+        client.terminate();
+        continue;
+      }
+      client.isAlive = false;
+      client.ping();
+    }
+  }, 30_000);
+  heartbeat.unref?.();
+  wss.on('close', () => clearInterval(heartbeat));
 }
 
 export function broadcastRecipeEvent(type, slug) {

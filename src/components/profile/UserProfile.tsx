@@ -107,8 +107,9 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
       setEditName(profile.name ?? '');
       setEditUsername(profile.username ?? '');
       setEditBio(profile.bio ?? '');
+      setIsFollowing(Boolean(profile.isFollowing));
     }
-  }, [profile?.id]);
+  }, [profile?.id, profile?.isFollowing]);
 
   useEffect(() => {
     if (isOwnProfile && me?.avatarUrl && profile) {
@@ -119,16 +120,6 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
   }, [isOwnProfile, me?.avatarUrl, profile?.id]);
 
   useEffect(() => {
-    if (!profile || !me || !userId) return;
-    apiFetch(`/api/users/${userId}/followers`)
-      .then((r) => r.json())
-      .then((followers) => {
-        if (Array.isArray(followers)) setIsFollowing(followers.some((f: { id: number }) => f.id === me.id));
-      })
-      .catch(() => {});
-  }, [userId, me?.id]);
-
-  useEffect(() => {
     if (!userId) return;
     const handler = (e: Event) => {
       const { followingId, followerId, delta } = (e as CustomEvent).detail as { followingId: number; followerId: number; delta: number };
@@ -137,12 +128,13 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
         const patch: Partial<UserProfileType> = {};
         if (followingId === +userId) patch.followerCount = old.followerCount + delta;
         if (followerId === +userId) patch.followingCount = old.followingCount + delta;
+        if (followingId === +userId && followerId === me?.id) patch.isFollowing = delta > 0;
         return Object.keys(patch).length ? { ...old, ...patch } : old;
       });
     };
     window.addEventListener('ws:user-follow', handler);
     return () => window.removeEventListener('ws:user-follow', handler);
-  }, [userId, queryClient]);
+  }, [userId, me?.id, queryClient]);
 
   async function toggleFollow() {
     if (!me) { navigate('/login'); return; }
@@ -155,9 +147,15 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
         body: method === 'POST' ? JSON.stringify({ sourceRecipeSlug }) : undefined,
       });
       if (res.ok) {
-        setIsFollowing(!isFollowing);
+        const data = await res.json();
+        const nextFollowing = typeof data.isFollowing === 'boolean' ? data.isFollowing : !isFollowing;
+        setIsFollowing(nextFollowing);
+        queryClient.setQueryData(['profile', userId], (old: UserProfileType) => old ? { ...old, isFollowing: nextFollowing } : old);
         queryClient.invalidateQueries({ queryKey: ['feed'] });
         showToast(t(isFollowing ? 'profile.unfollowedToast' : 'profile.followedToast'));
+      } else if (res.status === 409) {
+        setIsFollowing(true);
+        queryClient.setQueryData(['profile', userId], (old: UserProfileType) => old ? { ...old, isFollowing: true } : old);
       }
     } finally {
       setFollowLoading(false);

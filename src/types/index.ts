@@ -119,6 +119,7 @@ export interface UserProfile {
   followerCount: number;
   followingCount: number;
   recipeCount: number;
+  isFollowing?: boolean;
   createdAt?: string;
 }
 
