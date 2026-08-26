@@ -114,6 +114,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
 
   // Shared fields
   const [slug, setSlug] = useState('');
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(Boolean(editSlug));
   const [categoryId, setCategoryId] = useState('');
   const [categories, setCategories] = useState<{ id: number; slug: string; label: string }[]>([]);
   const [difficulty, setDifficulty] = useState('Facile');
@@ -177,6 +178,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
       const d = JSON.parse(raw);
       if (d.translations) setTranslations(d.translations);
       if (d.slug) setSlug(d.slug);
+      if (d.slugManuallyEdited) setSlugManuallyEdited(true);
       if (d.categoryId) setCategoryId(d.categoryId);
       if (d.difficulty) setDifficulty(d.difficulty);
       if (d.prepTime) setPrepTime(d.prepTime);
@@ -197,7 +199,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
     try {
       const savedAt = new Date();
       localStorage.setItem(DRAFT_KEY, JSON.stringify({
-        stepPage, translations, slug, categoryId, difficulty,
+        stepPage, translations, slug, slugManuallyEdited, categoryId, difficulty,
         prepTime, cookTime, servings, dietaryTags, referenceTagsInput,
         coverImage: coverImage.startsWith('blob:') ? PRESET_IMAGES[0].url : coverImage,
         imageFocalPoint,
@@ -209,7 +211,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
     } catch {
       return false;
     }
-  }, [editSlug, stepPage, translations, slug, categoryId, difficulty,
+  }, [editSlug, stepPage, translations, slug, slugManuallyEdited, categoryId, difficulty,
     prepTime, cookTime, servings, dietaryTags, referenceTagsInput, coverImage, imageFocalPoint]);
 
   // Auto-save draft (debounced, new recipes only)
@@ -387,7 +389,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
           tips: payload.draft.tips.length ? [...payload.draft.tips] : previous[editLang].tips,
         },
       }));
-      setSlug((current) => current || slugify(payload.draft.title));
+      if (!slugManuallyEdited) setSlug(slugify(payload.draft.title));
       setImportedSource(payload.source);
       setReferenceTagsInput((current) => {
         const tags = [...new Set([...parseReferenceTags(current), ...(payload.draft.tags || [])])];
@@ -601,7 +603,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
   function discardDraft() {
     localStorage.removeItem(DRAFT_KEY);
     setTranslations({ fr: emptyTranslation(), en: emptyTranslation(), es: emptyTranslation() });
-    setSlug(''); setCategoryId(''); setDifficulty('Facile');
+    setSlug(''); setSlugManuallyEdited(false); setCategoryId(''); setDifficulty('Facile');
     setPrepTime(''); setCookTime(''); setServings('4');
     setDietaryTags([]); setReferenceTagsInput('');
     setCoverImage(PRESET_IMAGES[0].url); setStepPage(1);
@@ -760,7 +762,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                 onChange={(e) => {
                   setTr({ title: e.target.value });
                   if (e.target.value.trim()) clearValidationError('title');
-                  if (!slug) {
+                  if (!slugManuallyEdited) {
                     const generatedSlug = slugify(e.target.value);
                     setSlug(generatedSlug);
                     if (generatedSlug) clearValidationError('slug');
@@ -897,6 +899,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                 </div>
                 <input type="text" value={slug} onChange={(e) => {
                   const value = slugify(e.target.value);
+                  setSlugManuallyEdited(true);
                   setSlug(value);
                   if (value) clearValidationError('slug');
                 }}

@@ -66,6 +66,7 @@ export function createWsServer(server) {
   }, 30_000);
   heartbeat.unref?.();
   wss.on('close', () => clearInterval(heartbeat));
+  return wss;
 }
 
 export function broadcastRecipeEvent(type, slug) {

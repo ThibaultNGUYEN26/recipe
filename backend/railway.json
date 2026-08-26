@@ -5,7 +5,11 @@
     "buildCommand": "npm install --omit=dev && npm run build"
   },
   "deploy": {
-    "startCommand": "npm run db:migrate && npm start",
+    "preDeployCommand": ["npm run db:migrate"],
+    "startCommand": "node index.js",
+    "healthcheckPath": "/health",
+    "healthcheckTimeout": 300,
+    "drainingSeconds": "30",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 3
   }

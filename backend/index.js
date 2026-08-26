@@ -26,6 +26,7 @@ import { selectRecipeTranslation } from "./lib/translations.js";
 import { authenticate, requireAdmin } from "./middleware/authenticate.js";
 import { csrfProtection } from "./middleware/csrf.js";
 import { buildSitemap } from "./lib/sitemap.js";
+import { prisma } from "./lib/prisma.js";
 
 export const app = express();
 app.set("trust proxy", 1);
@@ -45,6 +46,9 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(cookieParser());
+app.get("/health", (_req, res) => {
+  res.status(200).json({ status: "ok" });
+});
 app.use(csrfProtection);
 
 app.get("/sitemap.xml", async (_req, res) => {
@@ -151,7 +155,36 @@ if (process.env.NODE_ENV !== "test") {
   await assertMediaInfrastructureReady();
   await cleanupUnreferencedLegacyUploads().catch((error) => console.error("Legacy upload cleanup failed", error));
   const server = http.createServer(app);
-  createWsServer(server);
+  const wsServer = createWsServer(server);
   server.listen(PORT, () => console.log(`🚀 API running on port ${PORT}`));
-  startMediaCleanup();
+  const mediaCleanupTimer = startMediaCleanup();
+
+  let shuttingDown = false;
+  const shutdown = (signal) => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    console.log(`${signal} received, shutting down gracefully`);
+    clearInterval(mediaCleanupTimer);
+
+    for (const client of wsServer.clients) client.terminate();
+    wsServer.close();
+
+    const forceExitTimer = setTimeout(() => {
+      console.error("Graceful shutdown timed out");
+      process.exit(1);
+    }, 25_000);
+    forceExitTimer.unref();
+
+    server.close(async (error) => {
+      clearTimeout(forceExitTimer);
+      await prisma.$disconnect().catch((disconnectError) => {
+        console.error("Failed to disconnect Prisma", disconnectError);
+      });
+      if (error) console.error("HTTP server shutdown failed", error);
+      process.exit(error ? 1 : 0);
+    });
+  };
+
+  process.once("SIGTERM", () => shutdown("SIGTERM"));
+  process.once("SIGINT", () => shutdown("SIGINT"));
 }
