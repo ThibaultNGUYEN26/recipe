@@ -324,6 +324,7 @@ const messages = {
   'add.shortDescriptionPlaceholder': 'Describe el sabor, la textura y la historia…',
   'add.urlSlugLabel': 'Slug de URL *',
   'add.urlSlugPlaceholder': 'mi-receta',
+  'add.urlSlugHelp': 'Este identificador se convierte en la dirección web de la receta. Usa un nombre corto y único; los espacios y acentos se convierten automáticamente.',
   'add.categoryLabel': 'Categoría *',
   'add.newCategoryButton': '+ Nueva',
   'add.noCategoriesEmpty': 'Sin categorías — crea una',

@@ -324,6 +324,7 @@ const messages = {
   'add.shortDescriptionPlaceholder': 'Mô tả hương vị, kết cấu và câu chuyện…',
   'add.urlSlugLabel': 'Đường dẫn URL *',
   'add.urlSlugPlaceholder': 'my-recipe-slug',
+  'add.urlSlugHelp': 'Nội dung này sẽ trở thành địa chỉ web của công thức. Hãy dùng tên ngắn gọn, duy nhất; dấu cách và dấu tiếng Việt sẽ được chuyển đổi tự động.',
   'add.categoryLabel': 'Danh mục *',
   'add.newCategoryButton': '+ Mới',
   'add.noCategoriesEmpty': 'Chưa có danh mục — hãy tạo một danh mục',
