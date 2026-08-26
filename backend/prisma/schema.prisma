@@ -234,6 +234,8 @@ model RecipeImage {
   recipe   Recipe  @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   url      String
   isMain   Boolean @default(true)
+  focalX   Float   @default(50)
+  focalY   Float   @default(50)
 
   @@unique([recipeId, isMain])
 }

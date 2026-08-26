@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Heart, MessageCircle, Send, X } from 'lucide-react';
@@ -20,7 +20,7 @@ function avatarUrl(url: string | null | undefined) {
 
 function CommentRow({ comment, slug, onChanged, nested = false }: { comment: Comment; slug: string; onChanged: () => void; nested?: boolean }) {
   const { user } = useAuth();
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
 
   async function toggleLike() {
     if (!user) return;
@@ -38,7 +38,7 @@ function CommentRow({ comment, slug, onChanged, nested = false }: { comment: Com
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <span className="truncate text-xs font-bold">{comment.author.name ?? 'Savor Chef'}</span>
+            <span className="truncate text-xs font-bold">{comment.author.name ?? t('comments.savorChef')}</span>
             {comment.author.isVerified && <VerifiedBadge className="h-3.5 w-3.5 shrink-0" />}
             <span className="ml-auto shrink-0 text-[10px]" style={{ color: 'var(--color-muted)' }}>{new Date(comment.createdAt).toLocaleDateString(language)}</span>
           </div>
@@ -61,6 +61,7 @@ export default function CommentsModal() {
   const queryClient = useQueryClient();
   const [text, setText] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const commentInputRef = useRef<HTMLInputElement>(null);
 
   const slug = commentsTarget?.slug;
   const { data: comments = [], isLoading } = useQuery<Comment[]>({
@@ -108,10 +109,10 @@ export default function CommentsModal() {
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
           {isLoading ? <div className="flex h-full items-center justify-center"><LoadingPan /></div> : comments.length ? (
             <div className="space-y-5">{comments.map((comment) => <CommentRow key={comment.id} comment={comment} slug={commentsTarget.slug} onChanged={() => queryClient.invalidateQueries({ queryKey: ['comments', commentsTarget.slug] })} />)}</div>
-          ) : <div className="flex h-full flex-col items-center justify-center text-center"><MessageCircle className="mb-3 h-10 w-10 opacity-25" /><p className="font-semibold">{t('comments.empty')}</p><p className="mt-1 text-xs" style={{ color: 'var(--color-muted)' }}>{t('comments.emptyHint')}</p></div>}
+          ) : <div className="flex h-full flex-col items-center justify-center text-center"><MessageCircle className="mb-3 h-10 w-10 opacity-25" /><p className="font-semibold">{t('comments.empty')}</p><p className="mt-1 text-xs" style={{ color: 'var(--color-muted)' }}>{t('comments.emptyHint')}</p>{user ? <button type="button" onClick={() => commentInputRef.current?.focus()} className="mt-5 rounded-2xl bg-amber-800 px-5 py-2.5 text-xs font-bold text-white shadow-sm">{t('comments.startConversation')}</button> : <Link to="/login" onClick={dismiss} className="mt-5 rounded-2xl bg-amber-800 px-5 py-2.5 text-xs font-bold text-white shadow-sm">{t('comments.startConversation')}</Link>}</div>}
         </div>
         <footer className="border-t p-4" style={{ borderColor: 'var(--color-border)' }}>
-          {user ? <div className="flex items-center gap-2"><input value={text} onChange={(event) => setText(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && submit()} placeholder={t('comments.placeholder')} className="min-w-0 flex-1 rounded-2xl border px-4 py-3 text-sm outline-none" style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }} /><button onClick={submit} disabled={!text.trim() || submitting} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-800 text-white disabled:opacity-40"><Send className="h-4 w-4" /></button></div>
+          {user ? <div className="flex items-center gap-2"><input ref={commentInputRef} value={text} onChange={(event) => setText(event.target.value)} onKeyDown={(event) => event.key === 'Enter' && submit()} placeholder={t('comments.placeholder')} className="min-w-0 flex-1 rounded-2xl border px-4 py-3 text-sm outline-none" style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }} /><button onClick={submit} disabled={!text.trim() || submitting} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-800 text-white disabled:opacity-40"><Send className="h-4 w-4" /></button></div>
             : <Link to="/login" onClick={dismiss} className="block text-center text-sm font-semibold" style={{ color: 'var(--color-accent)' }}>{t('comments.signIn')}</Link>}
         </footer>
       </section>

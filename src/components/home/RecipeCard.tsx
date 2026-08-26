@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Heart, MessageCircle, Bookmark, BookmarkCheck, Star, Clock, ChefHat, Share2, UserPlus, Sparkles, Users } from 'lucide-react';
+import { Heart, MessageCircle, Bookmark, BookmarkCheck, Star, Clock, ChefHat, Share2, UserPlus, Sparkles, Users, Check } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { RecipeListItem } from '../../types';
 
@@ -156,6 +156,13 @@ export default function RecipeCard({ recipe, hideAuthor = false, isFollowingAuth
             <div className="flex items-center gap-1 min-w-0">
               <h4 className="recipe-card__primary text-xs font-bold truncate">{recipe.authorName ?? 'Savor Chef'}</h4>
               {recipe.authorIsVerified && <VerifiedBadge className="w-3.5 h-3.5" />}
+              {recipe.authorId !== user?.id && isFollowingAuthor && (
+                <span className="ml-1 inline-flex shrink-0 items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-semibold"
+                  style={{ color: 'var(--color-accent)', backgroundColor: 'var(--color-accent-soft)' }}>
+                  <Check className="h-2.5 w-2.5" strokeWidth={3} />
+                  {t('profile.following')}
+                </span>
+              )}
             </div>
           </div>
         </Link>
@@ -163,7 +170,7 @@ export default function RecipeCard({ recipe, hideAuthor = false, isFollowingAuth
           <button onClick={handleFollow} disabled={followLoading}
             className="flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full bg-amber-800 text-white hover:bg-amber-900 transition-all shadow-sm disabled:opacity-60">
             <UserPlus className="w-3.5 h-3.5" />
-            <span>Follow</span>
+            <span>{t('profile.follow')}</span>
           </button>
         )}
       </div>

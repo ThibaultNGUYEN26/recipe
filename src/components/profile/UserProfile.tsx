@@ -9,7 +9,7 @@ import RecipeCard from '../home/RecipeCard';
 import type { UserProfile as UserProfileType, RecipeListItem } from '../../types';
 import {
   Edit3, MapPin, Utensils, Bookmark, BarChart3,
-  X, UserPlus, UserMinus, Camera, Crop as CropIcon, Share2, Flag, ShieldBan, MoreHorizontal
+  X, UserPlus, UserMinus, Check, Camera, Crop as CropIcon, Share2, Flag, ShieldBan, MoreHorizontal
 } from 'lucide-react';
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
@@ -349,9 +349,9 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
                     </button>
                   </>
                 ) : (
-                  <><button onClick={toggleFollow} disabled={followLoading}
-                    className={`${isFollowing ? 'profile-secondary border' : 'profile-primary'} flex min-h-11 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap px-2 py-2 text-xs font-bold rounded-2xl transition-colors shadow-sm`}>
-                    {isFollowing ? <UserMinus className="w-3.5 h-3.5" /> : <UserPlus className="w-3.5 h-3.5" />}
+                  <><button onClick={toggleFollow} disabled={followLoading} aria-pressed={isFollowing}
+                    className={`${isFollowing ? 'profile-following-button border' : 'profile-primary'} flex min-h-11 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap px-3 py-2 text-xs font-bold rounded-2xl transition-colors shadow-sm`}>
+                    {isFollowing ? <Check className="w-3.5 h-3.5" strokeWidth={3} /> : <UserPlus className="w-3.5 h-3.5" />}
                     {t(isFollowing ? 'profile.following' : 'profile.follow')}
                   </button>{me && <div className="relative"><button onClick={() => setSafetyMenuOpen((open) => !open)} className="flex h-11 w-11 items-center justify-center rounded-2xl border" aria-label={t('safety.moreActions')} aria-expanded={safetyMenuOpen} style={{ borderColor: 'var(--color-border)' }}><MoreHorizontal className="h-4 w-4" /></button>{safetyMenuOpen && <><button className="fixed inset-0 z-10 cursor-default" aria-label={t('safety.closeMenu')} onClick={() => setSafetyMenuOpen(false)} /><div className="absolute right-0 top-full z-20 mt-2 w-44 overflow-hidden rounded-2xl border py-1 text-left shadow-xl" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}><button onClick={() => { setSafetyMenuOpen(false); openReport(String(profile.id), 'user'); }} className="flex w-full items-center gap-2 px-4 py-3 text-xs font-semibold hover:bg-[var(--color-hover)]"><Flag className="h-4 w-4" />{t('safety.reportUser')}</button><button onClick={blockUser} className="flex w-full items-center gap-2 px-4 py-3 text-xs font-semibold text-rose-700 hover:bg-rose-50"><ShieldBan className="h-4 w-4" />{t('safety.blockUser')}</button></div></>}</div>}</>
                 )}
@@ -421,8 +421,11 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
           <p className="text-xs mt-1" style={{ color: 'var(--color-muted)' }}>
             {activeTab === 'recipes' && isOwnProfile ? t('profile.shareFirst') : ''}
           </p>
-          {activeTab === 'recipes' && isOwnProfile && (
-            <Link to="/add-recipe" className="profile-accent mt-4 inline-block text-xs font-semibold underline">{t('profile.addRecipe')}</Link>
+          {isOwnProfile && (
+            <Link to={activeTab === 'recipes' ? '/add-recipe' : '/search'}
+              className="profile-primary mt-5 inline-flex items-center justify-center rounded-2xl px-5 py-2.5 text-xs font-bold shadow-sm">
+              {t(activeTab === 'recipes' ? 'profile.createFirstRecipe' : 'profile.exploreRecipes')}
+            </Link>
           )}
         </div>
       ) : (
@@ -453,9 +456,24 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
                   <LoadingPan />
                 </div>
               ) : followList.length === 0 ? (
-                <p className="text-center text-xs py-12" style={{ color: 'var(--color-muted)' }}>
-                  {t(followListModal === 'followers' ? 'profile.noFollowers' : 'profile.notFollowingAnyone')}
-                </p>
+                <div className="flex flex-col items-center px-6 py-12 text-center">
+                  <p className="text-xs" style={{ color: 'var(--color-muted)' }}>
+                    {t(followListModal === 'followers' ? 'profile.noFollowers' : 'profile.notFollowingAnyone')}
+                  </p>
+                  {followListModal === 'followers' && (
+                    <button type="button" onClick={() => {
+                      setFollowListModal(null);
+                      openShare({
+                        type: 'profile',
+                        path: profile.username ? `/u/${encodeURIComponent(profile.username)}` : `/profile/${profile.id}`,
+                        title: profile.name ?? (profile.username ? `@${profile.username}` : t('profile.creator')),
+                        text: profile.bio ?? t('profile.shareText', { name: profile.name ?? profile.username ?? t('profile.creator') }),
+                      });
+                    }} className="profile-primary mt-5 inline-flex items-center gap-2 rounded-2xl px-5 py-2.5 text-xs font-bold shadow-sm">
+                      <Share2 className="h-4 w-4" /> {t('profile.shareProfileAction')}
+                    </button>
+                  )}
+                </div>
               ) : (
                 <ul className="divide-y" style={{ borderColor: 'var(--color-border)' }}>
                   {followList.map((u) => (

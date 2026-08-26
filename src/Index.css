@@ -584,6 +584,17 @@ select:disabled {
   background-color: var(--color-hover);
 }
 
+.profile-following-button {
+  color: var(--color-accent);
+  background-color: var(--color-accent-soft);
+  border-color: var(--color-accent-soft-border);
+}
+
+.profile-following-button:hover {
+  background-color: var(--color-hover);
+  border-color: var(--color-accent);
+}
+
 .profile-tab.profile-tab--active {
   color: #fff;
   background-color: #92400e;
@@ -899,6 +910,20 @@ a {
   padding-bottom: calc(6rem + env(safe-area-inset-bottom));
 }
 
+@media (max-width: 47.999rem) {
+  html {
+    scroll-padding-bottom: calc(7rem + env(safe-area-inset-bottom));
+  }
+
+  .app-main {
+    padding-bottom: calc(7rem + env(safe-area-inset-bottom));
+  }
+
+  .savor-footer {
+    padding-bottom: 0;
+  }
+}
+
 .app-modal-backdrop {
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -1026,4 +1051,14 @@ a {
   outline: none;
   border-radius: 3px;
   box-shadow: 0 0 0 2px var(--color-accent);
+}
+
+.recipe-detail-cover-image {
+  object-position: center;
+}
+
+@media (min-width: 1024px) {
+  .recipe-detail-cover-image {
+    object-position: var(--recipe-image-focal-x, 50%) var(--recipe-image-focal-y, 50%);
+  }
 }

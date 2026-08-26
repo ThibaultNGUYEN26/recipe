@@ -198,11 +198,10 @@ export default function SavedRecipes() {
               ? t('saved.emptyMineHint')
               : t('saved.emptySavedHint')}
           </p>
-          {activeTab === 'mine' && (
-            <Link to="/add-recipe" className="saved-accent mt-4 inline-block text-xs font-semibold underline">
-              {t('saved.addFirst')}
-            </Link>
-          )}
+          <Link to={activeTab === 'mine' ? '/add-recipe' : '/search'}
+            className="saved-primary mt-5 inline-flex items-center justify-center rounded-2xl px-5 py-2.5 text-xs font-bold shadow-sm">
+            {t(activeTab === 'mine' ? 'saved.addFirst' : 'saved.exploreRecipes')}
+          </Link>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

@@ -1,6 +1,6 @@
 import { LoadingPan } from '../ui/LoadingPan';
 import { useMinLoading } from '../../hooks/useMinLoading';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -21,10 +21,6 @@ const API = import.meta.env.VITE_API_URL;
 function imgSrc(url: string | null) {
   if (!url) return null;
   return url.startsWith('/') ? `${API}${url}` : url;
-}
-
-function languageName(language: string | undefined) {
-  return language === 'fr' ? 'French' : language === 'en' ? 'English' : language === 'es' ? 'Spanish' : language === 'vi' ? 'Vietnamese' : language?.toUpperCase() || 'original';
 }
 
 function StarRow({ value, onChange, readonly }: { value: number; onChange?: (v: number) => void; readonly?: boolean }) {
@@ -77,6 +73,7 @@ function CommentItem({ comment, recipeSlug, onDelete, onLike }: {
   onLike: (id: number, isLiked: boolean, likesCount: number) => void;
 }) {
   const { user } = useAuth();
+  const { language, t } = useLanguage();
   const { openReport } = useUI();
   const [replying, setReplying] = useState(false);
   const [replyText, setReplyText] = useState('');
@@ -119,9 +116,9 @@ function CommentItem({ comment, recipeSlug, onDelete, onLike }: {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{comment.author.name ?? 'Anonymous'}</span>
+            <span className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{comment.author.name ?? t('detail.anonymous')}</span>
             {comment.author.isVerified && <VerifiedBadge className="w-3.5 h-3.5" />}
-            <span className="text-xs" style={{ color: 'var(--color-muted)' }}>{new Date(comment.createdAt).toLocaleDateString()}</span>
+            <span className="text-xs" style={{ color: 'var(--color-muted)' }}>{new Date(comment.createdAt).toLocaleDateString(language)}</span>
           </div>
           <p className="text-sm mt-0.5 leading-relaxed" style={{ color: 'var(--color-text)' }}>{comment.text}</p>
           <div className="flex items-center gap-3 mt-1.5">
@@ -130,7 +127,7 @@ function CommentItem({ comment, recipeSlug, onDelete, onLike }: {
               {comment.likesCount > 0 && comment.likesCount}
             </button>
             {user && !comment.parentId && (
-              <button onClick={() => setReplying(!replying)} className="text-xs" style={{ color: 'var(--color-muted)' }}>Reply</button>
+              <button onClick={() => setReplying(!replying)} className="text-xs" style={{ color: 'var(--color-muted)' }}>{t('detail.reply')}</button>
             )}
             {user?.id === comment.author.id && (
               <button onClick={() => onDelete(comment.id)} className="text-xs" style={{ color: 'var(--color-muted)' }}>
@@ -138,7 +135,7 @@ function CommentItem({ comment, recipeSlug, onDelete, onLike }: {
               </button>
             )}
             {user && user.id !== comment.author.id && (
-              <button onClick={() => openReport(String(comment.id), 'comment')} aria-label="Report comment" style={{ color: 'var(--color-muted)' }}><Flag size={13} /></button>
+              <button onClick={() => openReport(String(comment.id), 'comment')} aria-label={t('detail.reportComment')} style={{ color: 'var(--color-muted)' }}><Flag size={13} /></button>
             )}
           </div>
           {replying && (
@@ -146,7 +143,7 @@ function CommentItem({ comment, recipeSlug, onDelete, onLike }: {
               <input
                 value={replyText}
                 onChange={(e) => setReplyText(e.target.value)}
-                placeholder="Write a reply…"
+                placeholder={t('detail.writeReply')}
                 className="flex-1 text-sm px-3 py-1.5 rounded-xl outline-none"
                 style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
                 onKeyDown={(e) => e.key === 'Enter' && submitReply()}
@@ -183,6 +180,7 @@ export default function RecipeDetail() {
   const [comments, setComments] = useState<Comment[]>([]);
   const [commentText, setCommentText] = useState('');
   const [submittingComment, setSubmittingComment] = useState(false);
+  const commentInputRef = useRef<HTMLInputElement>(null);
   const [contentLanguage, setContentLanguage] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -212,8 +210,8 @@ export default function RecipeDetail() {
   const showLoader = useMinLoading(loading);
 
   useSeo({
-    title: recipe?.title || 'Recipe',
-    description: recipe?.description || 'View ingredients, instructions and community tips for this recipe on Savor.',
+    title: recipe?.title || t('detail.recipeFallback'),
+    description: recipe?.description || t('detail.seoDescription'),
     path: recipe?.authorUsername ? `/${recipe.authorUsername}/${recipe.slug}` : `/recipe/${slug ?? ''}`,
     image: recipe?.image ? imgSrc(recipe.image) : null,
     type: 'article',
@@ -260,7 +258,7 @@ export default function RecipeDetail() {
   }, [slug, contentLanguage, language]);
 
   async function rate(score: number) {
-    if (!user) { showToast('Sign in to rate', undefined, 'info'); return; }
+    if (!user) { showToast(t('detail.signInToRate'), undefined, 'info'); return; }
     setUserScore(score);
     const res = await apiFetch(`/api/recipes/${slug}/rate`, {
       method: 'POST',
@@ -271,12 +269,12 @@ export default function RecipeDetail() {
       queryClient.setQueryData<RecipeDetailType>(['recipe', slug, contentLanguage ?? language], (old) =>
         old ? { ...old, avgRating: d.avgRating, ratingCount: d.ratingCount, myRating: d.myRating } : old
       );
-      showToast('Rating saved!');
+      showToast(t('detail.ratingSaved'));
     }
   }
 
   async function toggleSave() {
-    if (!user) { showToast('Sign in to save', undefined, 'info'); return; }
+    if (!user) { showToast(t('detail.signInToSave'), undefined, 'info'); return; }
     if (!recipe) return;
     if (recipe.isSaved) {
       await apiFetch(`/api/recipes/${slug}/save`, { method: 'DELETE' });
@@ -284,14 +282,14 @@ export default function RecipeDetail() {
         old ? { ...old, isSaved: false, savedCategoryId: null } : old
       );
       queryClient.invalidateQueries({ queryKey: ['saved'] });
-      showToast('Removed from saved');
+      showToast(t('detail.removedFromSaved'));
     } else {
       openSaveModal(slug!);
     }
   }
 
   async function toggleRecipeLike() {
-    if (!user) { showToast('Sign in to like recipes', undefined, 'info'); return; }
+    if (!user) { showToast(t('detail.signInToLike'), undefined, 'info'); return; }
     if (!recipe) return;
     const response = await apiFetch(`/api/recipes/${slug}/like`, { method: recipe.isLiked ? 'DELETE' : 'POST' });
     if (!response.ok) return;
@@ -335,10 +333,10 @@ export default function RecipeDetail() {
       queryClient.invalidateQueries({ queryKey: ['feed'] });
       queryClient.invalidateQueries({ queryKey: ['myRecipes'] });
       queryClient.invalidateQueries({ queryKey: ['discover'] });
-      showToast('Recipe deleted');
+      showToast(t('detail.recipeDeleted'));
       navigate('/');
     } else {
-      showToast('Failed to delete recipe', undefined, 'error');
+      showToast(t('detail.recipeDeleteFailed'), undefined, 'error');
     }
   }
 
@@ -386,8 +384,8 @@ export default function RecipeDetail() {
   if (!recipe || (recipe as { error?: string }).error) return (
     <div className="text-center py-20">
       <p className="text-4xl mb-3">🍽️</p>
-      <p style={{ color: 'var(--color-muted)' }}>Recipe not found</p>
-      <button onClick={() => navigate('/')} className="mt-4 text-sm text-amber-800 underline">Go home</button>
+      <p style={{ color: 'var(--color-muted)' }}>{t('detail.notFound')}</p>
+      <button onClick={() => navigate('/')} className="mt-4 text-sm text-amber-800 underline">{t('detail.goHome')}</button>
     </div>
   );
 
@@ -410,27 +408,27 @@ export default function RecipeDetail() {
         <div className="max-w-5xl mx-auto px-4 py-2 flex items-center justify-between">
           <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-sm" style={{ color: 'var(--color-muted)' }}>
             <ArrowLeft size={18} />
-            Back
+            {t('detail.back')}
           </button>
           <div className="flex items-center gap-2">
             {user?.id === recipe.authorId && (
               <>
-                <Link to={`/edit-recipe/${recipe.slug}`} aria-label="Edit recipe" style={{ color: 'var(--color-muted)' }}>
+                <Link to={`/edit-recipe/${recipe.slug}`} aria-label={t('detail.editRecipe')} style={{ color: 'var(--color-muted)' }}>
                   <Pencil size={18} />
                 </Link>
                 {confirmDelete ? (
                   <div className="flex items-center gap-1.5">
                     <button onClick={() => { setConfirmDelete(false); deleteRecipe(); }}
                       className="text-xs font-semibold text-white bg-rose-500 hover:bg-rose-600 px-2.5 py-1 rounded-lg transition-colors">
-                      Delete
+                      {t('detail.delete')}
                     </button>
                     <button onClick={() => setConfirmDelete(false)}
                       className="text-xs font-semibold text-stone-600 hover:text-stone-900 bg-stone-100 hover:bg-stone-200 px-2.5 py-1 rounded-lg transition-colors">
-                      Cancel
+                      {t('detail.cancel')}
                     </button>
                   </div>
                 ) : (
-                  <button onClick={() => setConfirmDelete(true)} aria-label="Delete recipe" style={{ color: 'var(--color-muted)' }}
+                  <button onClick={() => setConfirmDelete(true)} aria-label={t('detail.deleteRecipe')} style={{ color: 'var(--color-muted)' }}
                     className="hover:text-rose-600 transition-colors">
                     <Trash2 size={18} />
                   </button>
@@ -441,11 +439,11 @@ export default function RecipeDetail() {
               path: recipe.authorUsername ? `/${recipe.authorUsername}/${recipe.slug}` : `/recipe/${recipe.slug}`,
               title: recipe.title,
               text: recipe.description,
-            })} aria-label="Share recipe" style={{ color: 'var(--color-muted)' }}><Share2 size={18} /></button>
+            })} aria-label={t('detail.shareRecipe')} style={{ color: 'var(--color-muted)' }}><Share2 size={18} /></button>
             <button onClick={toggleSave} style={{ color: recipe.isSaved ? '#92400e' : 'var(--color-muted)' }}>
               {recipe.isSaved ? <BookmarkCheck size={20} className="fill-amber-800" /> : <Bookmark size={20} />}
             </button>
-            <button onClick={() => openReport(recipe.slug, 'recipe')} style={{ color: 'var(--color-muted)' }}><Flag size={17} /></button>
+            <button onClick={() => openReport(recipe.slug, 'recipe')} aria-label={t('detail.reportRecipe')} style={{ color: 'var(--color-muted)' }}><Flag size={17} /></button>
           </div>
         </div>
       </div>
@@ -454,7 +452,12 @@ export default function RecipeDetail() {
       {/* The upload flow stores an 800×800 crop; display that crop directly. */}
       <div className="relative mx-auto mt-4 w-[calc(100%-2rem)] max-w-2xl lg:max-w-none rounded-3xl overflow-hidden aspect-square lg:aspect-[21/9] mb-6">
         {recipe.image ? (
-          <img src={imgSrc(recipe.image)!} alt={recipe.title} className="h-full w-full object-cover object-center lg:object-[center_65%]" />
+          <img src={imgSrc(recipe.image)!} alt={recipe.title}
+            className="recipe-detail-cover-image h-full w-full object-cover"
+            style={{
+              '--recipe-image-focal-x': `${recipe.imageFocalPoint?.x ?? 50}%`,
+              '--recipe-image-focal-y': `${recipe.imageFocalPoint?.y ?? 50}%`,
+            } as CSSProperties} />
         ) : (
           <div className="w-full h-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 40%, #d97706 100%)' }}>
             <ChefHat size={56} className="opacity-30" style={{ color: '#78350f' }} />
@@ -480,14 +483,14 @@ export default function RecipeDetail() {
           {recipe.availableLanguages && recipe.availableLanguages.length > 1 && (
             <div className="flex items-center gap-2 mt-2 text-xs" style={{ color: 'var(--color-muted)' }}>
               <Languages className="w-3.5 h-3.5" />
-              {recipe.isTranslated && <span>Translated from {languageName(recipe.originalLanguage)}</span>}
+              {recipe.isTranslated && <span>{t('detail.translatedFrom', { language: t(`detail.language.${recipe.originalLanguage ?? 'original'}`) })}</span>}
               {recipe.isTranslated ? (
                 <button onClick={() => setContentLanguage(recipe.originalLanguage ?? null)} className="font-bold underline" style={{ color: 'var(--color-accent)' }}>
-                  See original
+                  {t('detail.seeOriginal')}
                 </button>
               ) : recipe.availableLanguages.includes(language) && language !== recipe.originalLanguage ? (
                 <button onClick={() => setContentLanguage(language)} className="font-bold underline" style={{ color: 'var(--color-accent)' }}>
-                  See translation
+                  {t('detail.seeTranslation')}
                 </button>
               ) : null}
             </div>
@@ -512,7 +515,7 @@ export default function RecipeDetail() {
             </a>
             <span aria-hidden="true">·</span>
             <a href="#community-makes" className="flex items-center gap-1.5">
-              <ChefHat size={17} /> <span>{formatCompactCount(recipe.makeCount ?? 0, language)} made it</span>
+              <ChefHat size={17} /> <span>{t('detail.madeItCount', { count: formatCompactCount(recipe.makeCount ?? 0, language) })}</span>
             </a>
           </div>
         </div>
@@ -539,7 +542,7 @@ export default function RecipeDetail() {
           {/* Ingredients */}
           <div className="rounded-2xl p-4 space-y-3" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
             <div className="flex items-center justify-between">
-              <h2 className="font-serif text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Ingredients</h2>
+              <h2 className="font-serif text-lg font-semibold" style={{ color: 'var(--color-text)' }}>{t('detail.ingredients')}</h2>
               <div className="flex items-center gap-2">
                 <button onClick={() => setServings(Math.max(1, servings - 1))} className="w-7 h-7 rounded-full border text-lg flex items-center justify-center" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text)' }}>−</button>
                 <div className="flex items-center gap-1">
@@ -577,7 +580,7 @@ export default function RecipeDetail() {
           {/* Nutrition */}
           {recipe.nutrition && (
             <div className="rounded-2xl p-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
-              <h2 className="font-serif text-lg font-semibold mb-3" style={{ color: 'var(--color-text)' }}>Nutrition</h2>
+              <h2 className="font-serif text-lg font-semibold mb-3" style={{ color: 'var(--color-text)' }}>{t('detail.nutrition')}</h2>
               <div className="responsive-single-column-narrow grid grid-cols-2 gap-2">
                 {Object.entries(recipe.nutrition as Record<string, string>).map(([k, v]) => (
                   <div key={k} className="px-3 py-2 rounded-xl" style={{ backgroundColor: 'var(--color-subtle)', border: '1px solid var(--color-border)' }}>
@@ -594,7 +597,7 @@ export default function RecipeDetail() {
         <div className="order-3 lg:[grid-column:1] lg:[grid-row:2] space-y-6 min-w-0">
           {/* Instructions */}
           <div>
-            <h2 className="font-serif text-lg font-semibold mb-4" style={{ color: 'var(--color-text)' }}>Instructions</h2>
+            <h2 className="font-serif text-lg font-semibold mb-4" style={{ color: 'var(--color-text)' }}>{t('detail.instructions')}</h2>
             <div className="space-y-4">
               {(recipe.instructions as InstructionStep[]).map((step, i) => (
                 <div key={i} className="flex gap-4">
@@ -605,11 +608,11 @@ export default function RecipeDetail() {
                     <p className="text-sm leading-relaxed" style={{ color: 'var(--color-text)' }}>{step.text}</p>
                     {step.timerMinutes && (
                       <button
-                        onClick={() => startTimer(`Step ${step.step ?? i + 1}`, step.timerMinutes!, recipe.title)}
+                        onClick={() => startTimer(t('detail.stepNumber', { number: step.step ?? i + 1 }), step.timerMinutes!, recipe.title)}
                         className="mt-2 flex items-center gap-1.5 text-xs font-medium text-amber-800"
                       >
                         <Timer size={13} />
-                        Start {step.timerMinutes} min timer
+                        {t('detail.startTimer', { minutes: step.timerMinutes })}
                       </button>
                     )}
                   </div>
@@ -621,9 +624,9 @@ export default function RecipeDetail() {
           {/* Cooking video */}
           {recipe.videoUrl && (
             <div>
-              <h2 className="font-serif text-lg font-semibold mb-3" style={{ color: 'var(--color-text)' }}>Cooking Video</h2>
+              <h2 className="font-serif text-lg font-semibold mb-3" style={{ color: 'var(--color-text)' }}>{t('detail.cookingVideo')}</h2>
               <video controls preload="metadata" src={imgSrc(recipe.videoUrl)!} className="w-full rounded-3xl bg-black aspect-video">
-                Your browser does not support embedded videos.
+                {t('detail.videoUnsupported')}
               </video>
             </div>
           )}
@@ -635,8 +638,8 @@ export default function RecipeDetail() {
               style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
               {recipe.sourceThumbnailUrl && <img src={recipe.sourceThumbnailUrl} alt="" className="h-14 w-10 shrink-0 rounded-lg object-cover" />}
               <span className="min-w-0 flex-1">
-                <span className="block text-sm font-bold">Watch the original TikTok</span>
-                <span className="block truncate text-xs" style={{ color: 'var(--color-muted)' }}>{recipe.sourceAuthor ? `By ${recipe.sourceAuthor}` : 'Source video'}</span>
+                <span className="block text-sm font-bold">{t('detail.watchOriginalTikTok')}</span>
+                <span className="block truncate text-xs" style={{ color: 'var(--color-muted)' }}>{recipe.sourceAuthor ? t('detail.byAuthor', { author: recipe.sourceAuthor }) : t('detail.sourceVideo')}</span>
               </span>
               <ExternalLink size={17} style={{ color: 'var(--color-muted)' }} />
             </a>
@@ -645,7 +648,7 @@ export default function RecipeDetail() {
           {/* Tips */}
           {recipe.tips && (recipe.tips as string[]).length > 0 && (
             <div className="rounded-2xl p-4 space-y-2" style={{ backgroundColor: 'var(--color-accent-soft)', border: '1px solid var(--color-accent-soft-border)' }}>
-              <h3 className="text-sm font-semibold" style={{ color: 'var(--color-accent)' }}>💡 Tips</h3>
+              <h3 className="text-sm font-semibold" style={{ color: 'var(--color-accent)' }}>💡 {t('detail.tips')}</h3>
               {(recipe.tips as string[]).map((tip, i) => (
                 <p key={i} className="text-sm leading-relaxed" style={{ color: 'var(--color-accent)' }}>• {tip}</p>
               ))}
@@ -655,7 +658,7 @@ export default function RecipeDetail() {
           {/* Rating */}
           <div className="rounded-2xl p-4 space-y-3" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
             <div className="flex items-center justify-between">
-              <h2 className="font-serif text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Ratings</h2>
+              <h2 className="font-serif text-lg font-semibold" style={{ color: 'var(--color-text)' }}>{t('detail.ratings')}</h2>
               {recipe.avgRating != null && (
                 <div className="flex items-center gap-1.5">
                   <Star size={16} className="text-amber-500 fill-amber-500" />
@@ -666,12 +669,12 @@ export default function RecipeDetail() {
             </div>
             {user && user.id !== recipe.authorId ? (
               <div>
-                <p className="text-xs mb-2" style={{ color: 'var(--color-muted)' }}>{userScore ? 'Your rating' : 'Rate this recipe'}</p>
+                <p className="text-xs mb-2" style={{ color: 'var(--color-muted)' }}>{userScore ? t('detail.yourRating') : t('detail.rateRecipe')}</p>
                 <StarRow value={userScore} onChange={rate} />
               </div>
             ) : !user ? (
               <p className="text-xs" style={{ color: 'var(--color-muted)' }}>
-                <Link to="/login" className="text-amber-800 underline">Sign in</Link> to rate this recipe
+                <Link to="/login" className="text-amber-800 underline">{t('detail.signIn')}</Link> {t('detail.toRateRecipe')}
               </p>
             ) : null}
           </div>
@@ -688,7 +691,7 @@ export default function RecipeDetail() {
 
         <div id="comments" className="order-5 lg:[grid-column:1] lg:[grid-row:4] pb-6 scroll-mt-20">
           <h2 className="font-serif text-lg font-semibold mb-4" style={{ color: 'var(--color-text)' }}>
-            Comments {comments.length > 0 && <span className="text-base font-normal" style={{ color: 'var(--color-muted)' }}>({comments.length})</span>}
+            {t('comments.title')} {comments.length > 0 && <span className="text-base font-normal" style={{ color: 'var(--color-muted)' }}>({comments.length})</span>}
           </h2>
 
           {user && (
@@ -697,10 +700,10 @@ export default function RecipeDetail() {
                 {user.name?.[0]?.toUpperCase() ?? user.email[0].toUpperCase()}
               </div>
               <div className="flex-1 flex gap-2">
-                <input
+                <input ref={commentInputRef}
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
-                  placeholder="Share your thoughts…"
+                  placeholder={t('detail.shareThoughts')}
                   className="flex-1 text-sm px-4 py-2.5 rounded-2xl outline-none"
                   style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
                   onKeyDown={(e) => e.key === 'Enter' && postComment()}
@@ -717,7 +720,10 @@ export default function RecipeDetail() {
           )}
 
           {comments.length === 0 ? (
-            <p className="text-sm text-center py-6" style={{ color: 'var(--color-muted)' }}>No comments yet. Be the first!</p>
+            <div className="flex flex-col items-center py-6 text-center">
+              <p className="text-sm" style={{ color: 'var(--color-muted)' }}>{t('detail.noComments')}</p>
+              {user ? <button type="button" onClick={() => commentInputRef.current?.focus()} className="mt-4 rounded-2xl bg-amber-800 px-5 py-2.5 text-xs font-bold text-white shadow-sm">{t('comments.startConversation')}</button> : <Link to="/login" className="mt-4 rounded-2xl bg-amber-800 px-5 py-2.5 text-xs font-bold text-white shadow-sm">{t('comments.startConversation')}</Link>}
+            </div>
           ) : (
             <div className="space-y-5">
               {comments.map((c) => (

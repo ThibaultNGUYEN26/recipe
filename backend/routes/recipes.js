@@ -32,8 +32,18 @@ function handleRecipeMedia(req, res, next) {
 }
 
 function hasRequiredRecipeTimes(info) {
-  const minutes = (value) => Number.parseFloat(String(value ?? "").replace(/[^0-9.]/g, ""));
-  return minutes(info?.prepTime) > 0 && minutes(info?.cookTime) > 0;
+  const minutes = (value) => {
+    const match = String(value ?? "").match(/-?\d+(?:\.\d+)?/);
+    return match ? Number.parseFloat(match[0]) : Number.NaN;
+  };
+  const prepMinutes = minutes(info?.prepTime);
+  const cookMinutes = minutes(info?.cookTime);
+  return prepMinutes > 0 && Number.isFinite(cookMinutes) && cookMinutes >= 0;
+}
+
+function normalizeFocalPoint(value) {
+  const point = Number.parseFloat(value);
+  return Number.isFinite(point) ? Math.min(100, Math.max(0, point)) : 50;
 }
 
 // GET /api/recipes
@@ -313,6 +323,12 @@ router.get("/:slug", optionalAuthenticate, async (req, res) => {
       title: t.title,
       description: t.description,
       image: recipe.images.find((i) => i.isMain)?.url || recipe.sourceThumbnailUrl || null,
+      imageFocalPoint: recipe.images.some((i) => i.isMain)
+        ? {
+            x: recipe.images.find((i) => i.isMain).focalX,
+            y: recipe.images.find((i) => i.isMain).focalY,
+          }
+        : { x: 50, y: 50 },
       category: { slug: recipe.category.slug, label: recipe.category.label },
       info: recipe.info,
       tags: recipe.tags,
@@ -358,7 +374,7 @@ router.get("/:slug", optionalAuthenticate, async (req, res) => {
 router.post("/", authenticate, handleRecipeMedia, async (req, res) => {
   const {
     slug, categoryId, isPublic = "true",
-    info, tags, sourcePlatform, sourceUrl, sourceAuthor, sourceThumbnailUrl,
+    info, tags, sourcePlatform, sourceUrl, sourceAuthor, sourceThumbnailUrl, imageFocalX, imageFocalY,
     translations: rawTranslations,
     // single-language fallback
     lang = "fr", originalLanguage: rawOriginalLanguage, title, description, ingredients, instructions, tips, nutrition,
@@ -396,7 +412,7 @@ router.post("/", authenticate, handleRecipeMedia, async (req, res) => {
     const parsedInfo = info ? JSON.parse(info) : null;
     if (!hasRequiredRecipeTimes(parsedInfo)) {
       removeUploadedFiles();
-      return res.status(400).json({ error: "Preparation and cooking times are required" });
+      return res.status(400).json({ error: "Preparation time must be greater than zero and cooking time cannot be negative" });
     }
 
     // Support both multi-translation JSON payload and legacy single-lang fields
@@ -452,7 +468,15 @@ router.post("/", authenticate, handleRecipeMedia, async (req, res) => {
       }
 
       if (imageUrl) {
-        await tx.recipeImage.create({ data: { recipeId: r.id, url: imageUrl, isMain: true } });
+        await tx.recipeImage.create({
+          data: {
+            recipeId: r.id,
+            url: imageUrl,
+            isMain: true,
+            focalX: normalizeFocalPoint(imageFocalX),
+            focalY: normalizeFocalPoint(imageFocalY),
+          },
+        });
       }
 
       return r;
@@ -491,7 +515,7 @@ router.put("/:slug", authenticate, handleRecipeMedia, async (req, res) => {
     if (!recipe) return res.status(404).json({ error: "Recipe not found" });
     if (recipe.authorId !== req.user.id) return res.status(403).json({ error: "Not your recipe" });
 
-    const { categoryId, info, tags, originalLanguage: rawOriginalLanguage, isPublic } = req.body;
+    const { categoryId, info, tags, originalLanguage: rawOriginalLanguage, isPublic, imageFocalX, imageFocalY } = req.body;
     const rawTranslations = req.body.translations;
 
     const imageFile = req.files?.image?.[0];
@@ -519,7 +543,7 @@ router.put("/:slug", authenticate, handleRecipeMedia, async (req, res) => {
     const parsedInfo = info ? JSON.parse(info) : null;
     if (info && !hasRequiredRecipeTimes(parsedInfo)) {
       removeUploadedFiles();
-      return res.status(400).json({ error: "Preparation and cooking times are required" });
+      return res.status(400).json({ error: "Preparation time must be greater than zero and cooking time cannot be negative" });
     }
 
     await prisma.$transaction(async (tx) => {
@@ -538,13 +562,36 @@ router.put("/:slug", authenticate, handleRecipeMedia, async (req, res) => {
       if (newImageUrl) {
         const existing = recipe.images[0];
         if (existing) {
-          await tx.recipeImage.update({ where: { id: existing.id }, data: { url: newImageUrl } });
+          await tx.recipeImage.update({
+            where: { id: existing.id },
+            data: {
+              url: newImageUrl,
+              focalX: normalizeFocalPoint(imageFocalX),
+              focalY: normalizeFocalPoint(imageFocalY),
+            },
+          });
           if (existing.url.startsWith("/uploads/")) {
             fs.unlink(`${process.env.UPLOAD_DIR || "uploads"}/${existing.url.replace("/uploads/", "")}`, () => {});
           }
         } else {
-          await tx.recipeImage.create({ data: { recipeId: recipe.id, url: newImageUrl, isMain: true } });
+          await tx.recipeImage.create({
+            data: {
+              recipeId: recipe.id,
+              url: newImageUrl,
+              isMain: true,
+              focalX: normalizeFocalPoint(imageFocalX),
+              focalY: normalizeFocalPoint(imageFocalY),
+            },
+          });
         }
+      } else if (recipe.images[0] && (imageFocalX !== undefined || imageFocalY !== undefined)) {
+        await tx.recipeImage.update({
+          where: { id: recipe.images[0].id },
+          data: {
+            focalX: normalizeFocalPoint(imageFocalX ?? recipe.images[0].focalX),
+            focalY: normalizeFocalPoint(imageFocalY ?? recipe.images[0].focalY),
+          },
+        });
       }
 
       for (const tr of translationRows) {

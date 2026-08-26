@@ -5,7 +5,7 @@ import { useUI } from '../../contexts/UIContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import {
   Plus, Trash2, MoveUp, MoveDown, Sparkles, Eye,
-  ArrowRight, ArrowLeft, X, Crop as CropIcon, Video, Upload, Link2, ExternalLink, Info
+  ArrowRight, ArrowLeft, X, Crop as CropIcon, Video, Upload, Link2, ExternalLink, Info, ChevronDown
 } from 'lucide-react';
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
@@ -127,6 +127,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
   // Image
   const [coverImage, setCoverImage] = useState(PRESET_IMAGES[0].url);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageFocalPoint, setImageFocalPoint] = useState({ x: 50, y: 50 });
   const [showImagePicker, setShowImagePicker] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
@@ -138,6 +139,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
 
   const [newCategoryName, setNewCategoryName] = useState('');
   const [creatingCategory, setCreatingCategory] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Set<string>>(new Set());
@@ -148,6 +150,9 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
   const [importedSource, setImportedSource] = useState<TikTokImportSource | null>(null);
   const [importWarnings, setImportWarnings] = useState<string[]>([]);
   const [draftRestored, setDraftRestored] = useState(false);
+  const [draftSavedAt, setDraftSavedAt] = useState<Date | null>(null);
+  const [draftClock, setDraftClock] = useState(() => Date.now());
+  const [showExitDialog, setShowExitDialog] = useState(false);
 
   useEffect(() => {
     apiFetch('/api/categories')
@@ -180,10 +185,32 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
       if (d.dietaryTags) setDietaryTags(d.dietaryTags);
       if (d.referenceTagsInput) setReferenceTagsInput(d.referenceTagsInput);
       if (d.coverImage) setCoverImage(d.coverImage);
+      if (d.imageFocalPoint) setImageFocalPoint(d.imageFocalPoint);
       if (d.stepPage) setStepPage(d.stepPage);
+      if (d.savedAt) setDraftSavedAt(new Date(d.savedAt));
       setDraftRestored(true);
     } catch { localStorage.removeItem(DRAFT_KEY); }
   }, []); // run once on mount
+
+  const saveDraft = useCallback(() => {
+    if (editSlug) return false;
+    try {
+      const savedAt = new Date();
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({
+        stepPage, translations, slug, categoryId, difficulty,
+        prepTime, cookTime, servings, dietaryTags, referenceTagsInput,
+        coverImage: coverImage.startsWith('blob:') ? PRESET_IMAGES[0].url : coverImage,
+        imageFocalPoint,
+        savedAt: savedAt.toISOString(),
+      }));
+      setDraftSavedAt(savedAt);
+      setDraftClock(savedAt.getTime());
+      return true;
+    } catch {
+      return false;
+    }
+  }, [editSlug, stepPage, translations, slug, categoryId, difficulty,
+    prepTime, cookTime, servings, dietaryTags, referenceTagsInput, coverImage, imageFocalPoint]);
 
   // Auto-save draft (debounced, new recipes only)
   useEffect(() => {
@@ -193,18 +220,15 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
              tl.ingredients.some((sec) => sec.rows.some((r) => r.name)),
     );
     if (!hasContent) return;
-    const timer = setTimeout(() => {
-      try {
-        localStorage.setItem(DRAFT_KEY, JSON.stringify({
-          stepPage, translations, slug, categoryId, difficulty,
-          prepTime, cookTime, servings, dietaryTags, referenceTagsInput,
-          coverImage: coverImage.startsWith('blob:') ? PRESET_IMAGES[0].url : coverImage,
-        }));
-      } catch { /* quota exceeded */ }
-    }, 1500);
+    const timer = setTimeout(saveDraft, 1500);
     return () => clearTimeout(timer);
-  }, [editSlug, stepPage, translations, slug, categoryId, difficulty,
-    prepTime, cookTime, servings, dietaryTags, referenceTagsInput, coverImage]);
+  }, [editSlug, translations, slug, saveDraft]);
+
+  useEffect(() => {
+    if (!draftSavedAt) return;
+    const timer = window.setInterval(() => setDraftClock(Date.now()), 30_000);
+    return () => window.clearInterval(timer);
+  }, [draftSavedAt]);
 
   // Pre-fill form when editing an existing recipe
   useEffect(() => {
@@ -214,6 +238,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
       .then((recipe) => {
         setSlug(recipe.slug ?? '');
         if (recipe.image) setCoverImage(recipe.image.startsWith('/') ? `${import.meta.env.VITE_API_URL}${recipe.image}` : recipe.image);
+        if (recipe.imageFocalPoint) setImageFocalPoint(recipe.imageFocalPoint);
         const info = (recipe.info as Record<string, unknown>) || {};
         if (info.prepTime) setPrepTime(String(info.prepTime).replace(' min', ''));
         if (info.cookTime) setCookTime(String(info.cookTime).replace(' min', ''));
@@ -277,6 +302,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
     setValidationErrors(new Set(errors));
     const firstError = errors[0];
     const targetPage = ['title', 'slug', 'category', 'prepTime', 'cookTime'].includes(firstError) ? 1 : 2;
+    if (errors.includes('slug')) setAdvancedOpen(true);
     setStepPage(targetPage);
     window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
@@ -285,6 +311,49 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
         target?.focus({ preventScroll: true });
       });
     });
+  }
+
+  function getStepOneErrors() {
+    const errors: string[] = [];
+    const originalTranslation = translations[originalLanguage];
+    if (!originalTranslation.title.trim()) errors.push('title');
+    if (!categoryId) errors.push('category');
+    if (!slug.trim()) errors.push('slug');
+    if (!prepTime || Number(prepTime) <= 0) errors.push('prepTime');
+    if (cookTime === '' || Number(cookTime) < 0) errors.push('cookTime');
+    return errors;
+  }
+
+  function getStepTwoErrors() {
+    const errors: string[] = [];
+    if (tr.ingredients.length > 1) {
+      tr.ingredients.forEach((section) => {
+        if (!section.section.trim()) errors.push(`section:${section.id}`);
+      });
+    }
+    if (!tr.ingredients.some((section) => section.rows.some((row) => row.name.trim()))) errors.push('ingredients');
+    if (!tr.steps.some((step) => step.instruction.trim())) errors.push('steps');
+    return errors;
+  }
+
+  function continueToStep(targetPage: 1 | 2 | 3) {
+    if (targetPage <= stepPage) {
+      setValidationErrors(new Set());
+      setStepPage(targetPage);
+      return;
+    }
+
+    let errors = stepPage === 1 ? getStepOneErrors() : getStepTwoErrors();
+    if (errors.length === 0 && stepPage === 1 && targetPage === 3) {
+      errors = getStepTwoErrors();
+    }
+    if (errors.length > 0) {
+      showValidationErrors(errors);
+      return;
+    }
+
+    setValidationErrors(new Set());
+    setStepPage(targetPage);
   }
 
   async function importFromTikTok() {
@@ -328,6 +397,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
       if (payload.source.thumbnailUrl) {
         setCoverImage(payload.source.thumbnailUrl);
         setImageFile(null);
+        setImageFocalPoint({ x: 50, y: 50 });
       }
       showToast(t('add.toast.tiktokImported'), payload.draft.warnings.length ? t('add.toast.tiktokImportedWithWarnings') : t('add.toast.tiktokImportedClean'), 'success');
     } catch (error) {
@@ -416,6 +486,8 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
     const ctx = canvas.getContext('2d')!;
     const scaleX = img.naturalWidth / img.width;
     const scaleY = img.naturalHeight / img.height;
+    const focalX = Math.min(100, Math.max(0, ((completedCrop.x + completedCrop.width / 2) / img.width) * 100));
+    const focalY = Math.min(100, Math.max(0, ((completedCrop.y + completedCrop.height / 2) / img.height) * 100));
     ctx.drawImage(
       img,
       completedCrop.x * scaleX,
@@ -429,6 +501,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
       const file = new File([blob], 'cover.jpg', { type: 'image/jpeg' });
       setImageFile(file);
       setCoverImage(URL.createObjectURL(blob));
+      setImageFocalPoint({ x: focalX, y: focalY });
       setCoverImageEdited(true);
       setCropSrc(null);
       showToast(t('add.toast.coverPhotoSet'), undefined, 'success');
@@ -436,20 +509,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
   }
 
   async function publish() {
-    const originalTranslation = translations[originalLanguage];
-    const errors: string[] = [];
-    if (!originalTranslation.title.trim()) errors.push('title');
-    if (!slug.trim()) errors.push('slug');
-    if (!categoryId) errors.push('category');
-    if (!prepTime || Number(prepTime) <= 0) errors.push('prepTime');
-    if (!cookTime || Number(cookTime) <= 0) errors.push('cookTime');
-    if (tr.ingredients.length > 1) {
-      tr.ingredients.forEach((section) => {
-        if (!section.section.trim()) errors.push(`section:${section.id}`);
-      });
-    }
-    if (!tr.ingredients.some((section) => section.rows.some((row) => row.name.trim()))) errors.push('ingredients');
-    if (!tr.steps.some((step) => step.instruction.trim())) errors.push('steps');
+    const errors = [...getStepOneErrors(), ...getStepTwoErrors()];
 
     if (errors.length > 0) {
       showValidationErrors(errors);
@@ -461,13 +521,11 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
 
     setSubmitting(true);
     try {
-      const totalTime = prepTime && cookTime
-        ? `${parseInt(prepTime) + parseInt(cookTime)} min`
-        : prepTime ? `${prepTime} min` : cookTime ? `${cookTime} min` : undefined;
+      const totalTime = `${Number(prepTime) + Number(cookTime)} min`;
 
       const info = {
-        prepTime: prepTime ? `${prepTime} min` : undefined,
-        cookTime: cookTime ? `${cookTime} min` : undefined,
+        prepTime: `${prepTime} min`,
+        cookTime: `${cookTime} min`,
         totalTime,
         servings: parseInt(servings) || 1,
         difficulty,
@@ -500,6 +558,8 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
       fd.append('info', JSON.stringify(info));
       fd.append('tags', JSON.stringify([...new Set([...dietaryTags, ...parseReferenceTags(referenceTagsInput)])]));
       fd.append('originalLanguage', originalLanguage);
+      fd.append('imageFocalX', String(imageFocalPoint.x));
+      fd.append('imageFocalY', String(imageFocalPoint.y));
       fd.append('translations', JSON.stringify(translationRows));
       if (importedSource) {
         fd.append('sourcePlatform', importedSource.platform);
@@ -545,8 +605,37 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
     setPrepTime(''); setCookTime(''); setServings('4');
     setDietaryTags([]); setReferenceTagsInput('');
     setCoverImage(PRESET_IMAGES[0].url); setStepPage(1);
+    setImageFocalPoint({ x: 50, y: 50 });
     setDraftRestored(false);
+    setDraftSavedAt(null);
   }
+
+  function requestExit() {
+    if (editSlug) {
+      navigate(-1);
+      return;
+    }
+    setShowExitDialog(true);
+  }
+
+  function keepDraftAndLeave() {
+    saveDraft();
+    navigate(-1);
+  }
+
+  function discardDraftAndLeave() {
+    localStorage.removeItem(DRAFT_KEY);
+    navigate(-1);
+  }
+
+  const draftAgeMinutes = draftSavedAt
+    ? Math.max(0, Math.floor((draftClock - draftSavedAt.getTime()) / 60_000))
+    : 0;
+  const draftStatus = draftSavedAt
+    ? draftAgeMinutes < 1
+      ? t('add.draftSavedJustNow')
+      : t('add.draftSavedMinutesAgo', { count: draftAgeMinutes })
+    : t('add.draftSavingSoon');
 
   const inputCls = "w-full bg-stone-50 border border-stone-200 text-stone-900 text-sm rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-amber-800/30 font-medium";
   const labelCls = "text-xs font-bold text-stone-700 uppercase tracking-wider";
@@ -572,8 +661,13 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
           <h1 className="font-serif text-2xl font-bold" style={{ color: 'var(--color-text)' }}>{editSlug ? t('add.headerTitleEdit') : t('add.headerTitleNew')}</h1>
           <p className="text-xs mt-0.5" style={{ color: 'var(--color-muted)' }}>{editSlug ? t('add.headerSubtitleEdit') : t('add.headerSubtitleNew')}</p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <button type="button" onClick={() => navigate(-1)}
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {!editSlug && (
+            <span className="text-[11px] font-medium text-stone-500" role="status" aria-live="polite">
+              {draftStatus}
+            </span>
+          )}
+          <button type="button" onClick={requestExit}
             className="add-recipe-secondary flex items-center gap-1.5 text-xs font-bold border px-3 py-2 rounded-2xl transition-colors">
             <X className="w-4 h-4" /> {t('add.cancelButton')}
           </button>
@@ -593,7 +687,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
       {/* Stepper */}
       <div className="add-recipe-tab-group responsive-single-column-narrow grid grid-cols-3 gap-2 p-1.5 rounded-2xl border">
         {([1, 2, 3] as const).map((n) => (
-          <button key={n} onClick={() => setStepPage(n)}
+          <button key={n} onClick={() => continueToStep(n)}
             className={`add-recipe-tab py-2 text-xs font-bold rounded-xl transition-all ${stepPage === n ? 'add-recipe-tab--active' : ''}`}>
             {n === 1 ? t('add.stepBasicInfo') : n === 2 ? t('add.stepIngredientsSteps') : t('add.stepTagsPublish')}
           </button>
@@ -686,33 +780,8 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
             </div>
           </div>
 
-          {/* Slug & category */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-1.5">
-                <label className={labelCls}>{t('add.urlSlugLabel')}</label>
-                <span className="group relative inline-flex">
-                  <button type="button" aria-label={t('add.urlSlugHelp')} aria-describedby="url-slug-help"
-                    className="flex h-4 min-h-0 w-4 min-w-0 items-center justify-center rounded-full text-stone-500 hover:text-amber-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-700">
-                    <Info className="h-3.5 w-3.5" />
-                  </button>
-                  <span id="url-slug-help" role="tooltip"
-                    className="pointer-events-none invisible absolute bottom-full left-0 z-20 mb-2 w-64 rounded-xl bg-stone-900 px-3 py-2 text-[11px] font-medium normal-case tracking-normal text-white opacity-0 shadow-xl transition-opacity group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
-                    {t('add.urlSlugHelp')}
-                  </span>
-                </span>
-              </div>
-              <input type="text" value={slug} onChange={(e) => {
-                const value = slugify(e.target.value);
-                setSlug(value);
-                if (value) clearValidationError('slug');
-              }}
-                placeholder={t('add.urlSlugPlaceholder')}
-                data-validation-key="slug"
-                aria-invalid={validationErrors.has('slug')}
-                className={`w-full bg-stone-50 border text-stone-900 text-xs font-mono rounded-xl px-3 py-2.5 focus:outline-none ${validationErrors.has('slug') ? 'border-rose-500 ring-2 ring-rose-200' : 'border-stone-200'}`} />
-              {validationErrors.has('slug') && <p className="text-xs font-semibold text-rose-600">{t('add.requiredField')}</p>}
-            </div>
+          {/* Category */}
+          <div>
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
                 <label className={labelCls}>{t('add.categoryLabel')}</label>
@@ -804,20 +873,58 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
             </div>
           </div>
 
+          {/* Advanced options */}
+          <div className="overflow-visible rounded-2xl border" style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-subtle)' }}>
+            <button type="button" onClick={() => setAdvancedOpen((open) => !open)} aria-expanded={advancedOpen}
+              className="flex w-full items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left text-xs font-bold">
+              <span>{t('add.advancedOptions')}</span>
+              <ChevronDown className={`h-4 w-4 shrink-0 transition-transform ${advancedOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {advancedOpen && (
+              <div className="space-y-1.5 border-t px-4 pb-4 pt-3" style={{ borderColor: 'var(--color-border)' }}>
+                <div className="flex items-center gap-1.5">
+                  <label className={labelCls}>{t('add.urlSlugLabel')}</label>
+                  <span className="group relative inline-flex">
+                    <button type="button" aria-label={t('add.urlSlugHelp')} aria-describedby="url-slug-help"
+                      className="flex h-4 min-h-0 w-4 min-w-0 items-center justify-center rounded-full text-stone-500 hover:text-amber-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-700">
+                      <Info className="h-3.5 w-3.5" />
+                    </button>
+                    <span id="url-slug-help" role="tooltip"
+                      className="pointer-events-none invisible absolute bottom-full left-0 z-20 mb-2 w-64 rounded-xl bg-stone-900 px-3 py-2 text-[11px] font-medium normal-case tracking-normal text-white opacity-0 shadow-xl transition-opacity group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+                      {t('add.urlSlugHelp')}
+                    </span>
+                  </span>
+                </div>
+                <input type="text" value={slug} onChange={(e) => {
+                  const value = slugify(e.target.value);
+                  setSlug(value);
+                  if (value) clearValidationError('slug');
+                }}
+                  placeholder={t('add.urlSlugPlaceholder')}
+                  data-validation-key="slug"
+                  aria-invalid={validationErrors.has('slug')}
+                  className={`w-full bg-white border text-stone-900 text-xs font-mono rounded-xl px-3 py-2.5 focus:outline-none ${validationErrors.has('slug') ? 'border-rose-500 ring-2 ring-rose-200' : 'border-stone-200'}`} />
+                {validationErrors.has('slug') && <p className="text-xs font-semibold text-rose-600">{t('add.requiredField')}</p>}
+              </div>
+            )}
+          </div>
+
           {/* Metrics */}
           <div className="responsive-single-column-narrow grid grid-cols-2 sm:grid-cols-4 gap-3">
             {[
-              { key: 'prepTime', label: t('add.prepTimeLabel'), value: prepTime, onChange: setPrepTime, placeholder: '15' },
-              { key: 'cookTime', label: t('add.cookTimeLabel'), value: cookTime, onChange: setCookTime, placeholder: '30' },
-            ].map(({ key, label, value, onChange, placeholder }) => (
+              { key: 'prepTime', label: t('add.prepTimeLabel'), value: prepTime, onChange: setPrepTime, placeholder: '15', min: 1 },
+              { key: 'cookTime', label: t('add.cookTimeLabel'), value: cookTime, onChange: setCookTime, placeholder: '0', min: 0 },
+            ].map(({ key, label, value, onChange, placeholder, min }) => (
               <div key={label} className="space-y-1">
                 <label className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">{label}</label>
-                <input type="number" min={1} required value={value} onChange={(e) => {
+                <input type="number" min={min} required value={value} onChange={(e) => {
                   onChange(e.target.value);
-                  if (Number(e.target.value) > 0) clearValidationError(key);
+                  if (e.target.value !== '' && Number(e.target.value) >= min) clearValidationError(key);
                 }} placeholder={placeholder} aria-invalid={validationErrors.has(key)} data-validation-key={key}
                   className={`w-full bg-stone-50 border text-stone-900 text-xs font-bold rounded-xl px-3 py-2 focus:outline-none text-center ${validationErrors.has(key) ? 'border-rose-500 ring-2 ring-rose-200' : 'border-stone-200'}`} />
-                {validationErrors.has(key) && <p className="text-[10px] font-semibold text-rose-600">{t('add.timeRequired')}</p>}
+                {validationErrors.has(key) && <p className="text-[10px] font-semibold text-rose-600">
+                  {t(key === 'cookTime' ? 'add.cookTimeRequired' : 'add.timeRequired')}
+                </p>}
               </div>
             ))}
             <div className="space-y-1">
@@ -837,7 +944,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
           </div>
 
           <div className="flex justify-end pt-3">
-            <button onClick={() => setStepPage(2)}
+            <button onClick={() => continueToStep(2)}
               className="add-recipe-primary flex items-center gap-2 font-bold text-xs px-6 py-3 rounded-2xl transition-colors shadow-md">
               {t('add.nextIngredientsStepsButton')} <ArrowRight className="w-4 h-4" />
             </button>
@@ -994,7 +1101,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
               className="add-recipe-secondary flex items-center gap-1.5 font-bold text-xs px-5 py-3 rounded-2xl transition-colors">
               <ArrowLeft className="w-4 h-4" /> {t('add.backButton')}
             </button>
-            <button onClick={() => setStepPage(3)}
+            <button onClick={() => continueToStep(3)}
               className="add-recipe-primary flex items-center gap-2 font-bold text-xs px-6 py-3 rounded-2xl transition-colors shadow-md">
               {t('add.nextTagsPublishButton')} <ArrowRight className="w-4 h-4" />
             </button>
@@ -1190,7 +1297,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
             </div>
             <div className="responsive-single-column-narrow grid grid-cols-2 gap-3">
               {PRESET_IMAGES.map((item) => (
-                <button key={item.url} onClick={() => { setCoverImage(item.url); setImageFile(null); setCoverImageEdited(true); setShowImagePicker(false); }}
+                <button key={item.url} onClick={() => { setCoverImage(item.url); setImageFile(null); setImageFocalPoint({ x: 50, y: 50 }); setCoverImageEdited(true); setShowImagePicker(false); }}
                   className="group relative aspect-square rounded-2xl overflow-hidden border border-stone-200 hover:ring-4 hover:ring-amber-700/50 transition-all">
                   <img src={item.url} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                   <div className="absolute inset-0 bg-gradient-to-t from-stone-950/80 via-transparent to-transparent flex items-end p-2.5">
@@ -1270,6 +1377,37 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                 </ul>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Leave recipe editor dialog */}
+      {showExitDialog && (
+        <div className="app-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 px-4 backdrop-blur-sm"
+          onClick={() => setShowExitDialog(false)}>
+          <div className="app-modal-panel add-recipe-modal w-full max-w-md rounded-3xl border p-6 shadow-2xl"
+            role="dialog" aria-modal="true" aria-labelledby="leave-recipe-title"
+            onClick={(event) => event.stopPropagation()}>
+            <h2 id="leave-recipe-title" className="font-serif text-xl font-bold text-stone-900">
+              {t('add.leaveDialogTitle')}
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-stone-600">
+              {t('add.leaveDialogDescription')}
+            </p>
+            <div className="mt-6 space-y-2.5">
+              <button type="button" onClick={keepDraftAndLeave}
+                className="add-recipe-primary w-full rounded-xl px-4 py-3 text-sm font-bold transition-colors">
+                {t('add.keepDraftAndLeave')}
+              </button>
+              <button type="button" onClick={discardDraftAndLeave}
+                className="w-full rounded-xl border border-rose-200 px-4 py-3 text-sm font-bold text-rose-700 transition-colors hover:bg-rose-50">
+                {t('add.discardDraftAndLeave')}
+              </button>
+              <button type="button" onClick={() => setShowExitDialog(false)}
+                className="add-recipe-secondary w-full rounded-xl px-4 py-3 text-sm font-bold transition-colors">
+                {t('add.continueEditing')}
+              </button>
+            </div>
           </div>
         </div>
       )}

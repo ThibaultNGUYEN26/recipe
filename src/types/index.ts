@@ -25,6 +25,7 @@ export interface RecipeListItem {
   title: string;
   description?: string;
   image: string | null;
+  imageFocalPoint?: { x: number; y: number };
   category: { slug: string; label: string };
   info?: RecipeInfo;
   tags?: string[];

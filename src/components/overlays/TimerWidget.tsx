@@ -1,5 +1,6 @@
 import { useUI } from '../../contexts/UIContext';
 import { Timer, X } from 'lucide-react';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 function fmt(s: number) {
   const m = Math.floor(s / 60).toString().padStart(2, '0');
@@ -9,6 +10,7 @@ function fmt(s: number) {
 
 export default function TimerWidget() {
   const { activeTimer, stopTimer } = useUI();
+  const { t } = useLanguage();
   if (!activeTimer) return null;
 
   const pct = activeTimer.totalSeconds > 0
@@ -28,7 +30,7 @@ export default function TimerWidget() {
           <div className="h-full bg-amber-800 rounded-full transition-all duration-1000" style={{ width: `${pct}%` }} />
         </div>
       </div>
-      <button onClick={stopTimer} className="shrink-0 p-2" aria-label="Stop timer" style={{ color: 'var(--color-muted)' }}>
+      <button onClick={stopTimer} className="shrink-0 p-2" aria-label={t('detail.stopTimer')} style={{ color: 'var(--color-muted)' }}>
         <X size={16} />
       </button>
     </div>
