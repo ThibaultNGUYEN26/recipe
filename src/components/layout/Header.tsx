@@ -47,8 +47,8 @@ export default function Header() {
                 aria-label={t('header.openNotifications')}>
                 <Bell className="w-5 h-5" />
                 {unreadNotifCount > 0 && (
-                  <span className="absolute top-1 right-1 bg-amber-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center animate-pulse">
-                    {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
+                  <span className="absolute top-1 right-0 bg-amber-600 text-white text-[9px] font-bold min-w-4 h-4 px-1 rounded-full flex items-center justify-center animate-pulse">
+                    {unreadNotifCount > 99 ? '99+' : unreadNotifCount}
                   </span>
                 )}
               </button>

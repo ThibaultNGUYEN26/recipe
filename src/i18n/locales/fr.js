@@ -155,8 +155,6 @@ const messages = {
   'profile.saving': 'Enregistrement…',
   'profile.saveChanges': 'Enregistrer',
   'profile.signOut': 'Se déconnecter',
-  'profile.followedToast': 'Abonnement effectué !',
-  'profile.unfollowedToast': 'Désabonné',
   'profile.shareText': 'Découvrez les recettes de {name} sur Savor.',
   'share.profileTitle': 'Partager le profil',
   'share.recipeTitle': 'Partager la recette',

@@ -155,8 +155,6 @@ const messages = {
   'profile.saving': 'Guardando…',
   'profile.saveChanges': 'Guardar cambios',
   'profile.signOut': 'Cerrar sesión',
-  'profile.followedToast': '¡Siguiendo!',
-  'profile.unfollowedToast': 'Dejaste de seguir',
   'profile.shareText': 'Descubre las recetas de {name} en Savor.',
   'share.profileTitle': 'Compartir perfil',
   'share.recipeTitle': 'Compartir receta',

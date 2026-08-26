@@ -78,7 +78,6 @@ export default function RecipeCard({ recipe, hideAuthor = false, isFollowingAuth
       const res = await apiFetch(`/api/users/${recipe.authorId}/follow`, { method: 'POST' });
       if (res.ok || res.status === 409) {
         onAuthorFollowed?.(recipe.authorId!);
-        showToast('Following!');
       }
     } finally {
       setFollowLoading(false);

@@ -155,8 +155,6 @@ const messages = {
   'profile.saving': 'Đang lưu…',
   'profile.saveChanges': 'Lưu thay đổi',
   'profile.signOut': 'Đăng xuất',
-  'profile.followedToast': 'Đã theo dõi!',
-  'profile.unfollowedToast': 'Đã bỏ theo dõi',
   'profile.shareText': 'Xem các công thức của {name} trên Savor.',
   'share.profileTitle': 'Chia sẻ hồ sơ',
   'share.recipeTitle': 'Chia sẻ công thức',

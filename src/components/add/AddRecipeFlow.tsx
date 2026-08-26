@@ -573,6 +573,10 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
           <p className="text-xs mt-0.5" style={{ color: 'var(--color-muted)' }}>{editSlug ? t('add.headerSubtitleEdit') : t('add.headerSubtitleNew')}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <button type="button" onClick={() => navigate(-1)}
+            className="add-recipe-secondary flex items-center gap-1.5 text-xs font-bold border px-3 py-2 rounded-2xl transition-colors">
+            <X className="w-4 h-4" /> {t('add.cancelButton')}
+          </button>
           <button onClick={() => setShowPreview(true)}
             className="add-recipe-accent-soft flex items-center gap-1.5 text-xs font-bold border px-3 py-2 rounded-2xl transition-colors">
             <Eye className="w-4 h-4" /> {t('add.previewButton')}
@@ -904,10 +908,10 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                         <div className="responsive-stack-narrow pl-7 flex items-center gap-2">
                           <input type="text" value={row.amount} onChange={(e) => updateIngredient(sec.id, row.id, 'amount', e.target.value)}
                             placeholder={t('add.ingredientAmountPlaceholder')}
-                            className="responsive-full-narrow bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 font-bold text-center focus:outline-none w-32 shrink-0" />
+                            className="responsive-full-narrow bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 font-bold text-center focus:outline-none w-20 sm:w-32 shrink-0" />
                           <input type="text" placeholder={t('add.ingredientUnitPlaceholder')} value={row.unit}
                             onChange={(e) => updateIngredient(sec.id, row.id, 'unit', e.target.value)}
-                            className="responsive-full-narrow bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 focus:outline-none w-48 shrink-0" />
+                            className="responsive-full-narrow bg-white text-xs border border-stone-200 rounded-xl px-3 py-2 focus:outline-none w-32 sm:w-48 shrink-0" />
                         </div>
                       </div>
                     ))}
@@ -974,7 +978,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
           </section>
 
           <div className="responsive-stack-narrow flex items-center justify-between gap-3 pt-2">
-            <button onClick={() => navigate(-1)}
+            <button onClick={() => setStepPage(1)}
               className="add-recipe-secondary flex items-center gap-1.5 font-bold text-xs px-5 py-3 rounded-2xl transition-colors">
               <ArrowLeft className="w-4 h-4" /> {t('add.backButton')}
             </button>
@@ -1101,7 +1105,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
           </div>
 
           <div className="responsive-stack-narrow flex items-center justify-between gap-3 pt-4 border-t border-stone-100">
-            <button type="button" onClick={() => navigate(-1)}
+            <button type="button" onClick={() => setStepPage(2)}
               className="add-recipe-secondary flex items-center gap-1.5 font-bold text-xs px-5 py-3 rounded-2xl transition-colors">
               <ArrowLeft className="w-4 h-4" /> {t('add.backButton')}
             </button>
