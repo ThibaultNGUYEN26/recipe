@@ -133,7 +133,7 @@ export interface AuthUser {
   emailVerified: boolean;
   name: string | null;
   avatarUrl?: string | null;
-  preferredLanguage?: 'fr' | 'en' | 'es' | 'vi' | 'ar' | 'it' | 'zh' | 'de' | null;
+  preferredLanguage?: 'fr' | 'en' | 'es' | 'vi' | 'ar' | 'it' | 'zh' | 'de' | 'ko' | null;
 }
 
 export interface ToastData {

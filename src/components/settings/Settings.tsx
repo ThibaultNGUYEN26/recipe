@@ -80,7 +80,7 @@ export default function SettingsPage() {
             <span className="flex h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: 'var(--color-subtle)' }}><Languages size={19} /></span>
             <span className="min-w-0 flex-1">
               <span className="block text-sm font-medium">{t('settings.language')}</span>
-              <span className="block text-xs" style={{ color: 'var(--color-muted)' }}>{language === 'fr' ? 'Français' : language === 'es' ? 'Español' : language === 'vi' ? 'Tiếng Việt' : language === 'ar' ? 'العربية' : language === 'it' ? 'Italiano' : language === 'zh' ? '简体中文' : language === 'de' ? 'Deutsch' : 'English'}</span>
+              <span className="block text-xs" style={{ color: 'var(--color-muted)' }}>{language === 'fr' ? 'Français' : language === 'es' ? 'Español' : language === 'vi' ? 'Tiếng Việt' : language === 'ar' ? 'العربية' : language === 'it' ? 'Italiano' : language === 'zh' ? '简体中文' : language === 'de' ? 'Deutsch' : language === 'ko' ? '한국어' : 'English'}</span>
             </span>
             <ChevronRight size={18} style={{ color: 'var(--color-muted)' }} />
           </Link>

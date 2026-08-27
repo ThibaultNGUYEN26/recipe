@@ -10,9 +10,10 @@ const localeLoaders = {
   it: () => import('./locales/it'),
   zh: () => import('./locales/zh'),
   de: () => import('./locales/de'),
+  ko: () => import('./locales/ko'),
 };
 
-export const supportedLanguages = ['en', 'fr', 'es', 'vi', 'ar', 'it', 'zh', 'de'];
+export const supportedLanguages = ['en', 'fr', 'es', 'vi', 'ar', 'it', 'zh', 'de', 'ko'];
 
 export async function loadLanguage(language) {
   if (messages[language] || !localeLoaders[language]) return;

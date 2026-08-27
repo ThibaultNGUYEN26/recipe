@@ -56,6 +56,7 @@ export default function LanguageSettings() {
         <LanguageChoice active={language === 'it'} label="Italiano" description={t('language.italianDescription')} onClick={() => setPreferredLanguage('it')} />
         <LanguageChoice active={language === 'zh'} label="简体中文" description={t('language.chineseDescription')} onClick={() => setPreferredLanguage('zh')} />
         <LanguageChoice active={language === 'de'} label="Deutsch" description={t('language.germanDescription')} onClick={() => setPreferredLanguage('de')} />
+        <LanguageChoice active={language === 'ko'} label="한국어" description={t('language.koreanDescription')} onClick={() => setPreferredLanguage('ko')} />
       </div>
     </div>
   );
