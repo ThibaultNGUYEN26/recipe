@@ -7,7 +7,7 @@ import {
   Plus, Trash2, MoveUp, MoveDown, Sparkles, Eye,
   ArrowRight, ArrowLeft, X, Crop as CropIcon, Video, Upload, Link2, ExternalLink, Info, ChevronDown
 } from 'lucide-react';
-import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
+import ReactCrop, { type Crop, type PixelCrop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { apiFetch } from '../../lib/apiFetch';
 import { slugify } from '../../lib/slugify';
@@ -69,8 +69,8 @@ interface TikTokImportResponse {
   error?: string;
 }
 
-type RecipeLanguage = 'fr' | 'en' | 'es';
-const RECIPE_LANGUAGES: RecipeLanguage[] = ['fr', 'en', 'es'];
+type RecipeLanguage = 'fr' | 'en' | 'es' | 'vi' | 'ar' | 'it';
+const RECIPE_LANGUAGES: RecipeLanguage[] = ['fr', 'en', 'es', 'vi', 'ar', 'it'];
 
 function emptyTranslation(): TranslationFields {
   return {
@@ -110,6 +110,9 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
     fr: emptyTranslation(),
     en: emptyTranslation(),
     es: emptyTranslation(),
+    vi: emptyTranslation(),
+    ar: emptyTranslation(),
+    it: emptyTranslation(),
   });
 
   // Shared fields
@@ -135,7 +138,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
   // Crop
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [crop, setCrop] = useState<Crop>();
-  const [completedCrop, setCompletedCrop] = useState<Crop>();
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
   const cropImgRef = useRef<HTMLImageElement>(null);
 
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -486,10 +489,9 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
     canvas.width = size;
     canvas.height = size;
     const ctx = canvas.getContext('2d')!;
-    const scaleX = img.naturalWidth / img.width;
-    const scaleY = img.naturalHeight / img.height;
-    const focalX = Math.min(100, Math.max(0, ((completedCrop.x + completedCrop.width / 2) / img.width) * 100));
-    const focalY = Math.min(100, Math.max(0, ((completedCrop.y + completedCrop.height / 2) / img.height) * 100));
+    const renderedImage = img.getBoundingClientRect();
+    const scaleX = img.naturalWidth / renderedImage.width;
+    const scaleY = img.naturalHeight / renderedImage.height;
     ctx.drawImage(
       img,
       completedCrop.x * scaleX,
@@ -503,7 +505,9 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
       const file = new File([blob], 'cover.jpg', { type: 'image/jpeg' });
       setImageFile(file);
       setCoverImage(URL.createObjectURL(blob));
-      setImageFocalPoint({ x: focalX, y: focalY });
+      // The uploaded file is already the exact square selected by the user.
+      // Reusing the source-image focal point would crop that square a second time.
+      setImageFocalPoint({ x: 50, y: 50 });
       setCoverImageEdited(true);
       setCropSrc(null);
       showToast(t('add.toast.coverPhotoSet'), undefined, 'success');
@@ -602,7 +606,14 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
 
   function discardDraft() {
     localStorage.removeItem(DRAFT_KEY);
-    setTranslations({ fr: emptyTranslation(), en: emptyTranslation(), es: emptyTranslation() });
+    setTranslations({
+      fr: emptyTranslation(),
+      en: emptyTranslation(),
+      es: emptyTranslation(),
+      vi: emptyTranslation(),
+      ar: emptyTranslation(),
+      it: emptyTranslation(),
+    });
     setSlug(''); setSlugManuallyEdited(false); setCategoryId(''); setDifficulty('Facile');
     setPrepTime(''); setCookTime(''); setServings('4');
     setDietaryTags([]); setReferenceTagsInput('');
@@ -906,7 +917,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                   placeholder={t('add.urlSlugPlaceholder')}
                   data-validation-key="slug"
                   aria-invalid={validationErrors.has('slug')}
-                  className={`w-full bg-white border text-stone-900 text-xs font-mono rounded-xl px-3 py-2.5 focus:outline-none ${validationErrors.has('slug') ? 'border-rose-500 ring-2 ring-rose-200' : 'border-stone-200'}`} />
+                  className={`locale-ltr-field w-full bg-white border text-stone-900 text-xs font-mono rounded-xl px-3 py-2.5 focus:outline-none ${validationErrors.has('slug') ? 'border-rose-500 ring-2 ring-rose-200' : 'border-stone-200'}`} />
                 {validationErrors.has('slug') && <p className="text-xs font-semibold text-rose-600">{t('add.requiredField')}</p>}
               </div>
             )}

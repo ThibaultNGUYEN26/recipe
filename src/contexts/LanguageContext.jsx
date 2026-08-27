@@ -35,6 +35,7 @@ export const LanguageProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('savorAppLanguage', language);
     document.documentElement.lang = language;
+    document.documentElement.classList.toggle('locale-rtl', language === 'ar');
   }, [language]);
 
   useEffect(() => {

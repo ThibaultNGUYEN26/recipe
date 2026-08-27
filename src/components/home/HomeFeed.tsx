@@ -32,6 +32,7 @@ function HeroCard({ recipe }: { recipe: RecipeListItem }) {
       <div className="relative h-[240px] sm:h-[300px] lg:h-[340px] w-full">
         {recipe.image ? (
           <img src={imgSrc(recipe.image)!} alt={recipe.title ?? ''}
+            style={{ objectPosition: '50% 50%' }}
             className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700 ease-out" />
         ) : (
           <div className="w-full h-full bg-stone-800 flex items-center justify-center text-6xl">🍽️</div>

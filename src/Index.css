@@ -1,5 +1,33 @@
 @import "tailwindcss";
 
+/* Arabic uses RTL typography without mirroring the application shell, cards, or icons. */
+html.locale-rtl :where(h1, h2, h3, h4, h5, h6, p, blockquote) {
+  direction: rtl;
+  unicode-bidi: plaintext;
+}
+
+html.locale-rtl :where(label, li, th, td) {
+  unicode-bidi: plaintext;
+}
+
+html.locale-rtl :where(input, textarea, select) {
+  direction: rtl;
+  text-align: right;
+}
+
+html.locale-rtl :where(input[type="email"], input[type="url"], .locale-ltr-field) {
+  direction: ltr;
+  text-align: left;
+}
+
+html.locale-rtl :where(button, a, span) {
+  unicode-bidi: plaintext;
+}
+
+html.locale-rtl .text-left {
+  text-align: right;
+}
+
 .avatar-ring { --tw-ring-color: #92400e; }
 [data-theme="dark"] .avatar-ring { --tw-ring-color: #fcd34d; }
 

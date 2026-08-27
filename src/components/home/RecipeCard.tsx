@@ -182,6 +182,7 @@ export default function RecipeCard({ recipe, hideAuthor = false, isFollowingAuth
         {recipe.image ? (
           <img src={imgSrc(recipe.image)!} alt={recipe.title ?? ''}
             loading="lazy"
+            style={{ objectPosition: '50% 50%' }}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out" />
         ) : (
           <div className="recipe-card__image-placeholder w-full h-full flex items-center justify-center text-4xl">🍽️</div>
