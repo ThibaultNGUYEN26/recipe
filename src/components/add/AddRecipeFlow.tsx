@@ -69,8 +69,8 @@ interface TikTokImportResponse {
   error?: string;
 }
 
-type RecipeLanguage = 'fr' | 'en' | 'es' | 'vi' | 'ar' | 'it';
-const RECIPE_LANGUAGES: RecipeLanguage[] = ['fr', 'en', 'es', 'vi', 'ar', 'it'];
+type RecipeLanguage = 'fr' | 'en' | 'es' | 'vi' | 'ar' | 'it' | 'zh';
+const RECIPE_LANGUAGES: RecipeLanguage[] = ['fr', 'en', 'es', 'vi', 'ar', 'it', 'zh'];
 
 function emptyTranslation(): TranslationFields {
   return {
@@ -113,6 +113,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
     vi: emptyTranslation(),
     ar: emptyTranslation(),
     it: emptyTranslation(),
+    zh: emptyTranslation(),
   });
 
   // Shared fields
@@ -613,6 +614,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
       vi: emptyTranslation(),
       ar: emptyTranslation(),
       it: emptyTranslation(),
+      zh: emptyTranslation(),
     });
     setSlug(''); setSlugManuallyEdited(false); setCategoryId(''); setDifficulty('Facile');
     setPrepTime(''); setCookTime(''); setServings('4');
