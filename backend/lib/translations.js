@@ -1,4 +1,4 @@
-const SUPPORTED_LANGUAGES = new Set(["fr", "en", "es", "vi", "ar", "it", "zh", "de", "ko"]);
+const SUPPORTED_LANGUAGES = new Set(["fr", "en", "es", "vi", "ar", "it", "zh", "de", "ja", "ko", "pt"]);
 
 export function normalizeLanguage(value, fallback = "fr") {
   const language = String(value || "").trim().toLowerCase().split(/[-_]/)[0];

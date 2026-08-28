@@ -190,7 +190,7 @@ router.patch("/me", authenticate, uploadRateLimit, handleAvatarUpload, async (re
 // PATCH /api/users/me/preferences
 router.patch("/me/preferences", authenticate, async (req, res) => {
   const preferredLanguage = String(req.body.preferredLanguage || "").toLowerCase();
-  if (!['fr', 'en', 'es', 'vi', 'ar', 'it', 'zh', 'de', 'ko'].includes(preferredLanguage)) {
+  if (!['fr', 'en', 'es', 'vi', 'ar', 'it', 'zh', 'de', 'ja', 'ko', 'pt'].includes(preferredLanguage)) {
     return res.status(400).json({ error: "Unsupported preferred language" });
   }
 

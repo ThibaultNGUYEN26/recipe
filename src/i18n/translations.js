@@ -9,11 +9,13 @@ const localeLoaders = {
   de: () => import('./locales/de'),
   it: () => import('./locales/it'),
   ko: () => import('./locales/ko'),
+  ja: () => import('./locales/ja'),
+  pt: () => import('./locales/pt'),
   es: () => import('./locales/es'),
   vi: () => import('./locales/vi'),
 };
 
-export const supportedLanguages = ['ar', 'zh', 'en', 'fr', 'de', 'it', 'ko', 'es', 'vi'];
+export const supportedLanguages = ['ar', 'zh', 'en', 'fr', 'de', 'it', 'ja', 'ko', 'pt', 'es', 'vi'];
 
 export async function loadLanguage(language) {
   if (messages[language] || !localeLoaders[language]) return;
