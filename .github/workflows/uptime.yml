@@ -1,0 +1,19 @@
+name: Production uptime
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-production:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Check frontend
+        run: curl --fail --silent --show-error --retry 2 --retry-delay 5 --max-time 20 https://recipe.thibault-nguyen.dev/ > /dev/null
+      - name: Check API readiness
+        run: curl --fail --silent --show-error --retry 2 --retry-delay 5 --max-time 20 https://recipe-production-4bd0.up.railway.app/health/ready > /dev/null

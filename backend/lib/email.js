@@ -1,17 +1,23 @@
 import process from "node:process";
+import { captureOperationalFailure } from "./monitoring.js";
 
 async function sendEmail({ to, subject, html }) {
-  if (!process.env.RESEND_API_KEY) {
-    if (process.env.NODE_ENV === "production") throw new Error("RESEND_API_KEY is not configured");
-    console.info(`[email preview] ${subject} -> ${to}\n${html}`);
-    return;
+  try {
+    if (!process.env.RESEND_API_KEY) {
+      if (process.env.NODE_ENV === "production") throw new Error("RESEND_API_KEY is not configured");
+      console.info(`[email preview] ${subject} -> ${to}\n${html}`);
+      return;
+    }
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ from: process.env.EMAIL_FROM || "Savor <noreply@example.com>", to: [to], subject, html }),
+    });
+    if (!response.ok) throw new Error(`Email provider returned ${response.status}`);
+  } catch (error) {
+    captureOperationalFailure("email-delivery", error, { subject });
+    throw error;
   }
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: process.env.EMAIL_FROM || "Savor <noreply@example.com>", to: [to], subject, html }),
-  });
-  if (!response.ok) throw new Error(`Email provider returned ${response.status}`);
 }
 
 export function sendVerificationEmail(email, token) {

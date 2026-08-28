@@ -27,8 +27,11 @@ import { authenticate, requireAdmin } from "./middleware/authenticate.js";
 import { csrfProtection } from "./middleware/csrf.js";
 import { buildSitemap } from "./lib/sitemap.js";
 import { prisma } from "./lib/prisma.js";
+import { initializeMonitoring, installExpressErrorMonitoring, monitorServerErrors } from "./lib/monitoring.js";
+import { readinessStatus } from "./lib/readiness.js";
 
 export const app = express();
+initializeMonitoring();
 app.set("trust proxy", 1);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -46,8 +49,19 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(cookieParser());
+app.use(monitorServerErrors);
 app.get("/health", (_req, res) => {
   res.status(200).json({ status: "ok" });
+});
+app.get("/health/live", (_req, res) => {
+  res.status(200).json({ status: "ok" });
+});
+app.get("/health/ready", async (_req, res) => {
+  const readiness = await readinessStatus();
+  res.status(readiness.ok ? 200 : 503).json({
+    status: readiness.ok ? "ready" : "not_ready",
+    ...readiness,
+  });
 });
 app.use(csrfProtection);
 
@@ -149,6 +163,8 @@ app.use("/api/my-recipes", async (req, res) => {
     }
   });
 });
+
+installExpressErrorMonitoring(app);
 
 if (process.env.NODE_ENV !== "test") {
   const PORT = process.env.PORT || 4000;

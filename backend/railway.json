@@ -7,7 +7,7 @@
   "deploy": {
     "preDeployCommand": ["npm run db:migrate"],
     "startCommand": "node index.js",
-    "healthcheckPath": "/health",
+    "healthcheckPath": "/health/ready",
     "healthcheckTimeout": 300,
     "drainingSeconds": 30,
     "restartPolicyType": "ON_FAILURE",
