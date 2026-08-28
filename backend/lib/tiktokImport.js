@@ -8,7 +8,7 @@ const TIKTOK_HOSTS = new Set([
 
 const INGREDIENT_HEADERS = /^(ingredients?|ingrédients?|ingredientes?)\s*:?[\s]*$/i;
 const INSTRUCTION_HEADERS = /^(instructions?|method|directions?|préparation|méthode|instrucciones?|preparación|pasos?)\s*:?[\s]*$/i;
-const UNIT_PATTERN = "g|kg|mg|ml|cl|l|oz|lb|lbs|cup|cups|tbsp|tsp|tablespoons?|teaspoons?|c\.\s*à\s*s\.|c\.\s*à\s*c\.|tazas?|cucharadas?|cucharaditas?";
+const UNIT_PATTERN = "g|kg|mg|ml|cl|l|oz|lb|lbs|cup|cups|tbsp|tsp|tablespoons?|teaspoons?|c\\.\\s*à\\s*s\\.|c\\.\\s*à\\s*c\\.|tazas?|cucharadas?|cucharaditas?";
 const AMOUNT_PATTERN = "\\d+\\s+\\d+\\/\\d+|\\d+\\/\\d+|\\d+(?:[.,]\\d+)?|[¼½¾⅓⅔⅛⅜⅝⅞]+";
 
 export function validateTikTokUrl(input) {

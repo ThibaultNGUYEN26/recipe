@@ -4,6 +4,7 @@ import process from "node:process";
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import helmet from "helmet";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -33,6 +34,20 @@ import { readinessStatus } from "./lib/readiness.js";
 export const app = express();
 initializeMonitoring();
 app.set("trust proxy", 1);
+app.disable("x-powered-by");
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'none'"],
+      baseUri: ["'none'"],
+      formAction: ["'none'"],
+      frameAncestors: ["'none'"],
+    },
+  },
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  frameguard: { action: "deny" },
+  referrerPolicy: { policy: "no-referrer" },
+}));
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const allowedOrigins = process.env.CORS_ORIGIN

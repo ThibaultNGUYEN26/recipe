@@ -3,6 +3,8 @@ import { useAuth } from './AuthContext';
 import { loadLanguage, supportedLanguages, translate } from '../i18n/translations';
 import { apiFetch } from '../lib/apiFetch';
 
+/* eslint-disable react-refresh/only-export-components -- Provider and hook intentionally share this context module. */
+
 const LanguageContext = createContext();
 
 export const useLanguage = () => {
@@ -23,6 +25,8 @@ export const LanguageProvider = ({ children }) => {
     return 'en';
   });
   const [, setLocaleVersion] = useState(0);
+  const userId = user?.id;
+  const preferredLanguage = user?.preferredLanguage;
 
   useEffect(() => {
     let active = true;
@@ -39,9 +43,9 @@ export const LanguageProvider = ({ children }) => {
   }, [language]);
 
   useEffect(() => {
-    if (!user) return;
-    if (supportedLanguages.includes(user.preferredLanguage)) {
-      setLanguage(user.preferredLanguage);
+    if (!userId) return;
+    if (supportedLanguages.includes(preferredLanguage)) {
+      setLanguage(preferredLanguage);
       return;
     }
 
@@ -51,7 +55,7 @@ export const LanguageProvider = ({ children }) => {
     })
       .then((response) => response.ok && updateUser({ preferredLanguage: language }))
       .catch(() => {});
-  }, [user?.id, user?.preferredLanguage]);
+  }, [language, preferredLanguage, updateUser, userId]);
 
   const setPreferredLanguage = async (nextLanguage) => {
     if (!supportedLanguages.includes(nextLanguage)) return;

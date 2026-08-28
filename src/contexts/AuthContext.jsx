@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { apiFetch, setCsrfToken } from "../lib/apiFetch";
 
+/* eslint-disable react-refresh/only-export-components -- Provider and hook intentionally share this context module. */
+
 const API = import.meta.env.VITE_API_URL;
 
 const AuthContext = createContext(null);
@@ -53,6 +55,8 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     // Remove JWTs saved by versions prior to cookie-only authentication.
     localStorage.removeItem("savor_token");
+    // The request resolves asynchronously; state is not changed during the effect setup.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     refreshUser({ clearOnError: true })
       .finally(() => setLoading(false));
   }, [refreshUser]);
@@ -133,9 +137,9 @@ export function AuthProvider({ children }) {
     setUser(null);
   }
 
-  function updateUser(updates) {
+  const updateUser = useCallback((updates) => {
     setUser((prev) => prev ? { ...prev, ...updates } : prev);
-  }
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, loading, login, loginWithGoogle, register, logout, updateUser, refreshUser }}>

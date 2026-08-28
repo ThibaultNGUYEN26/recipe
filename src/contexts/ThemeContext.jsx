@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
+/* eslint-disable react-refresh/only-export-components -- Provider and hook intentionally share this context module. */
+
 const ThemeContext = createContext();
 
 export const useTheme = () => {
