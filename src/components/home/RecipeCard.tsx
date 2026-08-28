@@ -13,6 +13,7 @@ import { apiFetch } from '../../lib/apiFetch';
 import { useLanguage } from '../../contexts/LanguageContext';
 import VerifiedBadge from '../profile/VerifiedBadge';
 import { formatCompactCount } from '../../lib/formatCompactCount';
+import { countryFlag, getCountryName } from '../../lib/countries';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -193,6 +194,13 @@ export default function RecipeCard({ recipe, hideAuthor = false, isFollowingAuth
           <span className="bg-stone-900/80 backdrop-blur-md text-stone-50 text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider">
             {recipe.category.label}
           </span>
+          {recipe.originCountry && (
+            <span className="bg-white/90 backdrop-blur-md text-sm leading-none px-2 py-1 rounded-full shadow-sm"
+              title={getCountryName(recipe.originCountry, language)}
+              aria-label={`${t('recipeCard.originCountry')}: ${getCountryName(recipe.originCountry, language)}`}>
+              {countryFlag(recipe.originCountry)}
+            </span>
+          )}
           {(recipe.tags as string[] | undefined)?.slice(0, 1).map((tag) => (
             <span key={tag} className="bg-amber-900/80 backdrop-blur-md text-amber-100 text-[10px] font-semibold px-2.5 py-1 rounded-full">
               {tag}

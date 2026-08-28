@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -13,6 +13,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { LoadingPan } from '../ui/LoadingPan';
 import { useMinLoading } from '../../hooks/useMinLoading';
 import { useUI } from '../../contexts/UIContext';
+import { countryFlag, getCountryName, getCountryOptions } from '../../lib/countries';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -84,6 +85,7 @@ export default function SearchDiscover() {
   const [maxTime, setMaxTime] = useState<number | 'Any'>('Any');
   const [minRating, setMinRating] = useState<number | 'Any'>('Any');
   const [dietary, setDietary] = useState<string | null>(null);
+  const [country, setCountry] = useState('');
   const [showFilterModal, setShowFilterModal] = useState(false);
 
   const { data, isLoading: loading } = useQuery({
@@ -101,6 +103,9 @@ export default function SearchDiscover() {
   const showLoader = useMinLoading(loading);
   const allRecipes: RecipeListItem[] = data?.allRecipes ?? [];
   const discoveryRecipes: RecipeListItem[] = data?.discoveryRecipes ?? [];
+  const countryOptions = useMemo(() => getCountryOptions(language,
+    allRecipes.map((recipe) => recipe.originCountry).filter((code): code is string => Boolean(code))),
+  [allRecipes, language]);
 
   // Fast, debounced creator search by @username or display name.
   useEffect(() => {
@@ -134,7 +139,8 @@ export default function SearchDiscover() {
       r.title?.toLowerCase().includes(q) ||
       r.description?.toLowerCase().includes(q) ||
       r.category.label.toLowerCase().includes(q) ||
-      (r.tags as string[] | undefined)?.some((t) => t.toLowerCase().includes(q))
+      (r.tags as string[] | undefined)?.some((t) => t.toLowerCase().includes(q)) ||
+      (r.originCountry ? getCountryName(r.originCountry, language).toLowerCase().includes(q) : false)
     );
     const matchesDifficulty = difficulty === 'All' ||
       (r.info as Record<string, string> | null | undefined)?.difficulty === difficulty;
@@ -145,16 +151,17 @@ export default function SearchDiscover() {
     const matchesRating = minRating === 'Any' || (r.avgRating ?? 0) >= Number(minRating);
     const matchesDietary = !dietary ||
       (r.tags as string[] | undefined)?.some((t) => t.toLowerCase() === dietary.toLowerCase());
-    return matchesQuery && matchesDifficulty && matchesTime && matchesRating && matchesDietary;
+    const matchesCountry = !country || r.originCountry === country;
+    return matchesQuery && matchesDifficulty && matchesTime && matchesRating && matchesDietary && matchesCountry;
   });
 
   const activeFilterCount = (difficulty !== 'All' ? 1 : 0) +
     (maxTime !== 'Any' ? 1 : 0) +
     (minRating !== 'Any' ? 1 : 0) +
-    (dietary ? 1 : 0);
+    (dietary ? 1 : 0) + (country ? 1 : 0);
 
   function clearAll() {
-    setDifficulty('All'); setMaxTime('Any'); setMinRating('Any'); setDietary(null); setQuery('');
+    setDifficulty('All'); setMaxTime('Any'); setMinRating('Any'); setDietary(null); setCountry(''); setQuery('');
   }
 
   const hasSearch = q.length > 0 || activeFilterCount > 0;
@@ -200,6 +207,11 @@ export default function SearchDiscover() {
           {dietary && (
             <span className="discover-chip flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full border">
               {t(DIETARY_OPTS.find((option) => option.value === dietary)?.labelKey ?? dietary)} <X className="w-3.5 h-3.5 cursor-pointer" onClick={() => setDietary(null)} />
+            </span>
+          )}
+          {country && (
+            <span className="discover-chip flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full border">
+              {countryFlag(country)} {getCountryName(country, language)} <X className="w-3.5 h-3.5 cursor-pointer" onClick={() => setCountry('')} />
             </span>
           )}
           {difficulty !== 'All' && (
@@ -369,6 +381,17 @@ export default function SearchDiscover() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="discover-muted text-xs font-semibold uppercase tracking-wider">{t('discover.country')}</label>
+              <select value={country} onChange={(event) => setCountry(event.target.value)}
+                className="discover-input w-full rounded-xl border px-3 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-amber-600/40">
+                <option value="">{t('discover.allCountries')}</option>
+                {countryOptions.map((option) => (
+                  <option key={option.code} value={option.code}>{option.flag} {option.name}</option>
+                ))}
+              </select>
             </div>
 
             <div className="space-y-2">

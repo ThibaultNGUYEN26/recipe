@@ -3,17 +3,17 @@ import en from './locales/en';
 const messages = { en };
 
 const localeLoaders = {
+  ar: () => import('./locales/ar'),
+  zh: () => import('./locales/zh'),
   fr: () => import('./locales/fr'),
+  de: () => import('./locales/de'),
+  it: () => import('./locales/it'),
+  ko: () => import('./locales/ko'),
   es: () => import('./locales/es'),
   vi: () => import('./locales/vi'),
-  ar: () => import('./locales/ar'),
-  it: () => import('./locales/it'),
-  zh: () => import('./locales/zh'),
-  de: () => import('./locales/de'),
-  ko: () => import('./locales/ko'),
 };
 
-export const supportedLanguages = ['en', 'fr', 'es', 'vi', 'ar', 'it', 'zh', 'de', 'ko'];
+export const supportedLanguages = ['ar', 'zh', 'en', 'fr', 'de', 'it', 'ko', 'es', 'vi'];
 
 export async function loadLanguage(language) {
   if (messages[language] || !localeLoaders[language]) return;

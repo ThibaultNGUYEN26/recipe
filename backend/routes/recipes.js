@@ -46,13 +46,19 @@ function normalizeFocalPoint(value) {
   return Number.isFinite(point) ? Math.min(100, Math.max(0, point)) : 50;
 }
 
+function normalizeCountryCode(value) {
+  const code = String(value ?? "").trim().toUpperCase();
+  return /^[A-Z]{2}$/.test(code) ? code : null;
+}
+
 // GET /api/recipes
 router.get("/", optionalAuthenticate, async (req, res) => {
-  const { lang = "fr", category } = req.query;
+  const { lang = "fr", category, country } = req.query;
+  const originCountry = normalizeCountryCode(country);
   try {
     const excludedAuthors = await blockedUserIds(req.user?.id);
     const recipes = await prisma.recipe.findMany({
-      where: { isPublic: true, ...(excludedAuthors.length && { authorId: { notIn: excludedAuthors } }), ...(category && { category: { slug: category } }) },
+      where: { isPublic: true, ...(excludedAuthors.length && { authorId: { notIn: excludedAuthors } }), ...(category && { category: { slug: category } }), ...(originCountry && { originCountry }) },
       include: {
         category: true,
         images: { where: { isMain: true } },
@@ -85,6 +91,7 @@ router.get("/", optionalAuthenticate, async (req, res) => {
         title: t?.title,
         description: t?.description,
         image: r.images[0]?.url || r.sourceThumbnailUrl || null,
+        originCountry: r.originCountry,
         category: { slug: r.category.slug, label: r.category.label },
         info: r.info,
         tags: r.tags,
@@ -209,6 +216,7 @@ router.get("/recommended", optionalAuthenticate, async (req, res) => {
         title: translation.title,
         description: translation.description,
         image: recipe.images[0]?.url || recipe.sourceThumbnailUrl || null,
+        originCountry: recipe.originCountry,
         category: { slug: recipe.category.slug, label: recipe.category.label },
         info: recipe.info,
         authorId: recipe.author?.id ?? null,
@@ -330,6 +338,7 @@ router.get("/:slug", optionalAuthenticate, async (req, res) => {
           }
         : { x: 50, y: 50 },
       category: { slug: recipe.category.slug, label: recipe.category.label },
+      originCountry: recipe.originCountry,
       info: recipe.info,
       tags: recipe.tags,
       videoUrl: recipe.videoUrl,
@@ -377,7 +386,7 @@ router.post("/", authenticate, handleRecipeMedia, async (req, res) => {
     info, tags, sourcePlatform, sourceUrl, sourceAuthor, sourceThumbnailUrl, imageFocalX, imageFocalY,
     translations: rawTranslations,
     // single-language fallback
-    lang = "fr", originalLanguage: rawOriginalLanguage, title, description, ingredients, instructions, tips, nutrition,
+    lang = "fr", originalLanguage: rawOriginalLanguage, originCountry: rawOriginCountry, title, description, ingredients, instructions, tips, nutrition,
   } = req.body;
 
   const imageFile = req.files?.image?.[0];
@@ -393,6 +402,12 @@ router.post("/", authenticate, handleRecipeMedia, async (req, res) => {
   if (!slug || !categoryId) {
     removeUploadedFiles();
     return res.status(400).json({ error: "Missing required fields" });
+  }
+
+  const originCountry = normalizeCountryCode(rawOriginCountry);
+  if (rawOriginCountry && !originCountry) {
+    removeUploadedFiles();
+    return res.status(400).json({ error: "Invalid country code" });
   }
 
   const rawCoverImageUrl = req.body.coverImageUrl;
@@ -439,6 +454,7 @@ router.post("/", authenticate, handleRecipeMedia, async (req, res) => {
         data: {
           slug,
           originalLanguage,
+          originCountry,
           categoryId: parseInt(categoryId),
           isPublic: isPublic === "true",
           authorId: req.user.id,
@@ -515,7 +531,7 @@ router.put("/:slug", authenticate, handleRecipeMedia, async (req, res) => {
     if (!recipe) return res.status(404).json({ error: "Recipe not found" });
     if (recipe.authorId !== req.user.id) return res.status(403).json({ error: "Not your recipe" });
 
-    const { categoryId, info, tags, originalLanguage: rawOriginalLanguage, isPublic, imageFocalX, imageFocalY } = req.body;
+    const { categoryId, info, tags, originalLanguage: rawOriginalLanguage, originCountry: rawOriginCountry, isPublic, imageFocalX, imageFocalY } = req.body;
     const rawTranslations = req.body.translations;
 
     const imageFile = req.files?.image?.[0];
@@ -545,6 +561,11 @@ router.put("/:slug", authenticate, handleRecipeMedia, async (req, res) => {
       removeUploadedFiles();
       return res.status(400).json({ error: "Preparation time must be greater than zero and cooking time cannot be negative" });
     }
+    const originCountry = normalizeCountryCode(rawOriginCountry);
+    if (rawOriginCountry && !originCountry) {
+      removeUploadedFiles();
+      return res.status(400).json({ error: "Invalid country code" });
+    }
 
     await prisma.$transaction(async (tx) => {
       await tx.recipe.update({
@@ -554,6 +575,7 @@ router.put("/:slug", authenticate, handleRecipeMedia, async (req, res) => {
           ...(info ? { info: parsedInfo } : {}),
           ...(tags ? { tags: JSON.parse(tags) } : {}),
           ...(rawOriginalLanguage ? { originalLanguage: normalizeLanguage(rawOriginalLanguage) } : {}),
+          ...(rawOriginCountry !== undefined ? { originCountry } : {}),
           ...(isPublic !== undefined ? { isPublic: isPublic === "true" } : {}),
           ...(newVideoUrl !== undefined ? { videoUrl: newVideoUrl } : {}),
         },

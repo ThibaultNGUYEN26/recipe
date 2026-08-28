@@ -11,6 +11,7 @@ import ReactCrop, { type Crop, type PixelCrop, centerCrop, makeAspectCrop } from
 import 'react-image-crop/dist/ReactCrop.css';
 import { apiFetch } from '../../lib/apiFetch';
 import { slugify } from '../../lib/slugify';
+import { getCountryOptions } from '../../lib/countries';
 
 const DRAFT_KEY = 'recipe_draft';
 
@@ -124,6 +125,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
   const [categoryId, setCategoryId] = useState('');
   const [categories, setCategories] = useState<{ id: number; slug: string; label: string }[]>([]);
   const [difficulty, setDifficulty] = useState('Facile');
+  const [originCountry, setOriginCountry] = useState('');
   const [prepTime, setPrepTime] = useState('');
   const [cookTime, setCookTime] = useState('');
   const [servings, setServings] = useState('4');
@@ -187,6 +189,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
       if (d.slugManuallyEdited) setSlugManuallyEdited(true);
       if (d.categoryId) setCategoryId(d.categoryId);
       if (d.difficulty) setDifficulty(d.difficulty);
+      if (d.originCountry) setOriginCountry(d.originCountry);
       if (d.prepTime) setPrepTime(d.prepTime);
       if (d.cookTime) setCookTime(d.cookTime);
       if (d.servings) setServings(d.servings);
@@ -205,7 +208,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
     try {
       const savedAt = new Date();
       localStorage.setItem(DRAFT_KEY, JSON.stringify({
-        stepPage, translations, slug, slugManuallyEdited, categoryId, difficulty,
+        stepPage, translations, slug, slugManuallyEdited, categoryId, difficulty, originCountry,
         prepTime, cookTime, servings, dietaryTags, referenceTagsInput,
         coverImage: coverImage.startsWith('blob:') ? PRESET_IMAGES[0].url : coverImage,
         imageFocalPoint,
@@ -217,7 +220,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
     } catch {
       return false;
     }
-  }, [editSlug, stepPage, translations, slug, slugManuallyEdited, categoryId, difficulty,
+  }, [editSlug, stepPage, translations, slug, slugManuallyEdited, categoryId, difficulty, originCountry,
     prepTime, cookTime, servings, dietaryTags, referenceTagsInput, coverImage, imageFocalPoint]);
 
   // Auto-save draft (debounced, new recipes only)
@@ -252,6 +255,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
         if (info.cookTime) setCookTime(String(info.cookTime).replace(' min', ''));
         if (typeof info.servings === 'number') setServings(String(info.servings));
         if (info.difficulty) setDifficulty(String(info.difficulty));
+        setOriginCountry(recipe.originCountry ?? '');
         const allTags = (recipe.tags as string[]) || [];
         setDietaryTags(allTags.filter((tag) => DIETARY_LIST.includes(tag)));
         setReferenceTagsInput(allTags.filter((tag) => !DIETARY_LIST.includes(tag)).map((tag) => `#${tag}`).join(' '));
@@ -564,6 +568,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
       const fd = new FormData();
       fd.append('slug', slug);
       fd.append('categoryId', categoryId);
+      fd.append('originCountry', originCountry);
       fd.append('info', JSON.stringify(info));
       fd.append('tags', JSON.stringify([...new Set([...dietaryTags, ...parseReferenceTags(referenceTagsInput)])]));
       fd.append('originalLanguage', originalLanguage);
@@ -620,7 +625,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
       de: emptyTranslation(),
       ko: emptyTranslation(),
     });
-    setSlug(''); setSlugManuallyEdited(false); setCategoryId(''); setDifficulty('Facile');
+    setSlug(''); setSlugManuallyEdited(false); setCategoryId(''); setDifficulty('Facile'); setOriginCountry('');
     setPrepTime(''); setCookTime(''); setServings('4');
     setDietaryTags([]); setReferenceTagsInput('');
     setCoverImage(PRESET_IMAGES[0].url); setStepPage(1);
@@ -655,6 +660,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
       ? t('add.draftSavedJustNow')
       : t('add.draftSavedMinutesAgo', { count: draftAgeMinutes })
     : t('add.draftSavingSoon');
+  const countryOptions = getCountryOptions(language);
 
   const inputCls = "w-full bg-stone-50 border border-stone-200 text-stone-900 text-sm rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-amber-800/30 font-medium";
   const labelCls = "text-xs font-bold text-stone-700 uppercase tracking-wider";
@@ -890,6 +896,19 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
               )}
               {validationErrors.has('category') && <p className="text-xs font-semibold text-rose-600">{t('add.requiredField')}</p>}
             </div>
+          </div>
+
+          {/* Country of origin */}
+          <div className="space-y-1.5">
+            <label className={labelCls}>{t('add.originCountryLabel')}</label>
+            <select value={originCountry} onChange={(event) => setOriginCountry(event.target.value)}
+              className={`${inputCls} bg-stone-50`}>
+              <option value="">{t('add.originCountryPlaceholder')}</option>
+              {countryOptions.map((country) => (
+                <option key={country.code} value={country.code}>{country.flag} {country.name}</option>
+              ))}
+            </select>
+            <p className="text-[11px]" style={{ color: 'var(--color-muted)' }}>{t('add.originCountryHint')}</p>
           </div>
 
           {/* Advanced options */}

@@ -1,5 +1,5 @@
 import { Routes, Route, useParams, Link, useLocation } from 'react-router-dom';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect, useLayoutEffect } from 'react';
 import Header from './components/layout/Header';
 import BottomNav from './components/layout/BottomNav';
 import Footer from './components/layout/Footer';
@@ -58,6 +58,25 @@ function EditRecipeWrapper() {
   return <AddRecipeFlow editSlug={slug} />;
 }
 
+function ScrollToTop() {
+  const { pathname, hash } = useLocation();
+
+  useEffect(() => {
+    const previousSetting = window.history.scrollRestoration;
+    window.history.scrollRestoration = 'manual';
+    return () => {
+      window.history.scrollRestoration = previousSetting;
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    // Hash links manage their own destination, such as a recipe's comments.
+    if (!hash) window.scrollTo(0, 0);
+  }, [hash, pathname]);
+
+  return null;
+}
+
 const AUTH_PATHS = new Set(['/login', '/register', '/forgot-password', '/reset-password', '/verify-email']);
 
 export default function App() {
@@ -67,6 +86,7 @@ export default function App() {
 
   return (
     <div className="app-shell flex min-h-dvh flex-col" style={{ backgroundColor: 'var(--color-bg)', color: 'var(--color-text)' }}>
+      <ScrollToTop />
       <RouteSeo />
       <Header />
       {user && !user.emailVerified && (

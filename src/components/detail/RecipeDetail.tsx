@@ -15,6 +15,7 @@ import { useSeo } from '../../hooks/useSeo';
 import { recipeStructuredData, serializeStructuredData } from '../../lib/recipeStructuredData';
 import MadeItSection from './MadeItSection';
 import { formatCompactCount } from '../../lib/formatCompactCount';
+import { countryFlag, getCountryName } from '../../lib/countries';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -474,6 +475,14 @@ export default function RecipeDetail() {
             <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
               {recipe.category.label}
             </span>
+            {recipe.originCountry && (
+              <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: 'var(--color-border)', color: 'var(--color-text)' }}
+                aria-label={`${t('detail.originCountry')}: ${getCountryName(recipe.originCountry, language)}`}>
+                <span className="text-sm leading-none">{countryFlag(recipe.originCountry)}</span>
+                {getCountryName(recipe.originCountry, language)}
+              </span>
+            )}
             {(recipe.tags as string[] | undefined)?.map((t) => (
               <span key={t} className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--color-border)', color: 'var(--color-muted)' }}>{t}</span>
             ))}

@@ -110,6 +110,7 @@ model Recipe {
   id            Int                 @id @default(autoincrement())
   slug          String              @unique
   originalLanguage String           @default("fr")
+  originCountry String?             @db.Char(2)
   categoryId    Int
   category      Category            @relation(fields: [categoryId], references: [id])
   isPublic      Boolean             @default(true)
@@ -136,6 +137,8 @@ model Recipe {
   likes         RecipeLike[]
   makes         RecipeMake[]
   reports       Report[]
+
+  @@index([originCountry])
 }
 
 model RecipeMake {

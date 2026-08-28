@@ -48,15 +48,15 @@ export default function LanguageSettings() {
 
       <div className="divide-y divide-[var(--color-border)] overflow-hidden rounded-2xl border"
         style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
+        <LanguageChoice active={language === 'ar'} label="العربية" description={t('language.arabicDescription')} onClick={() => setPreferredLanguage('ar')} />
+        <LanguageChoice active={language === 'zh'} label="简体中文" description={t('language.chineseDescription')} onClick={() => setPreferredLanguage('zh')} />
         <LanguageChoice active={language === 'en'} label="English" description={t('language.englishDescription')} onClick={() => setPreferredLanguage('en')} />
         <LanguageChoice active={language === 'fr'} label="Français" description={t('language.frenchDescription')} onClick={() => setPreferredLanguage('fr')} />
+        <LanguageChoice active={language === 'de'} label="Deutsch" description={t('language.germanDescription')} onClick={() => setPreferredLanguage('de')} />
+        <LanguageChoice active={language === 'it'} label="Italiano" description={t('language.italianDescription')} onClick={() => setPreferredLanguage('it')} />
+        <LanguageChoice active={language === 'ko'} label="한국어" description={t('language.koreanDescription')} onClick={() => setPreferredLanguage('ko')} />
         <LanguageChoice active={language === 'es'} label="Español" description={t('language.spanishDescription')} onClick={() => setPreferredLanguage('es')} />
         <LanguageChoice active={language === 'vi'} label="Tiếng Việt" description={t('language.vietnameseDescription')} onClick={() => setPreferredLanguage('vi')} />
-        <LanguageChoice active={language === 'ar'} label="العربية" description={t('language.arabicDescription')} onClick={() => setPreferredLanguage('ar')} />
-        <LanguageChoice active={language === 'it'} label="Italiano" description={t('language.italianDescription')} onClick={() => setPreferredLanguage('it')} />
-        <LanguageChoice active={language === 'zh'} label="简体中文" description={t('language.chineseDescription')} onClick={() => setPreferredLanguage('zh')} />
-        <LanguageChoice active={language === 'de'} label="Deutsch" description={t('language.germanDescription')} onClick={() => setPreferredLanguage('de')} />
-        <LanguageChoice active={language === 'ko'} label="한국어" description={t('language.koreanDescription')} onClick={() => setPreferredLanguage('ko')} />
       </div>
     </div>
   );
