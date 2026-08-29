@@ -1,7 +1,4 @@
-import en from './en';
-
 const messages = {
-  ...en,
   'header.openNotifications': 'Benachrichtigungen öffnen',
   'header.openAccount': 'Kontomenü öffnen',
   'header.chef': 'Koch',
@@ -292,6 +289,8 @@ const messages = {
   'detail.language.fr': 'Französisch',
   'detail.language.it': 'Italienisch',
   'detail.language.ko': 'Koreanisch',
+  'detail.language.ja': 'Japanisch',
+  'detail.language.pt': 'Portugiesisch',
   'detail.language.original': 'der Originalsprache',
   'detail.language.vi': 'Vietnamesisch',
   'detail.language.zh': 'Chinesisch',
@@ -595,6 +594,8 @@ const messages = {
   'adminAnalytics.verified': 'E-Mail verifiziert',
   'adminAnalytics.views': 'Aufrufe',
   'language.koreanDescription': 'Savor auf Koreanisch verwenden',
+  'language.japaneseDescription': 'Savor auf Japanisch verwenden',
+  'language.portugueseDescription': 'Savor auf Portugiesisch verwenden',
   'cookieConsent.accept': 'Analysen akzeptieren',
   'cookieConsent.body': 'Savor verwendet erforderlichen Speicher für den Betrieb der App. Mit deiner Zustimmung werden außerdem eigene Rezeptaufrufe für Creator-Analysen erfasst. Es werden keine Werbe- oder Drittanbieter-Analyse-Cookies verwendet.',
   'cookieConsent.customize': 'Anpassen',

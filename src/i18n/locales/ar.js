@@ -1,7 +1,4 @@
-import en from './en';
-
 const messages = {
-  ...en,
   'header.openNotifications': 'فتح الإشعارات',
   'header.openAccount': 'فتح قائمة الحساب',
   'header.chef': 'طاهٍ',
@@ -49,6 +46,11 @@ const messages = {
   'language.vietnameseDescription': 'استخدام Savor باللغة الفيتنامية',
   'language.arabicDescription': 'استخدام Savor باللغة العربية',
   'language.italianDescription': 'استخدام Savor باللغة الإيطالية',
+  'language.chineseDescription': 'استخدام Savor باللغة الصينية المبسطة',
+  'language.germanDescription': 'استخدام Savor باللغة الألمانية',
+  'language.koreanDescription': 'استخدام Savor باللغة الكورية',
+  'language.japaneseDescription': 'استخدام Savor باللغة اليابانية',
+  'language.portugueseDescription': 'استخدام Savor باللغة البرتغالية',
   'home.forYou': 'لك',
   'home.following': 'المتابَعون',
   'home.followingTitle': 'من الطهاة الذين تتابعهم',
@@ -160,6 +162,11 @@ const messages = {
   'detail.language.vi': 'الفيتنامية',
   'detail.language.ar': 'العربية',
   'detail.language.it': 'الإيطالية',
+  'detail.language.zh': 'الصينية',
+  'detail.language.de': 'الألمانية',
+  'detail.language.ko': 'الكورية',
+  'detail.language.ja': 'اليابانية',
+  'detail.language.pt': 'البرتغالية',
   'detail.language.original': 'اللغة الأصلية',
   'detail.seeOriginal': 'عرض الأصل',
   'detail.seeTranslation': 'عرض الترجمة',
