@@ -1,7 +1,4 @@
-import en from './en';
-
 const messages = {
-  ...en,
   'header.openNotifications': '打开通知',
   'header.openAccount': '打开账户菜单',
   'header.chef': '厨师',
@@ -292,6 +289,8 @@ const messages = {
   'detail.language.fr': '法语',
   'detail.language.it': '意大利语',
   'detail.language.ko': '韩语',
+  'detail.language.ja': '日语',
+  'detail.language.pt': '葡萄牙语',
   'detail.language.original': '原始语言',
   'detail.language.vi': '越南语',
   'detail.ratingSaved': '评分已保存！',
@@ -595,6 +594,8 @@ const messages = {
   'adminAnalytics.views': '浏览量',
   'language.germanDescription': '使用德文版 Savor',
   'language.koreanDescription': '使用韩文版 Savor',
+  'language.japaneseDescription': '使用日文版 Savor',
+  'language.portugueseDescription': '使用葡萄牙文版 Savor',
   'cookieConsent.accept': '接受分析',
   'cookieConsent.body': 'Savor 使用必要存储来运行应用。经你同意，还会记录第一方菜谱浏览数据，用于创作者分析。我们不使用广告或第三方分析 Cookie。',
   'cookieConsent.customize': '自定义',

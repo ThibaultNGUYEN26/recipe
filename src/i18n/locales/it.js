@@ -1,7 +1,4 @@
-import en from './en';
-
 const messages = {
-  ...en,
   'header.openNotifications': 'Apri notifiche',
   'header.openAccount': 'Apri menu account',
   'header.chef': 'Chef',
@@ -108,6 +105,8 @@ const messages = {
   'language.chineseDescription': 'Usa Savor in cinese',
   'language.germanDescription': 'Usa Savor in tedesco',
   'language.koreanDescription': 'Usa Savor in coreano',
+  'language.japaneseDescription': 'Usa Savor in giapponese',
+  'language.portugueseDescription': 'Usa Savor in portoghese',
   'home.forYou': 'Per te',
   'home.following': 'Seguiti',
   'home.followingTitle': 'Dai cuochi che segui',
@@ -222,6 +221,8 @@ const messages = {
   'detail.language.zh': 'cinese',
   'detail.language.de': 'tedesco',
   'detail.language.ko': 'coreano',
+  'detail.language.ja': 'giapponese',
+  'detail.language.pt': 'portoghese',
   'detail.language.original': 'lingua originale',
   'detail.seeOriginal': 'Vedi originale',
   'detail.seeTranslation': 'Vedi traduzione',

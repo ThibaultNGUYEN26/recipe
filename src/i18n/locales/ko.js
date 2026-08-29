@@ -1,7 +1,4 @@
-import en from './en';
-
 const messages = {
-  ...en,
   'header.openNotifications': '알림 열기',
   'header.openAccount': '계정 메뉴 열기',
   'header.chef': '셰프',
@@ -39,6 +36,8 @@ const messages = {
   'language.chineseDescription': 'Savor를 중국어 간체로 사용',
   'language.germanDescription': 'Savor를 독일어로 사용',
   'language.koreanDescription': 'Savor를 한국어로 사용',
+  'language.japaneseDescription': 'Savor를 일본어로 사용',
+  'language.portugueseDescription': 'Savor를 포르투갈어로 사용',
   'home.forYou': '추천',
   'home.following': '팔로잉',
   'home.followingTitle': '팔로우하는 셰프의 레시피',
@@ -293,6 +292,8 @@ const messages = {
   'detail.language.fr': '프랑스어',
   'detail.language.it': '이탈리아어',
   'detail.language.ko': '한국어',
+  'detail.language.ja': '일본어',
+  'detail.language.pt': '포르투갈어',
   'detail.language.original': '원문 언어',
   'detail.language.vi': '베트남어',
   'detail.language.zh': '중국어',
