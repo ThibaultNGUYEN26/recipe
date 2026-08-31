@@ -342,7 +342,6 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
                     <Link to="/creator/analytics" className="profile-accent-soft flex min-h-11 w-full items-center justify-center gap-1.5 px-2 py-2 text-center text-xs font-bold rounded-2xl border">
                       <BarChart3 className="w-3.5 h-3.5" /> {t('profile.analytics')}
                     </Link>
-                    {!profile.isVerified && <Link to="/settings/verification" className="profile-verification flex min-h-11 w-full items-center justify-center px-2 py-2 text-center text-xs font-bold rounded-2xl border">Apply for chef badge</Link>}
                     <button onClick={() => setIsEditOpen(true)}
                       className="profile-primary flex min-h-11 w-full items-center justify-center gap-1.5 px-2 py-2 text-center text-xs font-bold rounded-2xl transition-colors shadow-sm">
                       <Edit3 className="w-3.5 h-3.5" /> {t('profile.editProfile')}
