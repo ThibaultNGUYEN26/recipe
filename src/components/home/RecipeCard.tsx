@@ -12,6 +12,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { apiFetch } from '../../lib/apiFetch';
 import { useLanguage } from '../../contexts/LanguageContext';
 import VerifiedBadge from '../profile/VerifiedBadge';
+import ChefBadge from '../profile/ChefBadge';
 import { formatCompactCount } from '../../lib/formatCompactCount';
 import { countryFlag, getCountryName } from '../../lib/countries';
 
@@ -157,6 +158,7 @@ export default function RecipeCard({ recipe, hideAuthor = false, isFollowingAuth
             <div className="flex items-center gap-1 min-w-0">
               <h4 className="recipe-card__primary text-xs font-bold truncate">{recipe.authorName ?? 'Savor Chef'}</h4>
               {recipe.authorIsVerified && <VerifiedBadge className="w-3.5 h-3.5" />}
+              {recipe.authorIsChefVerified && <ChefBadge className="w-3.5 h-3.5" />}
               {recipe.authorId !== user?.id && isFollowingAuthor && (
                 <span className="ml-1 inline-flex shrink-0 items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[9px] font-semibold"
                   style={{ color: 'var(--color-accent)', backgroundColor: 'var(--color-accent-soft)' }}>

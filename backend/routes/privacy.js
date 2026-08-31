@@ -24,7 +24,7 @@ router.get("/export", authenticate, async (req, res) => {
         followers: { select: { followerId: true, createdAt: true } },
         notifications: { select: { type: true, recipeId: true, message: true, read: true, createdAt: true } },
         sentNotifications: { select: { type: true, recipeId: true, createdAt: true } },
-        verification: { select: { status: true, socialLinks: true, message: true, rejectionReason: true, reviewedAt: true, createdAt: true } },
+        verifications: { select: { type: true, status: true, socialLinks: true, message: true, rejectionReason: true, reviewedAt: true, createdAt: true } },
         blockedUsers: { select: { blockedId: true, createdAt: true } },
         reportsSubmitted: { select: { id: true, targetType: true, reason: true, notes: true, status: true, createdAt: true } },
       },

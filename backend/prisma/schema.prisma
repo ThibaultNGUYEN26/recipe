@@ -26,6 +26,7 @@ model User {
   sessionVersion        Int                   @default(0)
   isAdmin               Boolean               @default(false)
   isVerified            Boolean               @default(false)
+  isChefVerified        Boolean               @default(false)
   bio                   String?
   avatarUrl             String?               @default("/api/media/default-avatar.svg")
   avatarMediaId         String?               @unique
@@ -47,7 +48,7 @@ model User {
   recipeMakes           RecipeMake[]
   notifications         Notification[]        @relation("NotificationRecipient")
   sentNotifications     Notification[]        @relation("NotificationActor")
-  verification          CreatorVerification?  @relation("VerificationApplicant")
+  verifications         CreatorVerification[] @relation("VerificationApplicant")
   reviewedVerifications CreatorVerification[] @relation("VerificationReviewer")
   passwordResetTokens   PasswordResetToken[]
   emailVerificationTokens EmailVerificationToken[]
@@ -87,11 +88,17 @@ enum VerificationStatus {
   REJECTED
 }
 
+enum VerificationType {
+  USER
+  CHEF
+}
+
 model CreatorVerification {
   id               Int                @id @default(autoincrement())
-  userId           Int                @unique
+  userId           Int
   user             User               @relation("VerificationApplicant", fields: [userId], references: [id], onDelete: Cascade)
   status           VerificationStatus @default(PENDING)
+  type             VerificationType   @default(USER)
   socialLinks      Json
   message          String?
   verificationCode String
@@ -104,6 +111,7 @@ model CreatorVerification {
 
   @@index([status, createdAt])
   @@index([reviewedById])
+  @@unique([userId, type])
 }
 
 model Recipe {

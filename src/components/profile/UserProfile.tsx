@@ -14,6 +14,7 @@ import {
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import VerifiedBadge from './VerifiedBadge';
+import ChefBadge from './ChefBadge';
 import { apiFetch } from '../../lib/apiFetch';
 import { useSeo } from '../../hooks/useSeo';
 
@@ -321,6 +322,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
                 <div className="flex items-center justify-center sm:justify-start gap-1.5">
                   <h1 className="font-serif text-2xl font-black" style={{ color: 'var(--color-text)' }}>{profile.name ?? t('profile.anonymousChef')}</h1>
                   {profile.isVerified && <VerifiedBadge className="w-4 h-4" showLabel />}
+                  {profile.isChefVerified && <ChefBadge className="w-4 h-4" showLabel />}
                 </div>
                 {profile.username && <p className="text-sm font-medium" style={{ color: 'var(--color-muted)' }}>@{profile.username}</p>}
               </div>

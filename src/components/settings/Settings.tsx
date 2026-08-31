@@ -69,21 +69,21 @@ export default function SettingsPage() {
             <span className="min-w-0 flex-1"><span className="block text-sm font-medium">{t('settings.privacySafety')}</span><span className="block text-xs" style={{ color: 'var(--color-muted)' }}>{t('settings.privacySafetyDescription')}</span></span>
             <ChevronRight size={18} style={{ color: 'var(--color-muted)' }} />
           </Link>
-          <Link to="/settings/verification" className="flex items-center gap-3 border-t px-4 py-4 transition-colors hover:bg-[var(--color-hover)]" style={{ borderColor: 'var(--color-border)' }}>
+          <Link to="/settings/verification?type=CHEF" className="flex items-center gap-3 border-t px-4 py-4 transition-colors hover:bg-[var(--color-hover)]" style={{ borderColor: 'var(--color-border)' }}>
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-50 text-amber-800"><ChefHat size={19} /></span>
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-medium">{user.isVerified ? 'Verified Chef status' : 'Apply for Verified Chef'}</span>
-              <span className="block text-xs" style={{ color: 'var(--color-muted)' }}>{user.isVerified ? 'Your professional chef badge is active' : 'Submit professional culinary evidence for review'}</span>
+              <span className="block text-sm font-medium">{user.isChefVerified ? 'Verified Chef status' : 'Apply for Verified Chef'}</span>
+              <span className="block text-xs" style={{ color: 'var(--color-muted)' }}>{user.isChefVerified ? 'Your professional chef badge is active' : 'Submit professional culinary evidence for review'}</span>
             </span>
-            {user.isVerified ? <Check size={18} className="text-emerald-600" /> : <ChevronRight size={18} style={{ color: 'var(--color-muted)' }} />}
+            {user.isChefVerified ? <Check size={18} className="text-emerald-600" /> : <ChevronRight size={18} style={{ color: 'var(--color-muted)' }} />}
           </Link>
-          <Link to="/verify-email" className="flex items-center gap-3 border-t px-4 py-4 transition-colors hover:bg-[var(--color-hover)]" style={{ borderColor: 'var(--color-border)' }}>
+          <Link to="/settings/verification?type=USER" className="flex items-center gap-3 border-t px-4 py-4 transition-colors hover:bg-[var(--color-hover)]" style={{ borderColor: 'var(--color-border)' }}>
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-50 text-blue-600"><BadgeCheck size={19} /></span>
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-medium">{user.emailVerified ? 'Verified User' : 'Verify user account'}</span>
-              <span className="block text-xs" style={{ color: 'var(--color-muted)' }}>{user.emailVerified ? 'Your email address has been verified' : 'Confirm your email address and secure your account'}</span>
+              <span className="block text-sm font-medium">{user.isVerified ? 'Verified User status' : 'Apply for Verified User'}</span>
+              <span className="block text-xs" style={{ color: 'var(--color-muted)' }}>{user.isVerified ? 'Your blue identity badge is active' : 'Request the blue identity and authenticity badge'}</span>
             </span>
-            {user.emailVerified ? <Check size={18} className="text-emerald-600" /> : <ChevronRight size={18} style={{ color: 'var(--color-muted)' }} />}
+            {user.isVerified ? <Check size={18} className="text-emerald-600" /> : <ChevronRight size={18} style={{ color: 'var(--color-muted)' }} />}
           </Link>
         </div>
       </section>

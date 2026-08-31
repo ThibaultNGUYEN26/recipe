@@ -1,12 +1,13 @@
 import { LoadingPan } from '../ui/LoadingPan';
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { ChefHat, CheckCircle2, Clock3, Copy, ExternalLink, ShieldCheck } from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { BadgeCheck, ChefHat, CheckCircle2, Clock3, Copy, ExternalLink, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUI } from '../../contexts/UIContext';
 import { apiFetch } from '../../lib/apiFetch';
 
 interface VerificationRequest {
+  type: 'USER' | 'CHEF';
   status: 'PENDING' | 'VERIFIED' | 'REJECTED';
   socialLinks: string[];
   message?: string | null;
@@ -17,6 +18,9 @@ interface VerificationRequest {
 
 export default function CreatorVerification() {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
+  const verificationType: 'USER' | 'CHEF' = searchParams.get('type')?.toUpperCase() === 'CHEF' ? 'CHEF' : 'USER';
+  const isChef = verificationType === 'CHEF';
   const { showToast } = useUI();
   const [request, setRequest] = useState<VerificationRequest | null>(null);
   const [linksText, setLinksText] = useState('');
@@ -26,7 +30,11 @@ export default function CreatorVerification() {
 
   useEffect(() => {
     if (!user) return;
-    apiFetch('/api/verifications/me')
+    setLoading(true);
+    setRequest(null);
+    setLinksText('');
+    setMessage('');
+    apiFetch(`/api/verifications/me?type=${verificationType}`)
       .then((response) => response.json())
       .then((data) => {
         setRequest(data.request ?? null);
@@ -35,7 +43,7 @@ export default function CreatorVerification() {
       })
       .catch(() => showToast('Failed to load verification status', undefined, 'error'))
       .finally(() => setLoading(false));
-  }, [user?.id, showToast]);
+  }, [user?.id, showToast, verificationType]);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -44,7 +52,7 @@ export default function CreatorVerification() {
     try {
       const response = await apiFetch('/api/verifications', {
         method: 'POST',
-        body: JSON.stringify({ socialLinks, message }),
+        body: JSON.stringify({ type: verificationType, socialLinks, message }),
       });
       const data = await response.json();
       if (!response.ok) { showToast(data.error ?? 'Submission failed', undefined, 'error'); return; }
@@ -65,7 +73,7 @@ export default function CreatorVerification() {
 
   if (!user) return (
     <div className="min-h-[60vh] flex flex-col items-center justify-center gap-3">
-      <p className="text-sm" style={{ color: 'var(--color-muted)' }}>Sign in to apply for the Verified Chef badge.</p>
+      <p className="text-sm" style={{ color: 'var(--color-muted)' }}>Sign in to apply for verification.</p>
       <Link to="/login" className="px-4 py-2 rounded-xl bg-stone-900 text-white text-sm">Sign in</Link>
     </div>
   );
@@ -76,22 +84,23 @@ export default function CreatorVerification() {
     <div className="w-full max-w-xl mx-auto px-4 py-8 pb-24 space-y-5">
       <div>
         <h1 className="font-serif text-2xl font-bold flex items-center gap-2" style={{ color: 'var(--color-text)' }}>
-          <ChefHat className="w-6 h-6 text-amber-700" /> Professional chef verification
+          {isChef ? <ChefHat className="w-6 h-6 text-amber-700" /> : <BadgeCheck className="w-6 h-6 text-blue-500" />}
+          {isChef ? 'Professional chef verification' : 'User verification'}
         </h1>
-        <p className="text-sm mt-1" style={{ color: 'var(--color-muted)' }}>Apply for a trust badge showing that Savor reviewed evidence of your professional culinary background.</p>
+        <p className="text-sm mt-1" style={{ color: 'var(--color-muted)' }}>{isChef ? 'Apply for a trust badge showing that Savor reviewed evidence of your professional culinary background.' : 'Apply for the blue badge showing that Savor confirmed your identity and ownership of your public profile.'}</p>
       </div>
 
-      {request?.status === 'VERIFIED' || user.isVerified ? (
+      {request?.status === 'VERIFIED' || (isChef ? user.isChefVerified : user.isVerified) ? (
         <div className="rounded-3xl border border-blue-200 bg-blue-50 p-6 text-center space-y-2">
           <CheckCircle2 className="w-10 h-10 text-blue-500 mx-auto" />
-          <h2 className="font-serif text-lg font-bold text-blue-950">You are a Verified Chef</h2>
-          <p className="text-sm text-blue-800">Your professional chef badge is visible on your profile and recipes.</p>
+          <h2 className="font-serif text-lg font-bold text-blue-950">You are {isChef ? 'a Verified Chef' : 'a Verified User'}</h2>
+          <p className="text-sm text-blue-800">Your {isChef ? 'professional chef' : 'blue identity'} badge is visible on your profile and recipes.</p>
         </div>
       ) : request?.status === 'PENDING' ? (
         <div className="space-y-4">
           <div className="rounded-3xl border p-5" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
             <div className="flex items-center gap-2 mb-2"><Clock3 className="w-5 h-5 text-amber-700" /><h2 className="font-semibold">Review pending</h2></div>
-            <p className="text-sm" style={{ color: 'var(--color-muted)' }}>Temporarily place this code in the bio of a submitted profile when possible. An admin will check account ownership and your professional evidence.</p>
+            <p className="text-sm" style={{ color: 'var(--color-muted)' }}>Temporarily place this code in the bio of a submitted profile when possible. An admin will check {isChef ? 'account ownership and your professional evidence' : 'your identity and account ownership'}.</p>
             <button onClick={copyCode} className="w-full mt-4 flex items-center justify-center gap-2 rounded-2xl bg-stone-900 text-white py-3 font-mono text-sm">
               {request.verificationCode} <Copy className="w-4 h-4" />
             </button>
@@ -109,24 +118,24 @@ export default function CreatorVerification() {
             </div>
           )}
           <div>
-            <label className="text-xs font-bold uppercase tracking-wide" style={{ color: 'var(--color-muted)' }}>Professional evidence</label>
+            <label className="text-xs font-bold uppercase tracking-wide" style={{ color: 'var(--color-muted)' }}>{isChef ? 'Professional evidence' : 'Public identity profiles'}</label>
             <textarea value={linksText} onChange={(event) => setLinksText(event.target.value)} required rows={4}
-              placeholder={'https://restaurant.example/team/your-name\nhttps://instagram.com/your-chef-profile'}
+              placeholder={isChef ? 'https://restaurant.example/team/your-name\nhttps://instagram.com/your-chef-profile' : 'https://instagram.com/yourname\nhttps://youtube.com/@yourname'}
               className="w-full mt-1 rounded-2xl px-4 py-3 text-sm outline-none resize-none"
               style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
-            <p className="text-[11px] mt-1" style={{ color: 'var(--color-muted)' }}>Add 1–5 public links such as an employer page, culinary qualification, press profile, restaurant page, or professional social account.</p>
+            <p className="text-[11px] mt-1" style={{ color: 'var(--color-muted)' }}>{isChef ? 'Add 1–5 public links such as an employer page, culinary qualification, press profile, restaurant page, or professional social account.' : 'Add 1–5 public profiles that clearly represent you. Use the same name or identity shown on Savor.'}</p>
           </div>
           <div>
-            <label className="text-xs font-bold uppercase tracking-wide" style={{ color: 'var(--color-muted)' }}>Your culinary background (optional)</label>
+            <label className="text-xs font-bold uppercase tracking-wide" style={{ color: 'var(--color-muted)' }}>{isChef ? 'Your culinary background (optional)' : 'About your public identity (optional)'}</label>
             <textarea value={message} onChange={(event) => setMessage(event.target.value)} maxLength={500} rows={3}
-              placeholder="Tell us where you trained or work and what kind of chef you are."
+              placeholder={isChef ? 'Tell us where you trained or work and what kind of chef you are.' : 'Tell us why your account should receive the blue badge.'}
               className="w-full mt-1 rounded-2xl px-4 py-3 text-sm outline-none resize-none"
               style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
           </div>
           <div className="flex items-start gap-2 rounded-2xl bg-amber-50 border border-amber-200 p-3 text-xs text-amber-900">
-            <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5" /> Savor reviews the submitted evidence manually. The badge confirms professional background, but is not an endorsement of individual recipes or claims.
+            <ShieldCheck className="w-4 h-4 shrink-0 mt-0.5" /> Savor reviews the submitted evidence manually. The badge confirms {isChef ? 'professional background' : 'identity and account ownership'}, but is not an endorsement of individual recipes or claims.
           </div>
-          <button disabled={submitting} className="w-full py-3 rounded-2xl bg-stone-900 text-white text-sm font-semibold disabled:opacity-50">{submitting ? 'Submitting…' : 'Apply for Verified Chef'}</button>
+          <button disabled={submitting} className="w-full py-3 rounded-2xl bg-stone-900 text-white text-sm font-semibold disabled:opacity-50">{submitting ? 'Submitting…' : `Apply for ${isChef ? 'Verified Chef' : 'Verified User'}`}</button>
         </form>
       )}
     </div>

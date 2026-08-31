@@ -9,6 +9,7 @@ import { useUI } from '../../contexts/UIContext';
 import type { RecipeDetail as RecipeDetailType, Comment, IngredientSection, InstructionStep } from '../../types';
 import { ArrowLeft, Star, StarHalf, Bookmark, BookmarkCheck, Share2, Clock, Users, ChefHat, Timer, Check, Heart, MessageCircle, Send, Flag, Trash2, Languages, ExternalLink, Pencil } from 'lucide-react';
 import VerifiedBadge from '../profile/VerifiedBadge';
+import ChefBadge from '../profile/ChefBadge';
 import { apiFetch } from '../../lib/apiFetch';
 import { ANALYTICS_VISITOR_KEY, hasAnalyticsConsent } from '../../lib/cookiePreferences';
 import { useSeo } from '../../hooks/useSeo';
@@ -511,6 +512,7 @@ export default function RecipeDetail() {
               </div>
               <span className="text-sm font-medium" style={{ color: 'var(--color-text)' }}>{recipe.authorName}</span>
               {recipe.authorIsVerified && <VerifiedBadge className="w-4 h-4" />}
+              {recipe.authorIsChefVerified && <ChefBadge className="w-4 h-4" />}
             </Link>
           )}
           <div className="flex flex-wrap items-center gap-x-1.5 sm:gap-x-3 gap-y-2 mt-4 text-sm" style={{ color: 'var(--color-muted)' }}>

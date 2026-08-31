@@ -35,7 +35,7 @@ router.get("/", optionalAuthenticate, async (req, res) => {
   const query = String(q).trim();
   const usernameQuery = normalizeUsername(query);
   try {
-    const select = { id: true, username: true, name: true, avatarUrl: true, isVerified: true };
+    const select = { id: true, username: true, name: true, avatarUrl: true, isVerified: true, isChefVerified: true };
     const [exactUser, matches] = await Promise.all([
       usernameQuery ? prisma.user.findUnique({ where: { username: usernameQuery }, select }) : null,
       prisma.user.findMany({
@@ -390,7 +390,7 @@ router.get("/by-username/:username", optionalAuthenticate, async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { username },
-      select: { id: true, username: true, name: true, bio: true, avatarUrl: true, isVerified: true, createdAt: true },
+      select: { id: true, username: true, name: true, bio: true, avatarUrl: true, isVerified: true, isChefVerified: true, createdAt: true },
     });
     if (!user) return res.status(404).json({ error: "User not found" });
     if (await usersAreBlocked(req.user?.id, user.id)) return res.status(404).json({ error: "User not found" });
@@ -418,7 +418,7 @@ router.get("/:id", optionalAuthenticate, async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, username: true, name: true, bio: true, avatarUrl: true, isVerified: true, createdAt: true },
+      select: { id: true, username: true, name: true, bio: true, avatarUrl: true, isVerified: true, isChefVerified: true, createdAt: true },
     });
     if (!user) return res.status(404).json({ error: "User not found" });
     if (await usersAreBlocked(req.user?.id, user.id)) return res.status(404).json({ error: "User not found" });

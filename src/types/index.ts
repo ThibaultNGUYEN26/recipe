@@ -33,6 +33,7 @@ export interface RecipeListItem {
   authorId?: number | null;
   authorUsername?: string | null;
   authorIsVerified?: boolean;
+  authorIsChefVerified?: boolean;
   authorName?: string | null;
   authorAvatar?: string | null;
   isFollowing?: boolean;
@@ -115,6 +116,7 @@ export interface UserProfile {
   id: number;
   username: string | null;
   isVerified: boolean;
+  isChefVerified: boolean;
   name: string | null;
   bio?: string | null;
   avatarUrl?: string | null;
@@ -131,6 +133,7 @@ export interface AuthUser {
   username: string | null;
   isAdmin: boolean;
   isVerified: boolean;
+  isChefVerified: boolean;
   emailVerified: boolean;
   name: string | null;
   avatarUrl?: string | null;
