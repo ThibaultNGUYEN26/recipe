@@ -370,13 +370,13 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
     setStepPage(targetPage);
   }
 
-  async function importFromTikTok() {
-    if (!tiktokUrl.trim()) return;
+  async function importFromTikTok(url = tiktokUrl.trim()) {
+    if (!url || importingTikTok) return;
     setImportingTikTok(true);
     try {
       const response = await apiFetch('/api/recipes/import/tiktok', {
         method: 'POST',
-        body: JSON.stringify({ url: tiktokUrl.trim() }),
+        body: JSON.stringify({ url }),
       });
       const payload: TikTokImportResponse = await response.json();
       if (!response.ok) throw new Error(payload.error || 'TikTok import failed');
@@ -738,8 +738,15 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
             </div>
             <div className="flex flex-col sm:flex-row gap-2">
               <input type="url" value={tiktokUrl} onChange={(event) => setTikTokUrl(event.target.value)}
+                onPaste={(event) => {
+                  const pastedValue = event.clipboardData.getData('text').trim();
+                  if (!pastedValue) return;
+                  event.preventDefault();
+                  setTikTokUrl(pastedValue);
+                  void importFromTikTok(pastedValue);
+                }}
                 placeholder={t('add.tiktokUrlPlaceholder')} className={`${inputCls} flex-1`} />
-              <button type="button" onClick={importFromTikTok} disabled={importingTikTok || !tiktokUrl.trim()}
+              <button type="button" onClick={() => void importFromTikTok()} disabled={importingTikTok || !tiktokUrl.trim()}
                 className="add-recipe-primary shrink-0 rounded-xl px-4 py-3 text-xs font-bold disabled:opacity-50">
                 {importingTikTok ? t('add.tiktokImportingEllipsis') : t('add.tiktokCreateDraftButton')}
               </button>

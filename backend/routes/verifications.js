@@ -5,10 +5,9 @@ import { authenticate } from "../middleware/authenticate.js";
 
 const router = Router();
 const RESUBMIT_DELAY_MS = 24 * 60 * 60 * 1000; // Prevent repeated manual-review submissions.
-export const MIN_VERIFICATION_FOLLOWERS = 1500;
 
-export function isVerificationEligible(followerCount) {
-  return followerCount > MIN_VERIFICATION_FOLLOWERS;
+export function isVerificationEligible() {
+  return true;
 }
 
 export function parseSocialLinks(value) {
@@ -29,14 +28,11 @@ async function requireAdmin(req, res, next) {
 }
 
 router.get("/me", authenticate, async (req, res) => {
-  const [request, followerCount] = await Promise.all([
-    prisma.creatorVerification.findUnique({
-      where: { userId: req.user.id },
-      select: { id: true, status: true, socialLinks: true, message: true, verificationCode: true, rejectionReason: true, reviewedAt: true, createdAt: true, updatedAt: true },
-    }),
-    prisma.follow.count({ where: { followingId: req.user.id } }),
-  ]);
-  res.json({ request, followerCount, eligible: isVerificationEligible(followerCount) });
+  const request = await prisma.creatorVerification.findUnique({
+    where: { userId: req.user.id },
+    select: { id: true, status: true, socialLinks: true, message: true, verificationCode: true, rejectionReason: true, reviewedAt: true, createdAt: true, updatedAt: true },
+  });
+  res.json({ request, eligible: isVerificationEligible() });
 });
 
 router.post("/", authenticate, async (req, res) => {
@@ -46,10 +42,6 @@ router.post("/", authenticate, async (req, res) => {
   if (message.length > 500) return res.status(400).json({ error: "Message must be 500 characters or less" });
 
   try {
-    const followerCount = await prisma.follow.count({ where: { followingId: req.user.id } });
-    if (!isVerificationEligible(followerCount)) {
-      return res.status(403).json({ error: `Creator verification requires more than ${MIN_VERIFICATION_FOLLOWERS.toLocaleString("en-US")} followers` });
-    }
     const existing = await prisma.creatorVerification.findUnique({ where: { userId: req.user.id } });
     if (existing?.status === "PENDING") return res.status(409).json({ error: "Your verification request is already pending" });
     if (existing?.status === "VERIFIED") return res.status(409).json({ error: "Your profile is already verified" });

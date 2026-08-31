@@ -21,8 +21,8 @@ describe("creator verification evidence", () => {
 });
 
 describe("creator verification eligibility", () => {
-  it("requires strictly more than 1,500 followers", () => {
-    expect(isVerificationEligible(1500)).toBe(false);
-    expect(isVerificationEligible(1501)).toBe(true);
+  it("allows chefs to apply regardless of audience size", () => {
+    expect(isVerificationEligible(0)).toBe(true);
+    expect(isVerificationEligible(1500)).toBe(true);
   });
 });

@@ -220,6 +220,7 @@ export function captionToRecipeDraft(caption, fallbackTitle) {
   )];
   const lines = contentCaption.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   let section = "description";
+  const descriptionLines = [];
   const ingredientLines = [];
   const instructionLines = [];
 
@@ -232,6 +233,7 @@ export function captionToRecipeDraft(caption, fallbackTitle) {
       section = "instructions";
       continue;
     }
+    if (section === "description") descriptionLines.push(line);
     if (section === "ingredients") ingredientLines.push(line);
     if (section === "instructions") instructionLines.push(line);
   }
@@ -246,13 +248,22 @@ export function captionToRecipeDraft(caption, fallbackTitle) {
     ? inline.instructionSections.flatMap((section) => splitSentences(section.text)).map((text, index) => ({ step: index + 1, text }))
     : dense?.instructions || instructionLines.map(cleanLine).filter(Boolean).map((text, index) => ({ step: index + 1, text }));
   const tips = dense?.tips || [];
+  const hasParsedRecipe = ingredients.length > 0 || instructions.length > 0;
+  const description = hasParsedRecipe
+    ? (inline || dense
+      ? ""
+      : descriptionLines
+        .map(cleanLine)
+        .filter((line) => line && line !== title)
+        .join("\n"))
+    : rawCaption;
   const warnings = [];
   if (!ingredients.length) warnings.push("No structured ingredient list was found in the TikTok caption.");
   if (!instructions.length) warnings.push("No structured preparation steps were found in the TikTok caption.");
 
   return {
     title,
-    description: rawCaption,
+    description,
     ingredients,
     instructions,
     tips,

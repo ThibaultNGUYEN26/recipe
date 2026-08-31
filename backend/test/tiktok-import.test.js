@@ -29,12 +29,22 @@ describe("TikTok recipe import", () => {
       { step: 1, text: "Boil the pasta" },
       { step: 2, text: "Stir in the sauce" },
     ]);
+    expect(draft.description).toBe("");
     expect(draft.warnings).toEqual([]);
+  });
+
+  it("keeps introductory prose without duplicating parsed recipe sections", () => {
+    const draft = captionToRecipeDraft(`Lemon pasta\nA bright dinner for warm evenings.\nIngredients:\n- 200 g pasta\n- 1 lemon\nInstructions:\n1. Boil the pasta\n2. Add the lemon`);
+
+    expect(draft.title).toBe("Lemon pasta");
+    expect(draft.description).toBe("A bright dinner for warm evenings.");
+    expect(draft.description).not.toMatch(/200 g pasta|Boil the pasta/);
   });
 
   it("returns an editable partial draft instead of inventing missing details", () => {
     const draft = captionToRecipeDraft("My easiest weeknight pasta #dinner");
     expect(draft.title).toBe("My easiest weeknight pasta");
+    expect(draft.description).toBe("My easiest weeknight pasta #dinner");
     expect(draft.ingredients).toEqual([]);
     expect(draft.instructions).toEqual([]);
     expect(draft.warnings).toHaveLength(2);
@@ -59,6 +69,7 @@ describe("TikTok recipe import", () => {
     expect(draft.instructions[0].text).toBe("In a pan, add oil and fry the onion and garlic until softened.");
     expect(draft.tips).toHaveLength(3);
     expect(draft.tags).toEqual(["creamypasta", "pasta", "easyrecipe"]);
+    expect(draft.description).toBe("");
     expect(draft.warnings).toEqual([]);
   });
 
@@ -90,6 +101,7 @@ describe("TikTok recipe import", () => {
     expect(draft.instructions).toHaveLength(4);
     expect(draft.instructions[0].text).toBe("Écrasez les 2 bananes dans un saladier.");
     expect(draft.instructions[3].text).toBe("Enfournez à 180°C pendant environ 30 minutes.");
+    expect(draft.description).toBe("");
     expect(draft.warnings).toEqual([]);
   });
 

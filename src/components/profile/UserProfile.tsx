@@ -320,7 +320,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
               <div>
                 <div className="flex items-center justify-center sm:justify-start gap-1.5">
                   <h1 className="font-serif text-2xl font-black" style={{ color: 'var(--color-text)' }}>{profile.name ?? t('profile.anonymousChef')}</h1>
-                  {profile.isVerified && <VerifiedBadge className="w-5 h-5" />}
+                  {profile.isVerified && <VerifiedBadge className="w-4 h-4" showLabel />}
                 </div>
                 {profile.username && <p className="text-sm font-medium" style={{ color: 'var(--color-muted)' }}>@{profile.username}</p>}
               </div>
@@ -342,7 +342,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
                     <Link to="/creator/analytics" className="profile-accent-soft flex min-h-11 w-full items-center justify-center gap-1.5 px-2 py-2 text-center text-xs font-bold rounded-2xl border">
                       <BarChart3 className="w-3.5 h-3.5" /> {t('profile.analytics')}
                     </Link>
-                    {!profile.isVerified && profile.followerCount > 1500 && <Link to="/settings/verification" className="profile-verification flex min-h-11 w-full items-center justify-center px-2 py-2 text-center text-xs font-bold rounded-2xl border">{t('profile.getVerified')}</Link>}
+                    {!profile.isVerified && <Link to="/settings/verification" className="profile-verification flex min-h-11 w-full items-center justify-center px-2 py-2 text-center text-xs font-bold rounded-2xl border">Apply for chef badge</Link>}
                     <button onClick={() => setIsEditOpen(true)}
                       className="profile-primary flex min-h-11 w-full items-center justify-center gap-1.5 px-2 py-2 text-center text-xs font-bold rounded-2xl transition-colors shadow-sm">
                       <Edit3 className="w-3.5 h-3.5" /> {t('profile.editProfile')}
