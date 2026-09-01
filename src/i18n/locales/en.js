@@ -560,6 +560,7 @@ const messages = {
   'add.toast.recipeUpdated': 'Recipe updated!',
   'add.toast.recipePublished': 'Recipe published!',
   'add.toast.failedToPublish': 'Failed to publish',
+  'add.editLoadError': 'Could not load this recipe for editing',
   'add.toast.failedToCreateCategory': 'Failed to create category',
   'add.toast.videoTooLarge': 'Video is too large',
   'add.toast.videoTooLargeBody': 'Choose a video under 100 MB',

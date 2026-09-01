@@ -311,7 +311,7 @@ router.get("/:slug", optionalAuthenticate, async (req, res) => {
     if (!recipe || recipe.translations.length === 0) return res.status(404).json({ error: "Recipe not found" });
     if (await usersAreBlocked(req.user?.id, recipe.authorId)) return res.status(404).json({ error: "Recipe not found" });
 
-    const selected = selectRecipeTranslation(recipe, lang);
+    const selected = selectRecipeTranslation(recipe, lang === "original" ? recipe.originalLanguage : lang);
     const t = selected.translation;
     const agg = await prisma.rating.aggregate({
       where: { recipeId: recipe.id },

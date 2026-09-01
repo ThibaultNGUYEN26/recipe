@@ -541,6 +541,7 @@ const messages = {
   'add.toast.recipeUpdated': 'Recette mise à jour !',
   'add.toast.recipePublished': 'Recette publiée !',
   'add.toast.failedToPublish': 'Échec de la publication',
+  'add.editLoadError': 'Impossible de charger cette recette pour la modifier',
   'add.toast.failedToCreateCategory': 'Échec de la création de la catégorie',
   'add.toast.videoTooLarge': 'Vidéo trop volumineuse',
   'add.toast.videoTooLargeBody': 'Choisissez une vidéo de moins de 100 Mo',

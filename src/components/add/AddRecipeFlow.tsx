@@ -12,6 +12,7 @@ import 'react-image-crop/dist/ReactCrop.css';
 import { apiFetch } from '../../lib/apiFetch';
 import { slugify } from '../../lib/slugify';
 import { getCountryOptions } from '../../lib/countries';
+import { LoadingPan } from '../ui/LoadingPan';
 
 const DRAFT_KEY = 'recipe_draft';
 
@@ -105,8 +106,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
 
   const [stepPage, setStepPage] = useState<1 | 2 | 3>(1);
   const initialRecipeLanguage: RecipeLanguage = RECIPE_LANGUAGES.includes(language) ? language : 'en';
-  const editLang = initialRecipeLanguage;
-  const originalLanguage = initialRecipeLanguage;
+  const [recipeLanguage, setRecipeLanguage] = useState<RecipeLanguage>(initialRecipeLanguage);
   const [translations, setTranslations] = useState<Record<RecipeLanguage, TranslationFields>>({
     fr: emptyTranslation(),
     en: emptyTranslation(),
@@ -165,6 +165,8 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
   const [draftSavedAt, setDraftSavedAt] = useState<Date | null>(null);
   const [draftClock, setDraftClock] = useState(() => Date.now());
   const [showExitDialog, setShowExitDialog] = useState(false);
+  const [editLoading, setEditLoading] = useState(Boolean(editSlug));
+  const [editLoadError, setEditLoadError] = useState('');
 
   useEffect(() => {
     apiFetch('/api/categories')
@@ -248,8 +250,14 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
   // Pre-fill form when editing an existing recipe
   useEffect(() => {
     if (!editSlug) return;
-    apiFetch(`/api/recipes/${editSlug}`)
-      .then((r) => r.json())
+    setEditLoading(true);
+    setEditLoadError('');
+    apiFetch(`/api/recipes/${editSlug}?lang=original`)
+      .then(async (r) => {
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || t('add.editLoadError'));
+        return data;
+      })
       .then((recipe) => {
         setSlug(recipe.slug ?? '');
         if (recipe.image) setCoverImage(recipe.image.startsWith('/') ? `${import.meta.env.VITE_API_URL}${recipe.image}` : recipe.image);
@@ -265,7 +273,10 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
         setDietaryTags(allTags.filter((tag) => DIETARY_LIST.includes(tag)));
         setReferenceTagsInput(allTags.filter((tag) => !DIETARY_LIST.includes(tag)).map((tag) => `#${tag}`).join(' '));
         if (recipe.category?.label) setPendingCategoryLabel(recipe.category.label);
-        const lang: RecipeLanguage = (recipe.originalLanguage as RecipeLanguage) || editLang;
+        const lang = RECIPE_LANGUAGES.includes(recipe.originalLanguage as RecipeLanguage)
+          ? recipe.originalLanguage as RecipeLanguage
+          : initialRecipeLanguage;
+        setRecipeLanguage(lang);
         const sections = ((recipe.ingredients as { section: string; items: string[] }[]) || []).map((sec, si) => ({
           id: `sec-${si}`,
           section: sec.section === 'main' ? '' : (sec.section || ''),
@@ -288,7 +299,11 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
           },
         }));
       })
-      .catch(console.error);
+      .catch((error) => {
+        console.error(error);
+        setEditLoadError(error instanceof Error ? error.message : t('add.editLoadError'));
+      })
+      .finally(() => setEditLoading(false));
   }, [editSlug]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!user) {
@@ -300,10 +315,25 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
     );
   }
 
-  const tr = translations[editLang];
+  if (editLoading) {
+    return <div className="flex min-h-[60vh] items-center justify-center"><LoadingPan /></div>;
+  }
+
+  if (editLoadError) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-6 text-center">
+        <p className="text-sm font-semibold text-rose-600">{editLoadError}</p>
+        <button type="button" onClick={() => navigate(-1)} className="add-recipe-secondary rounded-xl border px-4 py-2 text-sm font-semibold">
+          {t('add.cancelButton')}
+        </button>
+      </div>
+    );
+  }
+
+  const tr = translations[recipeLanguage];
 
   function setTr(updates: Partial<TranslationFields>) {
-    setTranslations((prev) => ({ ...prev, [editLang]: { ...prev[editLang], ...updates } }));
+    setTranslations((prev) => ({ ...prev, [recipeLanguage]: { ...prev[recipeLanguage], ...updates } }));
   }
 
   function clearValidationError(key: string) {
@@ -332,7 +362,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
 
   function getStepOneErrors() {
     const errors: string[] = [];
-    const originalTranslation = translations[originalLanguage];
+    const originalTranslation = translations[recipeLanguage];
     if (!originalTranslation.title.trim()) errors.push('title');
     if (!categoryId) errors.push('category');
     if (!slug.trim()) errors.push('slug');
@@ -396,13 +426,13 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
 
       setTranslations((previous) => ({
         ...previous,
-        [editLang]: {
-          ...previous[editLang],
-          title: payload.draft.title || previous[editLang].title,
-          description: payload.draft.description || previous[editLang].description,
-          ingredients: ingredientSections || previous[editLang].ingredients,
-          steps: steps || previous[editLang].steps,
-          tips: payload.draft.tips.length ? [...payload.draft.tips] : previous[editLang].tips,
+        [recipeLanguage]: {
+          ...previous[recipeLanguage],
+          title: payload.draft.title || previous[recipeLanguage].title,
+          description: payload.draft.description || previous[recipeLanguage].description,
+          ingredients: ingredientSections || previous[recipeLanguage].ingredients,
+          steps: steps || previous[recipeLanguage].steps,
+          tips: payload.draft.tips.length ? [...payload.draft.tips] : previous[recipeLanguage].tips,
         },
       }));
       if (!slugManuallyEdited) setSlug(slugify(payload.draft.title));
@@ -551,7 +581,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
         difficulty,
       };
 
-      const translationRows = [originalLanguage]
+      const translationRows = [recipeLanguage]
         .filter((l) => translations[l].title.trim())
         .map((l) => {
           const tl = translations[l];
@@ -578,7 +608,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
       fd.append('originCountry', originCountry);
       fd.append('info', JSON.stringify(info));
       fd.append('tags', JSON.stringify([...new Set([...dietaryTags, ...parseReferenceTags(referenceTagsInput)])]));
-      fd.append('originalLanguage', originalLanguage);
+      fd.append('originalLanguage', recipeLanguage);
       fd.append('imageFocalX', String(imageFocalPoint.x));
       fd.append('imageFocalY', String(imageFocalPoint.y));
       fd.append('translations', JSON.stringify(translationRows));
@@ -972,7 +1002,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
               { key: 'restTime', label: t('add.restTimeLabel'), value: restTime, onChange: setRestTime, placeholder: '0', min: 0, optional: true },
             ].map(({ key, label, value, onChange, placeholder, min, optional }) => (
               <div key={label} className="space-y-1">
-                <label className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">{label}</label>
+                <label className="block whitespace-nowrap text-[10px] font-bold text-stone-500 uppercase tracking-wider">{label}</label>
                 <input type="number" min={min} required={!optional} value={value} onChange={(e) => {
                   onChange(e.target.value);
                   if (e.target.value !== '' && Number(e.target.value) >= min) clearValidationError(key);
@@ -1381,8 +1411,8 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
             <div className="aspect-[16/9] rounded-2xl overflow-hidden bg-stone-200">
               <img src={coverImage} alt="Preview" className="w-full h-full object-cover" />
             </div>
-            <h2 className="font-serif text-2xl font-bold text-stone-900">{translations[originalLanguage].title || t('add.previewUntitledFallback')}</h2>
-            <p className="text-xs text-stone-600">{translations[originalLanguage].description || t('add.previewNoDescriptionFallback')}</p>
+            <h2 className="font-serif text-2xl font-bold text-stone-900">{translations[recipeLanguage].title || t('add.previewUntitledFallback')}</h2>
+            <p className="text-xs text-stone-600">{translations[recipeLanguage].description || t('add.previewNoDescriptionFallback')}</p>
             {[...new Set([...dietaryTags, ...parseReferenceTags(referenceTagsInput)])].length > 0 && (
               <div className="flex flex-wrap gap-1.5">
                 {[...new Set([...dietaryTags, ...parseReferenceTags(referenceTagsInput)])].map((tag) => (
@@ -1392,10 +1422,10 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                 ))}
               </div>
             )}
-            {translations[originalLanguage].ingredients.some((s) => s.rows.some((r) => r.name)) && (
+            {translations[recipeLanguage].ingredients.some((s) => s.rows.some((r) => r.name)) && (
               <div className="bg-white p-4 rounded-2xl border border-stone-200">
                 <p className="text-xs font-bold text-stone-900 mb-2">{t('add.previewIngredientsHeading')}</p>
-                {translations[originalLanguage].ingredients.map((sec) => (
+                {translations[recipeLanguage].ingredients.map((sec) => (
                   <div key={sec.id} className="mb-2">
                     {sec.section && <p className="text-[11px] font-bold text-amber-800 uppercase tracking-wide mb-1">{sec.section}</p>}
                     <ul className="list-disc list-inside text-xs text-stone-700 space-y-0.5">
@@ -1407,11 +1437,11 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                 ))}
               </div>
             )}
-            {translations[originalLanguage].steps.some((step) => step.instruction.trim()) && (
+            {translations[recipeLanguage].steps.some((step) => step.instruction.trim()) && (
               <div className="bg-white p-4 rounded-2xl border border-stone-200">
                 <p className="text-xs font-bold text-stone-900 mb-3">{t('add.previewPreparationStepsHeading')}</p>
                 <ol className="space-y-3">
-                  {translations[originalLanguage].steps.filter((step) => step.instruction.trim()).map((step, index) => (
+                  {translations[recipeLanguage].steps.filter((step) => step.instruction.trim()).map((step, index) => (
                     <li key={step.id} className="flex gap-3">
                       <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-800 text-[10px] font-bold text-white">{index + 1}</span>
                       <div className="min-w-0 flex-1">
@@ -1423,11 +1453,11 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
                 </ol>
               </div>
             )}
-            {translations[originalLanguage].tips.some((tip) => tip.trim()) && (
+            {translations[recipeLanguage].tips.some((tip) => tip.trim()) && (
               <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200">
                 <p className="text-xs font-bold text-stone-900 mb-2">{t('add.previewTipsHeading')}</p>
                 <ul className="list-disc list-inside text-xs text-stone-700 space-y-1">
-                  {translations[originalLanguage].tips.filter((tip) => tip.trim()).map((tip, index) => (
+                  {translations[recipeLanguage].tips.filter((tip) => tip.trim()).map((tip, index) => (
                     <li key={`${tip}-${index}`}>{tip.trim()}</li>
                   ))}
                 </ul>
