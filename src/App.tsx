@@ -43,6 +43,7 @@ const VerificationReview = lazy(() => import('./components/admin/VerificationRev
 const AdminAnalytics = lazy(() => import('./components/admin/AdminAnalytics'));
 const CreatorAnalytics = lazy(() => import('./components/profile/CreatorAnalytics'));
 const PrivacySafety = lazy(() => import('./components/settings/PrivacySafety'));
+const ChangePassword = lazy(() => import('./components/settings/ChangePassword'));
 const AdminReports = lazy(() => import('./components/admin/AdminReports'));
 
 function LoadingFallback() {
@@ -110,6 +111,7 @@ export default function App() {
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/settings/language" element={<LanguageSettings />} />
             <Route path="/settings/privacy-safety" element={<PrivacySafety />} />
+            <Route path="/settings/password" element={<ChangePassword />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />

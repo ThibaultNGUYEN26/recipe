@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, BadgeCheck, Check, ChefHat, ChevronRight, Languages, Moon, Shield, Sun, UserRound } from 'lucide-react';
+import { ArrowLeft, BadgeCheck, Check, ChefHat, ChevronRight, KeyRound, Languages, Moon, Shield, Sun, UserRound } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -68,6 +68,14 @@ export default function SettingsPage() {
           <Link to="/settings/privacy-safety" className="flex items-center gap-3 border-t px-4 py-4 transition-colors hover:bg-[var(--color-hover)]" style={{ borderColor: 'var(--color-border)' }}>
             <span className="flex h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: 'var(--color-subtle)' }}><Shield size={19} /></span>
             <span className="min-w-0 flex-1"><span className="block text-sm font-medium">{t('settings.privacySafety')}</span><span className="block text-xs" style={{ color: 'var(--color-muted)' }}>{t('settings.privacySafetyDescription')}</span></span>
+            <ChevronRight size={18} style={{ color: 'var(--color-muted)' }} />
+          </Link>
+          <Link to="/settings/password" className="flex items-center gap-3 border-t px-4 py-4 transition-colors hover:bg-[var(--color-hover)]" style={{ borderColor: 'var(--color-border)' }}>
+            <span className="flex h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: 'var(--color-subtle)' }}><KeyRound size={19} /></span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-medium">{t('settings.changePassword')}</span>
+              <span className="block text-xs" style={{ color: 'var(--color-muted)' }}>{t('settings.changePasswordDescription')}</span>
+            </span>
             <ChevronRight size={18} style={{ color: 'var(--color-muted)' }} />
           </Link>
           <Link to="/settings/verification?type=CHEF" className="flex items-center gap-3 border-t px-4 py-4 transition-colors hover:bg-[var(--color-hover)]" style={{ borderColor: 'var(--color-border)' }}>

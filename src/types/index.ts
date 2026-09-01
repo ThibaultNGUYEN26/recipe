@@ -139,6 +139,7 @@ export interface AuthUser {
   isVerified: boolean;
   isChefVerified: boolean;
   emailVerified: boolean;
+  hasPassword: boolean;
   name: string | null;
   bio?: string | null;
   instagramUrl?: string | null;

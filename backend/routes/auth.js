@@ -34,6 +34,7 @@ function publicUser(user) {
     tiktokUrl: user.tiktokUrl,
     youtubeUrl: user.youtubeUrl,
     emailVerified: Boolean(user.emailVerifiedAt),
+    hasPassword: Boolean(user.passwordHash),
   };
 }
 
@@ -256,6 +257,36 @@ router.post("/reset-password", accountEmailRateLimit, async (req, res) => {
   res.json({ ok: true });
 });
 
+router.post("/change-password", authenticate, loginRateLimit, async (req, res) => {
+  const currentPassword = typeof req.body.currentPassword === "string" ? req.body.currentPassword : "";
+  const newPassword = typeof req.body.newPassword === "string" ? req.body.newPassword : "";
+  if (newPassword.length < 8) return res.status(400).json({ error: "Password must be at least 8 characters" });
+  if (newPassword.length > 128) return res.status(400).json({ error: "Password must be 128 characters or fewer" });
+
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user) return res.status(401).json({ error: "User no longer exists" });
+    if (user.passwordHash && (!currentPassword || !(await bcrypt.compare(currentPassword, user.passwordHash)))) {
+      return res.status(400).json({ error: "Current password is incorrect" });
+    }
+    if (user.passwordHash && currentPassword === newPassword) return res.status(400).json({ error: "New password must be different from your current password" });
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+    const updatedUser = await prisma.$transaction(async (tx) => {
+      const updated = await tx.user.update({
+        where: { id: user.id },
+        data: { passwordHash, sessionVersion: { increment: 1 } },
+      });
+      await tx.passwordResetToken.deleteMany({ where: { userId: user.id } });
+      return updated;
+    });
+    return createSession(req, res, updatedUser);
+  } catch (error) {
+    console.error("Password change failed", error);
+    return res.status(500).json({ error: "Could not change password" });
+  }
+});
+
 router.post("/send-verification", authenticate, accountEmailRateLimit, async (req, res) => {
   try {
     const user = await prisma.user.findUnique({ where: { id: req.user.id }, select: { id: true, email: true, emailVerifiedAt: true } });
@@ -288,7 +319,7 @@ router.post("/verify-email", accountEmailRateLimit, async (req, res) => {
 router.get("/me", authenticate, async (req, res) => {
   const user = await prisma.user.findUnique({
     where: { id: req.user.id },
-    select: { id: true, email: true, username: true, name: true, bio: true, instagramUrl: true, tiktokUrl: true, youtubeUrl: true, isAdmin: true, isVerified: true, isChefVerified: true, emailVerifiedAt: true, avatarUrl: true, pendingAvatarId: true, preferredLanguage: true, sessionVersion: true },
+    select: { id: true, email: true, username: true, name: true, bio: true, instagramUrl: true, tiktokUrl: true, youtubeUrl: true, isAdmin: true, isVerified: true, isChefVerified: true, emailVerifiedAt: true, avatarUrl: true, pendingAvatarId: true, preferredLanguage: true, passwordHash: true, sessionVersion: true },
   });
   if (!user) return res.status(401).json({ error: "User no longer exists" });
   // Keep the current cookie stable. Rotating it here can race with focus or
