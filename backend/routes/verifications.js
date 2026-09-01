@@ -14,12 +14,29 @@ function parseVerificationType(value) {
   return value === "CHEF" ? "CHEF" : "USER";
 }
 
-export function parseSocialLinks(value) {
+const IDENTITY_PROFILE_HOSTS = new Set([
+  "instagram.com", "www.instagram.com",
+  "tiktok.com", "www.tiktok.com", "m.tiktok.com",
+  "youtube.com", "www.youtube.com", "m.youtube.com",
+]);
+
+function isIdentityProfileUrl(link) {
+  const url = new URL(link);
+  if (!IDENTITY_PROFILE_HOSTS.has(url.hostname.toLowerCase())) return false;
+  const path = url.pathname.replace(/\/+$/, "");
+  if (url.hostname.toLowerCase().includes("tiktok.com")) return /^\/@[^/]+$/i.test(path);
+  if (url.hostname.toLowerCase().includes("youtube.com")) return /^\/(?:@[^/]+|channel\/[^/]+|c\/[^/]+|user\/[^/]+)$/i.test(path);
+  return /^\/[^/]+$/i.test(path);
+}
+
+export function parseSocialLinks(value, type = "CHEF") {
   if (!Array.isArray(value)) return null;
   const links = [...new Set(value.map((link) => typeof link === "string" ? link.trim() : "").filter(Boolean))];
   if (links.length === 0 || links.length > 5) return null;
   try {
-    return links.every((link) => ["http:", "https:"].includes(new URL(link).protocol)) ? links : null;
+    const validUrls = links.every((link) => ["http:", "https:"].includes(new URL(link).protocol));
+    if (!validUrls) return null;
+    return type === "USER" && !links.every(isIdentityProfileUrl) ? null : links;
   } catch {
     return null;
   }
@@ -42,9 +59,13 @@ router.get("/me", authenticate, async (req, res) => {
 
 router.post("/", authenticate, async (req, res) => {
   const type = parseVerificationType(req.body.type);
-  const socialLinks = parseSocialLinks(req.body.socialLinks);
+  const socialLinks = parseSocialLinks(req.body.socialLinks, type);
   const message = typeof req.body.message === "string" ? req.body.message.trim() : "";
-  if (!socialLinks) return res.status(400).json({ error: "Provide 1-5 valid public profile links" });
+  if (!socialLinks) return res.status(400).json({
+    error: type === "USER"
+      ? "Provide at least one valid Instagram, TikTok, or YouTube profile link"
+      : "Provide 1-5 valid public profile links",
+  });
   if (message.length > 500) return res.status(400).json({ error: "Message must be 500 characters or less" });
 
   try {

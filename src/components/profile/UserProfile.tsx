@@ -437,9 +437,9 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
 
       {/* Followers / Following modal */}
       {followListModal && (
-        <div className="app-modal-backdrop fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-stone-900/60 backdrop-blur-sm"
+        <div className="app-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 backdrop-blur-sm"
           onClick={() => setFollowListModal(null)}>
-          <div className="profile-modal w-full max-w-sm rounded-t-3xl sm:rounded-3xl shadow-2xl border flex flex-col max-h-[calc(100dvh-2rem)] overflow-hidden"
+          <div className="profile-modal w-full max-w-sm rounded-3xl shadow-2xl border flex flex-col max-h-[calc(100dvh-2rem)] overflow-hidden"
             onClick={(e) => e.stopPropagation()}>
             {/* Header */}
             <div className="profile-divider flex items-center justify-between px-5 py-4 border-b shrink-0">

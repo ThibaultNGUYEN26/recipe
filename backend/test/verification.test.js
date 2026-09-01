@@ -10,6 +10,27 @@ describe("creator verification evidence", () => {
     ])).toEqual(["https://instagram.com/chef", "http://example.com/chef"]);
   });
 
+  it("accepts any combination of supported identity profiles", () => {
+    expect(parseSocialLinks([
+      "https://instagram.com/chef",
+      "https://www.tiktok.com/@chef",
+      "https://youtube.com/@chef",
+    ], "USER")).toEqual([
+      "https://instagram.com/chef",
+      "https://www.tiktok.com/@chef",
+      "https://youtube.com/@chef",
+    ]);
+    expect(parseSocialLinks(["https://www.tiktok.com/@chef"], "USER")).toEqual(["https://www.tiktok.com/@chef"]);
+  });
+
+  it.each([
+    ["https://example.com/chef"],
+    ["https://www.tiktok.com/@chef/video/123"],
+    ["https://youtube.com/watch?v=123"],
+  ])("rejects non-profile identity evidence", (links) => {
+    expect(parseSocialLinks(links, "USER")).toBeNull();
+  });
+
   it.each([
     [],
     ["javascript:alert(1)"],

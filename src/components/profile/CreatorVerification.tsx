@@ -24,6 +24,9 @@ export default function CreatorVerification() {
   const { showToast } = useUI();
   const [request, setRequest] = useState<VerificationRequest | null>(null);
   const [linksText, setLinksText] = useState('');
+  const [instagramUrl, setInstagramUrl] = useState('');
+  const [tiktokUrl, setTiktokUrl] = useState('');
+  const [youtubeUrl, setYoutubeUrl] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -33,12 +36,25 @@ export default function CreatorVerification() {
     setLoading(true);
     setRequest(null);
     setLinksText('');
+    setInstagramUrl('');
+    setTiktokUrl('');
+    setYoutubeUrl('');
     setMessage('');
     apiFetch(`/api/verifications/me?type=${verificationType}`)
       .then((response) => response.json())
       .then((data) => {
         setRequest(data.request ?? null);
-        if (data.request?.socialLinks) setLinksText(data.request.socialLinks.join('\n'));
+        if (data.request?.socialLinks) {
+          setLinksText(data.request.socialLinks.join('\n'));
+          for (const link of data.request.socialLinks as string[]) {
+            try {
+              const host = new URL(link).hostname.toLowerCase();
+              if (host.includes('instagram.com')) setInstagramUrl(link);
+              else if (host.includes('tiktok.com')) setTiktokUrl(link);
+              else if (host.includes('youtube.com')) setYoutubeUrl(link);
+            } catch { /* The API only returns validated links. */ }
+          }
+        }
         if (data.request?.message) setMessage(data.request.message);
       })
       .catch(() => showToast('Failed to load verification status', undefined, 'error'))
@@ -47,7 +63,13 @@ export default function CreatorVerification() {
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    const socialLinks = linksText.split(/\r?\n/).map((link) => link.trim()).filter(Boolean);
+    const socialLinks = isChef
+      ? linksText.split(/\r?\n/).map((link) => link.trim()).filter(Boolean)
+      : [instagramUrl, tiktokUrl, youtubeUrl].map((link) => link.trim()).filter(Boolean);
+    if (socialLinks.length === 0) {
+      showToast(isChef ? 'Add at least one evidence link' : 'Add an Instagram, TikTok, or YouTube profile', undefined, 'error');
+      return;
+    }
     setSubmitting(true);
     try {
       const response = await apiFetch('/api/verifications', {
@@ -119,11 +141,25 @@ export default function CreatorVerification() {
           )}
           <div>
             <label className="text-xs font-bold uppercase tracking-wide" style={{ color: 'var(--color-muted)' }}>{isChef ? 'Professional evidence' : 'Public identity profiles'}</label>
-            <textarea value={linksText} onChange={(event) => setLinksText(event.target.value)} required rows={4}
-              placeholder={isChef ? 'https://restaurant.example/team/your-name\nhttps://instagram.com/your-chef-profile' : 'https://instagram.com/yourname\nhttps://youtube.com/@yourname'}
-              className="w-full mt-1 rounded-2xl px-4 py-3 text-sm outline-none resize-none"
-              style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
-            <p className="text-[11px] mt-1" style={{ color: 'var(--color-muted)' }}>{isChef ? 'Add 1–5 public links such as an employer page, culinary qualification, press profile, restaurant page, or professional social account.' : 'Add 1–5 public profiles that clearly represent you. Use the same name or identity shown on Savor.'}</p>
+            {isChef ? (
+              <textarea value={linksText} onChange={(event) => setLinksText(event.target.value)} required rows={4}
+                placeholder="https://restaurant.example/team/your-name\nhttps://instagram.com/your-chef-profile"
+                className="w-full mt-1 rounded-2xl px-4 py-3 text-sm outline-none resize-none"
+                style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
+            ) : (
+              <div className="mt-2 space-y-3">
+                <input type="url" value={instagramUrl} onChange={(event) => setInstagramUrl(event.target.value)} placeholder="Instagram profile URL (optional)"
+                  aria-label="Instagram profile URL" className="w-full rounded-2xl px-4 py-3 text-sm outline-none"
+                  style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
+                <input type="url" value={tiktokUrl} onChange={(event) => setTiktokUrl(event.target.value)} placeholder="TikTok profile URL (optional)"
+                  aria-label="TikTok profile URL" className="w-full rounded-2xl px-4 py-3 text-sm outline-none"
+                  style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
+                <input type="url" value={youtubeUrl} onChange={(event) => setYoutubeUrl(event.target.value)} placeholder="YouTube channel URL (optional)"
+                  aria-label="YouTube channel URL" className="w-full rounded-2xl px-4 py-3 text-sm outline-none"
+                  style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
+              </div>
+            )}
+            <p className="text-[11px] mt-1" style={{ color: 'var(--color-muted)' }}>{isChef ? 'Add 1–5 public links such as an employer page, culinary qualification, press profile, restaurant page, or professional social account.' : 'Add at least one: Instagram and/or TikTok and/or YouTube. Use profiles that clearly represent the same identity shown on Savor.'}</p>
           </div>
           <div>
             <label className="text-xs font-bold uppercase tracking-wide" style={{ color: 'var(--color-muted)' }}>{isChef ? 'Your culinary background (optional)' : 'About your public identity (optional)'}</label>
