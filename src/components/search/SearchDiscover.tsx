@@ -14,7 +14,7 @@ import { LoadingPan } from '../ui/LoadingPan';
 import { useMinLoading } from '../../hooks/useMinLoading';
 import { useUI } from '../../contexts/UIContext';
 import { countryFlag, getCountryName, getCountryOptions } from '../../lib/countries';
-import { recipeLanguageCode } from '../../lib/recipeLanguage';
+import { recipeLanguageFlag } from '../../lib/recipeLanguage';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -339,10 +339,11 @@ export default function SearchDiscover() {
                 ) : (
                   <div className="recipe-card__image-placeholder w-full h-full flex items-center justify-center text-3xl">🍽️</div>
                 )}
-                {recipeLanguageCode(r.originalLanguage) && (
-                  <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2 py-1 text-[10px] font-extrabold text-stone-900 shadow-sm backdrop-blur-md"
-                    title={t(`detail.language.${r.originalLanguage}`)}>
-                    {recipeLanguageCode(r.originalLanguage)}
+                {recipeLanguageFlag(r.originalLanguage) && (
+                  <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2 py-1 text-sm leading-none text-stone-900 shadow-sm backdrop-blur-md"
+                    title={t(`detail.language.${r.originalLanguage}`)}
+                    aria-label={t(`detail.language.${r.originalLanguage}`)}>
+                    {recipeLanguageFlag(r.originalLanguage)}
                   </span>
                 )}
                 <div className="absolute inset-0 bg-gradient-to-t from-stone-950/90 via-stone-950/20 to-transparent p-3 flex flex-col justify-end">
@@ -418,7 +419,7 @@ export default function SearchDiscover() {
                 className="discover-input w-full rounded-xl border px-3 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-amber-600/40">
                 <option value="">{t('discover.allLanguages')}</option>
                 {recipeLanguageOptions.map((code) => (
-                  <option key={code} value={code}>{code.toUpperCase()} · {t(`detail.language.${code}`)}</option>
+                  <option key={code} value={code}>{recipeLanguageFlag(code)} {t(`detail.language.${code}`)}</option>
                 ))}
               </select>
             </div>

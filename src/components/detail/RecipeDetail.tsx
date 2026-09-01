@@ -17,7 +17,7 @@ import { recipeStructuredData, serializeStructuredData } from '../../lib/recipeS
 import MadeItSection from './MadeItSection';
 import { formatCompactCount } from '../../lib/formatCompactCount';
 import { countryFlag, getCountryName } from '../../lib/countries';
-import { recipeLanguageCode } from '../../lib/recipeLanguage';
+import { recipeLanguageFlag } from '../../lib/recipeLanguage';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -394,7 +394,7 @@ export default function RecipeDetail() {
 
   const info = recipe.info as Record<string, unknown> | null | undefined;
   const baseServings = (info?.servings as number) ?? 4;
-  const originalLanguageCode = recipeLanguageCode(recipe.originalLanguage);
+  const originalLanguageFlag = recipeLanguageFlag(recipe.originalLanguage);
   const structuredData = recipe.isPublic
     ? recipeStructuredData(recipe, recipe.image ? imgSrc(recipe.image) : null)
     : null;
@@ -478,11 +478,12 @@ export default function RecipeDetail() {
             <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
               {recipe.category.label}
             </span>
-            {originalLanguageCode && (
+            {originalLanguageFlag && (
               <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-extrabold"
                 style={{ backgroundColor: 'var(--color-accent-soft)', color: 'var(--color-accent)' }}
-                title={t(`detail.language.${recipe.originalLanguage}`)}>
-                <Languages className="h-3.5 w-3.5" /> {originalLanguageCode}
+                title={t(`detail.language.${recipe.originalLanguage}`)}
+                aria-label={t(`detail.language.${recipe.originalLanguage}`)}>
+                <span className="text-sm leading-none">{originalLanguageFlag}</span>
               </span>
             )}
             {recipe.originCountry && (

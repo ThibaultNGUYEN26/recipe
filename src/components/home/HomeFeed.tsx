@@ -9,7 +9,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { apiFetch } from '../../lib/apiFetch';
 import { LoadingPan } from '../ui/LoadingPan';
 import { useMinLoading } from '../../hooks/useMinLoading';
-import { recipeLanguageCode } from '../../lib/recipeLanguage';
+import { recipeLanguageFlag } from '../../lib/recipeLanguage';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -27,7 +27,7 @@ function imgSrc(url: string | null | undefined) {
 function HeroCard({ recipe }: { recipe: RecipeListItem }) {
   const { t } = useLanguage();
   const info = recipe.info as Record<string, string> | null | undefined;
-  const originalLanguageCode = recipeLanguageCode(recipe.originalLanguage);
+  const originalLanguageFlag = recipeLanguageFlag(recipe.originalLanguage);
   return (
     <Link to={recipe.authorUsername ? `/${recipe.authorUsername}/${recipe.slug}` : `/recipe/${recipe.slug}`}
       className="relative rounded-3xl overflow-hidden bg-stone-900 text-white cursor-pointer shadow-xl group border border-stone-800 block">
@@ -48,10 +48,11 @@ function HeroCard({ recipe }: { recipe: RecipeListItem }) {
             <Sparkles className="w-3 h-3" />
             {t('home.featured')}
           </span>
-          {originalLanguageCode && (
-            <span className="rounded-full bg-white/90 px-2 py-1 text-[10px] font-extrabold text-stone-900"
-              title={t(`detail.language.${recipe.originalLanguage}`)}>
-              {originalLanguageCode}
+          {originalLanguageFlag && (
+            <span className="rounded-full bg-white/90 px-2 py-1 text-sm leading-none text-stone-900"
+              title={t(`detail.language.${recipe.originalLanguage}`)}
+              aria-label={t(`detail.language.${recipe.originalLanguage}`)}>
+              {originalLanguageFlag}
             </span>
           )}
           {recipe.authorName && (

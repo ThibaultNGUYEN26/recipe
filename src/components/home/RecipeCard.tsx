@@ -15,7 +15,7 @@ import VerifiedBadge from '../profile/VerifiedBadge';
 import ChefBadge from '../profile/ChefBadge';
 import { formatCompactCount } from '../../lib/formatCompactCount';
 import { countryFlag, getCountryName } from '../../lib/countries';
-import { recipeLanguageCode } from '../../lib/recipeLanguage';
+import { recipeLanguageFlag } from '../../lib/recipeLanguage';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -38,7 +38,7 @@ export default function RecipeCard({ recipe, hideAuthor = false, isFollowingAuth
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const info = recipe.info as Record<string, string> | null | undefined;
-  const originalLanguageCode = recipeLanguageCode(recipe.originalLanguage);
+  const originalLanguageFlag = recipeLanguageFlag(recipe.originalLanguage);
   const creatorProfileUrl = recipe.authorUsername
     ? `/u/${encodeURIComponent(recipe.authorUsername)}`
     : recipe.authorId ? `/profile/${recipe.authorId}` : null;
@@ -198,10 +198,11 @@ export default function RecipeCard({ recipe, hideAuthor = false, isFollowingAuth
           <span className="bg-stone-900/80 backdrop-blur-md text-stone-50 text-[10px] font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider">
             {recipe.category.label}
           </span>
-          {originalLanguageCode && (
-            <span className="bg-white/90 backdrop-blur-md text-stone-900 text-[10px] font-extrabold px-2 py-1 rounded-full shadow-sm"
-              title={t(`detail.language.${recipe.originalLanguage}`)}>
-              {originalLanguageCode}
+          {originalLanguageFlag && (
+            <span className="bg-white/90 backdrop-blur-md text-stone-900 text-sm leading-none px-2 py-1 rounded-full shadow-sm"
+              title={t(`detail.language.${recipe.originalLanguage}`)}
+              aria-label={t(`detail.language.${recipe.originalLanguage}`)}>
+              {originalLanguageFlag}
             </span>
           )}
           {recipe.originCountry && (
