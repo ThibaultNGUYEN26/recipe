@@ -9,6 +9,9 @@ import { LanguageProvider } from './contexts/LanguageContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { UIProvider } from './contexts/UIContext';
 import { queryClient } from './lib/queryClient';
+import { initializePwa } from './lib/pwa';
+
+initializePwa();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

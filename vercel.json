@@ -21,7 +21,7 @@
         },
         {
           "key": "Permissions-Policy",
-          "value": "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+          "value": "camera=(self), microphone=(), geolocation=(), payment=(), usb=()"
         },
         {
           "key": "Cross-Origin-Opener-Policy",
@@ -34,6 +34,14 @@
     {
       "source": "/sitemap.xml",
       "destination": "https://recipe-production-4bd0.up.railway.app/sitemap.xml"
+    },
+    {
+      "source": "/recipe/:slug",
+      "destination": "/api/recipe-page?slug=:slug"
+    },
+    {
+      "source": "/:username/:slug",
+      "destination": "/api/recipe-page?username=:username&slug=:slug"
     },
     {
       "source": "/(.*)",

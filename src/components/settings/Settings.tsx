@@ -4,6 +4,7 @@ import { ArrowLeft, BadgeCheck, Check, ChefHat, ChevronRight, Languages, Moon, S
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import InstallApp from './InstallApp';
 
 type ChoiceProps = {
   active: boolean;
@@ -102,6 +103,8 @@ export default function SettingsPage() {
           </Link>
         </div>
       </section>
+
+      <InstallApp />
 
       <section>
         <div className="mb-2 px-1">
