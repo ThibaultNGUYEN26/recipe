@@ -11,7 +11,6 @@ import VerifiedBadge from '../profile/VerifiedBadge';
 import { apiFetch } from '../../lib/apiFetch';
 import { useAuth } from '../../contexts/AuthContext';
 import { LoadingPan } from '../ui/LoadingPan';
-import { useMinLoading } from '../../hooks/useMinLoading';
 import { useUI } from '../../contexts/UIContext';
 import { countryFlag, getCountryName, getCountryOptions } from '../../lib/countries';
 import { recipeLanguageFlag } from '../../lib/recipeLanguage';
@@ -90,21 +89,23 @@ export default function SearchDiscover() {
   const [recipeLanguageFilter, setRecipeLanguageFilter] = useState('');
   const [showFilterModal, setShowFilterModal] = useState(false);
 
-  const { data, isLoading: loading } = useQuery({
-    queryKey: ['discover', language],
-    queryFn: () =>
-      Promise.all([
-        apiFetch(`/api/recipes?lang=${language}`).then((r) => r.json()),
-        apiFetch(`/api/recipes/recommended?lang=${language}`).then((r) => (r.ok ? r.json() : null)),
-      ]).then(([all, recommendations]) => ({
-        allRecipes: Array.isArray(all) ? (all as RecipeListItem[]) : [],
-        discoveryRecipes: (Array.isArray(recommendations?.trending) && recommendations.trending.length > 0) ? recommendations.trending : (Array.isArray(all) ? all : []),
-      })),
+  const { data: allRecipes = [], isLoading: loading } = useQuery<RecipeListItem[]>({
+    queryKey: ['discover', 'recipes', language],
+    queryFn: () => apiFetch(`/api/recipes?lang=${language}`)
+      .then((response) => response.ok ? response.json() : [])
+      .then((recipes) => Array.isArray(recipes) ? recipes : []),
+    staleTime: 60_000,
+  });
+  const { data: recommendations } = useQuery({
+    queryKey: ['discover', 'recommendations', language],
+    queryFn: () => apiFetch(`/api/recipes/recommended?lang=${language}`)
+      .then((response) => response.ok ? response.json() : null),
+    staleTime: 60_000,
   });
 
-  const showLoader = useMinLoading(loading);
-  const allRecipes: RecipeListItem[] = data?.allRecipes ?? [];
-  const discoveryRecipes: RecipeListItem[] = data?.discoveryRecipes ?? [];
+  const discoveryRecipes: RecipeListItem[] = Array.isArray(recommendations?.trending) && recommendations.trending.length > 0
+    ? recommendations.trending
+    : allRecipes;
   const countryOptions = useMemo(() => getCountryOptions(language,
     allRecipes.map((recipe) => recipe.originCountry).filter((code): code is string => Boolean(code))),
   [allRecipes, language]);
@@ -316,7 +317,7 @@ export default function SearchDiscover() {
           </h3>
         </div>
 
-        {showLoader ? (
+        {loading ? (
           <div className="flex items-center justify-center min-h-[40vh]">
             <LoadingPan />
           </div>

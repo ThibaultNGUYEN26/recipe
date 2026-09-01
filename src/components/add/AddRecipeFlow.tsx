@@ -29,6 +29,11 @@ const PRESET_IMAGES = [
 
 const DIETARY_LIST = ['vegetarian', 'vegan', 'gluten-free', 'dairy-free', 'low-carb', 'nut-free', 'keto'];
 const DIFFICULTY_LIST = ['Facile', 'Moyen', 'Difficile'];
+const DIFFICULTY_LABEL_KEYS: Record<string, string> = {
+  Facile: 'discover.diff.easy',
+  Moyen: 'discover.diff.medium',
+  Difficile: 'discover.diff.hard',
+};
 
 function parseIngredientItem(item: string): { amount: string; unit: string; name: string } {
   const m = item.match(/^(\d+(?:[.,]\d+)?)\s*([a-zA-Z]+(?:\.)?)?[\s]+(.+)$/);
@@ -1024,7 +1029,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
               <label className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">{t('add.difficultyLabel')}</label>
               <select value={difficulty} onChange={(e) => setDifficulty(e.target.value)}
                 className="w-full bg-stone-50 border border-stone-200 text-stone-900 text-xs font-bold rounded-xl px-2 py-2 focus:outline-none">
-                {DIFFICULTY_LIST.map((d) => <option key={d} value={d}>{d}</option>)}
+                {DIFFICULTY_LIST.map((d) => <option key={d} value={d}>{t(DIFFICULTY_LABEL_KEYS[d])}</option>)}
               </select>
             </div>
           </div>
