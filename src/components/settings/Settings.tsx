@@ -112,9 +112,7 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      <InstallApp />
-
-      <section>
+      <section className="mb-7">
         <div className="mb-2 px-1">
           <h2 className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-muted)' }}>{t('settings.appearance')}</h2>
           <p className="mt-1 text-xs" style={{ color: 'var(--color-muted)' }}>{t('settings.appearanceDescription')}</p>
@@ -124,6 +122,8 @@ export default function SettingsPage() {
           <Choice active={theme === 'dark'} icon={<Moon size={18} />} label={t('settings.dark')} description={t('settings.darkDescription')} onClick={() => setTheme('dark')} />
         </div>
       </section>
+
+      <InstallApp />
     </div>
   );
 }
