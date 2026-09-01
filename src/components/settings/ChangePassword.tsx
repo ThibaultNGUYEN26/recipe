@@ -1,5 +1,5 @@
 import { FormEvent, useState } from 'react';
-import { ArrowLeft, CheckCircle2, KeyRound } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Eye, EyeOff, KeyRound } from 'lucide-react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -12,9 +12,14 @@ export default function ChangePassword() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmation, setConfirmation] = useState('');
+  const [visibleFields, setVisibleFields] = useState<Record<string, boolean>>({});
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+
+  function toggleVisibility(field: string) {
+    setVisibleFields((visible) => ({ ...visible, [field]: !visible[field] }));
+  }
 
   if (!user) return <Navigate to="/login" replace />;
 
@@ -76,28 +81,52 @@ export default function ChangePassword() {
               </div>
             )}
             {user.hasPassword && (
-              <label className="block text-sm font-medium">
-                {t('password.current')}
-                <input type="password" required autoComplete="current-password" value={currentPassword}
-                  onChange={(event) => setCurrentPassword(event.target.value)}
-                  className="mt-1.5 w-full rounded-xl border px-4 py-3 outline-none focus:ring-2 focus:ring-amber-600/30"
-                  style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }} />
-              </label>
+              <div>
+                <label htmlFor="current-password" className="text-sm font-medium">{t('password.current')}</label>
+                <div className="relative mt-1.5">
+                  <input id="current-password" type={visibleFields.current ? 'text' : 'password'} required autoComplete="current-password" value={currentPassword}
+                    onChange={(event) => setCurrentPassword(event.target.value)}
+                    className="w-full rounded-xl border py-3 pl-4 pr-12 outline-none focus:ring-2 focus:ring-amber-600/30"
+                    style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }} />
+                  <button type="button" onClick={() => toggleVisibility('current')}
+                    className="absolute inset-y-0 right-0 flex w-12 items-center justify-center"
+                    aria-label={t(visibleFields.current ? 'password.hide' : 'password.show')}
+                    aria-pressed={Boolean(visibleFields.current)}>
+                    {visibleFields.current ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
             )}
-            <label className="block text-sm font-medium">
-              {t('password.new')}
-              <input type="password" required minLength={8} autoComplete="new-password" value={newPassword}
-                onChange={(event) => setNewPassword(event.target.value)}
-                className="mt-1.5 w-full rounded-xl border px-4 py-3 outline-none focus:ring-2 focus:ring-amber-600/30"
-                style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }} />
-            </label>
-            <label className="block text-sm font-medium">
-              {t('password.confirm')}
-              <input type="password" required minLength={8} autoComplete="new-password" value={confirmation}
-                onChange={(event) => setConfirmation(event.target.value)}
-                className="mt-1.5 w-full rounded-xl border px-4 py-3 outline-none focus:ring-2 focus:ring-amber-600/30"
-                style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }} />
-            </label>
+            <div>
+              <label htmlFor="new-password" className="text-sm font-medium">{t('password.new')}</label>
+              <div className="relative mt-1.5">
+                <input id="new-password" type={visibleFields.new ? 'text' : 'password'} required minLength={8} autoComplete="new-password" value={newPassword}
+                  onChange={(event) => setNewPassword(event.target.value)}
+                  className="w-full rounded-xl border py-3 pl-4 pr-12 outline-none focus:ring-2 focus:ring-amber-600/30"
+                  style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }} />
+                <button type="button" onClick={() => toggleVisibility('new')}
+                  className="absolute inset-y-0 right-0 flex w-12 items-center justify-center"
+                  aria-label={t(visibleFields.new ? 'password.hide' : 'password.show')}
+                  aria-pressed={Boolean(visibleFields.new)}>
+                  {visibleFields.new ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label htmlFor="confirm-password" className="text-sm font-medium">{t('password.confirm')}</label>
+              <div className="relative mt-1.5">
+                <input id="confirm-password" type={visibleFields.confirm ? 'text' : 'password'} required minLength={8} autoComplete="new-password" value={confirmation}
+                  onChange={(event) => setConfirmation(event.target.value)}
+                  className="w-full rounded-xl border py-3 pl-4 pr-12 outline-none focus:ring-2 focus:ring-amber-600/30"
+                  style={{ backgroundColor: 'var(--color-bg)', borderColor: 'var(--color-border)' }} />
+                <button type="button" onClick={() => toggleVisibility('confirm')}
+                  className="absolute inset-y-0 right-0 flex w-12 items-center justify-center"
+                  aria-label={t(visibleFields.confirm ? 'password.hide' : 'password.show')}
+                  aria-pressed={Boolean(visibleFields.confirm)}>
+                  {visibleFields.confirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
             {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
             <button type="submit" disabled={submitting}
               className="w-full rounded-xl bg-stone-900 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60">

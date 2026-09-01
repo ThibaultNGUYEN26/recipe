@@ -37,6 +37,8 @@ const messages = {
   'password.current': 'Current password',
   'password.new': 'New password',
   'password.confirm': 'Confirm new password',
+  'password.show': 'Show password',
+  'password.hide': 'Hide password',
   'password.currentRequired': 'Enter your current password',
   'password.tooShort': 'Password must be at least 8 characters',
   'password.mismatch': 'Passwords do not match',
