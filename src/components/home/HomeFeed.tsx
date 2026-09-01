@@ -4,12 +4,11 @@ import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '../../contexts/LanguageContext';
 import RecipeCard from './RecipeCard';
 import type { RecipeListItem } from '../../types';
-import { Sparkles, Flame, Clock, Leaf, UtensilsCrossed, Star, ArrowRight } from 'lucide-react';
+import { Sparkles, Flame, Clock, Leaf, UtensilsCrossed, Star, ArrowRight, Languages } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiFetch } from '../../lib/apiFetch';
 import { LoadingPan } from '../ui/LoadingPan';
 import { useMinLoading } from '../../hooks/useMinLoading';
-import { recipeLanguageFlag } from '../../lib/recipeLanguage';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -27,7 +26,6 @@ function imgSrc(url: string | null | undefined) {
 function HeroCard({ recipe }: { recipe: RecipeListItem }) {
   const { t } = useLanguage();
   const info = recipe.info as Record<string, string> | null | undefined;
-  const originalLanguageFlag = recipeLanguageFlag(recipe.originalLanguage);
   return (
     <Link to={recipe.authorUsername ? `/${recipe.authorUsername}/${recipe.slug}` : `/recipe/${recipe.slug}`}
       className="relative rounded-3xl overflow-hidden bg-stone-900 text-white cursor-pointer shadow-xl group border border-stone-800 block">
@@ -48,11 +46,11 @@ function HeroCard({ recipe }: { recipe: RecipeListItem }) {
             <Sparkles className="w-3 h-3" />
             {t('home.featured')}
           </span>
-          {originalLanguageFlag && (
-            <span className="rounded-full bg-white/90 px-2 py-1 text-sm leading-none text-stone-900"
+          {recipe.originalLanguage && (
+            <span className="rounded-full bg-white/90 px-2 py-1 text-stone-900"
               title={t(`detail.language.${recipe.originalLanguage}`)}
               aria-label={t(`detail.language.${recipe.originalLanguage}`)}>
-              {originalLanguageFlag}
+              <Languages className="h-3.5 w-3.5" />
             </span>
           )}
           {recipe.authorName && (
