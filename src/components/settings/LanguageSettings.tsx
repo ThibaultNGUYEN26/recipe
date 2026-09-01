@@ -46,6 +46,15 @@ export default function LanguageSettings() {
         </div>
       </div>
 
+      <section className="mb-5 flex gap-3 rounded-2xl border p-4"
+        style={{ backgroundColor: 'var(--color-accent-soft)', borderColor: 'var(--color-accent-soft-border)' }}>
+        <Languages className="mt-0.5 h-5 w-5 shrink-0" style={{ color: 'var(--color-accent)' }} />
+        <div>
+          <h2 className="text-sm font-semibold" style={{ color: 'var(--color-text)' }}>{t('language.explanationTitle')}</h2>
+          <p className="mt-1 text-xs leading-5" style={{ color: 'var(--color-muted)' }}>{t('language.explanation')}</p>
+        </div>
+      </section>
+
       <div className="divide-y divide-[var(--color-border)] overflow-hidden rounded-2xl border"
         style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
         <LanguageChoice active={language === 'ar'} label="العربية" description={t('language.arabicDescription')} onClick={() => setPreferredLanguage('ar')} />

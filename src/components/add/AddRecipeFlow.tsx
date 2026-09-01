@@ -87,7 +87,7 @@ function parseReferenceTags(value: string) {
   return [...new Set(
     value
       .split(/[\s,#]+/)
-      .map((tag) => tag.trim().toLowerCase())
+      .map((tag) => tag.normalize('NFKC').replace(/^#+/, '').trim().toLocaleLowerCase())
       .filter(Boolean),
   )];
 }
@@ -130,6 +130,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
   const [originCountry, setOriginCountry] = useState('');
   const [prepTime, setPrepTime] = useState('');
   const [cookTime, setCookTime] = useState('');
+  const [restTime, setRestTime] = useState('');
   const [servings, setServings] = useState('4');
   const [dietaryTags, setDietaryTags] = useState<string[]>([]);
   const [referenceTagsInput, setReferenceTagsInput] = useState('');
@@ -194,6 +195,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
       if (d.originCountry) setOriginCountry(d.originCountry);
       if (d.prepTime) setPrepTime(d.prepTime);
       if (d.cookTime) setCookTime(d.cookTime);
+      if (d.restTime) setRestTime(d.restTime);
       if (d.servings) setServings(d.servings);
       if (d.dietaryTags) setDietaryTags(d.dietaryTags);
       if (d.referenceTagsInput) setReferenceTagsInput(d.referenceTagsInput);
@@ -211,7 +213,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
       const savedAt = new Date();
       localStorage.setItem(DRAFT_KEY, JSON.stringify({
         stepPage, translations, slug, slugManuallyEdited, categoryId, difficulty, originCountry,
-        prepTime, cookTime, servings, dietaryTags, referenceTagsInput,
+        prepTime, cookTime, restTime, servings, dietaryTags, referenceTagsInput,
         coverImage: coverImage.startsWith('blob:') ? PRESET_IMAGES[0].url : coverImage,
         imageFocalPoint,
         savedAt: savedAt.toISOString(),
@@ -223,7 +225,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
       return false;
     }
   }, [editSlug, stepPage, translations, slug, slugManuallyEdited, categoryId, difficulty, originCountry,
-    prepTime, cookTime, servings, dietaryTags, referenceTagsInput, coverImage, imageFocalPoint]);
+    prepTime, cookTime, restTime, servings, dietaryTags, referenceTagsInput, coverImage, imageFocalPoint]);
 
   // Auto-save draft (debounced, new recipes only)
   useEffect(() => {
@@ -255,6 +257,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
         const info = (recipe.info as Record<string, unknown>) || {};
         if (info.prepTime) setPrepTime(String(info.prepTime).replace(' min', ''));
         if (info.cookTime) setCookTime(String(info.cookTime).replace(' min', ''));
+        if (info.restTime) setRestTime(String(info.restTime).replace(' min', ''));
         if (typeof info.servings === 'number') setServings(String(info.servings));
         if (info.difficulty) setDifficulty(String(info.difficulty));
         setOriginCountry(recipe.originCountry ?? '');
@@ -315,7 +318,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
   function showValidationErrors(errors: string[]) {
     setValidationErrors(new Set(errors));
     const firstError = errors[0];
-    const targetPage = ['title', 'slug', 'category', 'prepTime', 'cookTime'].includes(firstError) ? 1 : 2;
+    const targetPage = ['title', 'slug', 'category', 'prepTime', 'cookTime', 'restTime'].includes(firstError) ? 1 : 2;
     if (errors.includes('slug')) setAdvancedOpen(true);
     setStepPage(targetPage);
     window.requestAnimationFrame(() => {
@@ -335,6 +338,7 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
     if (!slug.trim()) errors.push('slug');
     if (!prepTime || Number(prepTime) <= 0) errors.push('prepTime');
     if (cookTime === '' || Number(cookTime) < 0) errors.push('cookTime');
+    if (restTime !== '' && Number(restTime) < 0) errors.push('restTime');
     return errors;
   }
 
@@ -536,11 +540,12 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
 
     setSubmitting(true);
     try {
-      const totalTime = `${Number(prepTime) + Number(cookTime)} min`;
+      const totalTime = `${Number(prepTime) + Number(cookTime) + Number(restTime || 0)} min`;
 
       const info = {
         prepTime: `${prepTime} min`,
         cookTime: `${cookTime} min`,
+        ...(restTime !== '' ? { restTime: `${restTime} min` } : {}),
         totalTime,
         servings: parseInt(servings) || 1,
         difficulty,
@@ -960,20 +965,21 @@ export default function AddRecipeFlow({ editSlug }: { editSlug?: string }) {
           </div>
 
           {/* Metrics */}
-          <div className="responsive-single-column-narrow grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="responsive-single-column-narrow grid grid-cols-2 sm:grid-cols-5 gap-3">
             {[
               { key: 'prepTime', label: t('add.prepTimeLabel'), value: prepTime, onChange: setPrepTime, placeholder: '15', min: 1 },
               { key: 'cookTime', label: t('add.cookTimeLabel'), value: cookTime, onChange: setCookTime, placeholder: '0', min: 0 },
-            ].map(({ key, label, value, onChange, placeholder, min }) => (
+              { key: 'restTime', label: t('add.restTimeLabel'), value: restTime, onChange: setRestTime, placeholder: '0', min: 0, optional: true },
+            ].map(({ key, label, value, onChange, placeholder, min, optional }) => (
               <div key={label} className="space-y-1">
                 <label className="text-[10px] font-bold text-stone-500 uppercase tracking-wider">{label}</label>
-                <input type="number" min={min} required value={value} onChange={(e) => {
+                <input type="number" min={min} required={!optional} value={value} onChange={(e) => {
                   onChange(e.target.value);
                   if (e.target.value !== '' && Number(e.target.value) >= min) clearValidationError(key);
                 }} placeholder={placeholder} aria-invalid={validationErrors.has(key)} data-validation-key={key}
                   className={`w-full bg-stone-50 border text-stone-900 text-xs font-bold rounded-xl px-3 py-2 focus:outline-none text-center ${validationErrors.has(key) ? 'border-rose-500 ring-2 ring-rose-200' : 'border-stone-200'}`} />
                 {validationErrors.has(key) && <p className="text-[10px] font-semibold text-rose-600">
-                  {t(key === 'cookTime' ? 'add.cookTimeRequired' : 'add.timeRequired')}
+                  {t(key === 'prepTime' ? 'add.timeRequired' : 'add.cookTimeRequired')}
                 </p>}
               </div>
             ))}

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 
-export function useMinLoading(isLoading: boolean, minMs = 1450): boolean {
+// Keep very short loads legible without making fast API responses feel slow.
+export function useMinLoading(isLoading: boolean, minMs = 300): boolean {
   const [showing, setShowing] = useState(isLoading);
   const startRef = useRef<number | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);

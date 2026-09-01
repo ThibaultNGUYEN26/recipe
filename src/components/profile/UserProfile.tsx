@@ -9,7 +9,8 @@ import RecipeCard from '../home/RecipeCard';
 import type { UserProfile as UserProfileType, RecipeListItem } from '../../types';
 import {
   Edit3, MapPin, Utensils, Bookmark, BarChart3,
-  X, UserPlus, UserMinus, Check, Camera, Crop as CropIcon, Share2, Flag, ShieldBan, MoreHorizontal
+  X, UserPlus, UserMinus, Check, Camera, Crop as CropIcon, Share2, Flag, ShieldBan, MoreHorizontal,
+  ExternalLink
 } from 'lucide-react';
 import ReactCrop, { type Crop, centerCrop, makeAspectCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
@@ -49,6 +50,9 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
   const [editName, setEditName] = useState('');
   const [editUsername, setEditUsername] = useState('');
   const [editBio, setEditBio] = useState('');
+  const [editInstagramUrl, setEditInstagramUrl] = useState('');
+  const [editTiktokUrl, setEditTiktokUrl] = useState('');
+  const [editYoutubeUrl, setEditYoutubeUrl] = useState('');
   const [editAvatar, setEditAvatar] = useState<File | null>(null);
   const [editAvatarPreview, setEditAvatarPreview] = useState<string | null>(null);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
@@ -89,16 +93,24 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
     else showToast(t('safety.blockError'), undefined, 'error');
   }
 
-  const { data: recipes = [] } = useQuery<RecipeListItem[]>({
+  const { data: recipes = [], isLoading: recipesLoading } = useQuery<RecipeListItem[]>({
     queryKey: ['userRecipes', userId, language],
-    queryFn: () => apiFetch(`/api/users/${userId}/recipes?lang=${language}`).then((r) => r.json()),
+    queryFn: async () => {
+      const response = await apiFetch(`/api/users/${userId}/recipes?lang=${language}`);
+      if (!response.ok) throw new Error('Failed to load recipes');
+      return response.json();
+    },
     enabled: Boolean(userId),
     select: (d) => (Array.isArray(d) ? d : []),
   });
 
-  const { data: savedRecipes = [] } = useQuery<RecipeListItem[]>({
+  const { data: savedRecipes = [], isLoading: savedRecipesLoading } = useQuery<RecipeListItem[]>({
     queryKey: ['saved', language],
-    queryFn: () => apiFetch(`/api/users/me/saved?lang=${language}`).then((r) => r.json()),
+    queryFn: async () => {
+      const response = await apiFetch(`/api/users/me/saved?lang=${language}`);
+      if (!response.ok) throw new Error('Failed to load saved recipes');
+      return response.json();
+    },
     enabled: Boolean(isOwnProfile),
     select: (d) => (Array.isArray(d) ? d : []),
   });
@@ -108,6 +120,9 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
       setEditName(profile.name ?? '');
       setEditUsername(profile.username ?? '');
       setEditBio(profile.bio ?? '');
+      setEditInstagramUrl(profile.instagramUrl ?? '');
+      setEditTiktokUrl(profile.tiktokUrl ?? '');
+      setEditYoutubeUrl(profile.youtubeUrl ?? '');
       setIsFollowing(Boolean(profile.isFollowing));
     }
   }, [profile?.id, profile?.isFollowing]);
@@ -203,18 +218,25 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
     fd.append('name', editName);
     fd.append('username', editUsername);
     fd.append('bio', editBio);
+    fd.append('instagramUrl', editInstagramUrl);
+    fd.append('tiktokUrl', editTiktokUrl);
+    fd.append('youtubeUrl', editYoutubeUrl);
     if (editAvatar) fd.append('avatar', editAvatar);
     try {
       const res = await apiFetch('/api/users/me', { method: 'PATCH', body: fd });
       if (res.ok) {
         const d = await res.json();
         queryClient.setQueryData(['profile', userId], (old: UserProfileType) =>
-          old ? { ...old, username: d.user.username, name: d.user.name, bio: d.user.bio, avatarUrl: d.user.avatarUrl } : old
+          old ? { ...old, username: d.user.username, name: d.user.name, bio: d.user.bio, instagramUrl: d.user.instagramUrl, tiktokUrl: d.user.tiktokUrl, youtubeUrl: d.user.youtubeUrl, avatarUrl: d.user.avatarUrl } : old
         );
         queryClient.invalidateQueries({ queryKey: ['userRecipes', userId] });
         updateUser({
           username: d.user.username,
           name: d.user.name,
+          bio: d.user.bio,
+          instagramUrl: d.user.instagramUrl,
+          tiktokUrl: d.user.tiktokUrl,
+          youtubeUrl: d.user.youtubeUrl,
           avatarUrl: d.user.avatarUrl,
           avatarPending: d.avatarStatus === 'pending' || d.avatarStatus === 'review_required',
         });
@@ -301,6 +323,12 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
   if (!profile) { navigate('/'); return null; }
 
   const tabContent = activeTab === 'recipes' ? recipes : savedRecipes;
+  const tabLoading = activeTab === 'recipes' ? recipesLoading : savedRecipesLoading;
+  const socialProfiles = [
+    { label: 'Instagram', url: profile.instagramUrl },
+    { label: 'TikTok', url: profile.tiktokUrl },
+    { label: 'YouTube', url: profile.youtubeUrl },
+  ].filter((item): item is { label: string; url: string } => Boolean(item.url));
 
   return (
     <div className="profile-page w-full max-w-4xl mx-auto px-4 py-4 space-y-6 pb-24">
@@ -363,6 +391,18 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
               <p className="profile-muted text-xs leading-relaxed max-w-xl">{profile.bio}</p>
             )}
 
+            {socialProfiles.length > 0 && (
+              <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
+                {socialProfiles.map(({ label, url }) => (
+                  <a key={label} href={url} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-[var(--color-hover)]"
+                    style={{ color: 'var(--color-text)', borderColor: 'var(--color-border)' }}>
+                    <ExternalLink className="h-3.5 w-3.5" /> {label}
+                  </a>
+                ))}
+              </div>
+            )}
+
             {profile.createdAt && (
               <div className="flex items-center justify-center sm:justify-start gap-1 text-xs font-medium" style={{ color: 'var(--color-muted)' }}>
                 <MapPin className="profile-accent w-3.5 h-3.5" />
@@ -401,19 +441,23 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
         <button onClick={() => setActiveTab('recipes')}
           className={`profile-tab flex items-center gap-2 px-4 py-2.5 rounded-2xl border text-xs font-bold transition-all ${activeTab === 'recipes' ? 'profile-tab--active' : ''}`}>
           <Utensils className="w-4 h-4" />
-          {t('profile.myRecipes', { count: recipes.length })}
+          {t('profile.myRecipes', { count: recipesLoading ? profile.recipeCount : recipes.length })}
         </button>
         {isOwnProfile && (
           <button onClick={() => setActiveTab('saved')}
             className={`profile-tab flex items-center gap-2 px-4 py-2.5 rounded-2xl border text-xs font-bold transition-all ${activeTab === 'saved' ? 'profile-tab--active' : ''}`}>
             <Bookmark className="w-4 h-4" />
-            {t('profile.saved', { count: savedRecipes.length })}
+            {t('profile.saved', { count: savedRecipesLoading ? '…' : savedRecipes.length })}
           </button>
         )}
       </div>
 
       {/* Tab content */}
-      {tabContent.length === 0 ? (
+      {tabLoading ? (
+        <div className="flex min-h-48 items-center justify-center">
+          <LoadingPan />
+        </div>
+      ) : tabContent.length === 0 ? (
         <div className="rounded-3xl p-12 text-center border" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
           <Utensils className="w-12 h-12 mx-auto mb-3" style={{ color: 'var(--color-border)' }} />
           <h3 className="font-serif text-lg font-bold" style={{ color: 'var(--color-text)' }}>
@@ -565,7 +609,7 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
       {isEditOpen && (
         <div className="app-modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-stone-900/60 backdrop-blur-sm"
           onClick={() => setIsEditOpen(false)}>
-          <div className="app-modal-panel profile-modal w-full max-w-md rounded-3xl p-6 shadow-2xl border space-y-4"
+          <div className="app-modal-panel profile-modal max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-3xl p-6 shadow-2xl border space-y-4"
             onClick={(e) => e.stopPropagation()}>
             <div className="profile-divider flex items-center justify-between pb-3 border-b">
               <h3 className="font-serif text-lg font-bold">{t('profile.editProfile')}</h3>
@@ -602,6 +646,19 @@ export default function UserProfile({ userIdOverride }: { userIdOverride?: numbe
                     className="w-full bg-stone-50 border border-stone-200 text-xs font-bold rounded-xl pl-7 pr-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-amber-800/30" />
                 </div>
               </div>
+
+              <fieldset className="space-y-2">
+                <legend className="profile-muted mb-1 text-xs font-bold uppercase tracking-wider">{t('profile.socialLinks')}</legend>
+                <input type="url" maxLength={300} value={editInstagramUrl} onChange={(e) => setEditInstagramUrl(e.target.value)}
+                  placeholder="https://instagram.com/your-profile" aria-label="Instagram profile URL"
+                  className="w-full bg-stone-50 border border-stone-200 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-amber-800/30" />
+                <input type="url" maxLength={300} value={editTiktokUrl} onChange={(e) => setEditTiktokUrl(e.target.value)}
+                  placeholder="https://tiktok.com/@your-profile" aria-label="TikTok profile URL"
+                  className="w-full bg-stone-50 border border-stone-200 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-amber-800/30" />
+                <input type="url" maxLength={300} value={editYoutubeUrl} onChange={(e) => setEditYoutubeUrl(e.target.value)}
+                  placeholder="https://youtube.com/@your-channel" aria-label="YouTube channel URL"
+                  className="w-full bg-stone-50 border border-stone-200 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-amber-800/30" />
+              </fieldset>
 
               <div className="space-y-1">
                 <label className="profile-muted text-xs font-bold uppercase tracking-wider">{t('profile.displayName')}</label>

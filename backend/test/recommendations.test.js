@@ -19,10 +19,58 @@ describe("recipe recommendation ranking", () => {
     expect(result).toMatchObject({ reasonCode: "category", reasonValue: "Cakes" });
   });
 
+  it("softly favors the preferred recipe language without excluding others", () => {
+    const frenchOriginal = scoreRecommendation({
+      ...base,
+      originalLanguage: "fr",
+      availableLanguages: ["fr"],
+    }, { language: "fr" }, new Date("2026-08-01T00:00:00.000Z"));
+    const frenchTranslation = scoreRecommendation({
+      ...base,
+      originalLanguage: "en",
+      availableLanguages: ["en", "fr"],
+    }, { language: "fr" }, new Date("2026-08-01T00:00:00.000Z"));
+    const otherLanguage = scoreRecommendation({
+      ...base,
+      originalLanguage: "es",
+      availableLanguages: ["es"],
+    }, { language: "fr" }, new Date("2026-08-01T00:00:00.000Z"));
+
+    expect(frenchOriginal.score).toBeGreaterThan(frenchTranslation.score);
+    expect(frenchTranslation.score).toBeGreaterThan(otherLanguage.score);
+    expect(otherLanguage.score).toBeGreaterThan(0);
+  });
+
   it("rewards recent high-intent community activity", () => {
     const quiet = scoreRecommendation({ ...base, recentSaveCount: 0, recentCommentCount: 0, recentLikeCount: 0, recentMakeCount: 0 }, {}, new Date("2026-08-01T00:00:00.000Z"));
     const active = scoreRecommendation({ ...base, recentSaveCount: 3, recentCommentCount: 4, recentLikeCount: 8, recentMakeCount: 2 }, {}, new Date("2026-08-01T00:00:00.000Z"));
     expect(active.score).toBeGreaterThan(quiet.score);
+  });
+
+  it("only describes a recipe as popular when engagement supports the claim", () => {
+    const quiet = scoreRecommendation({
+      ...base,
+      createdAt: "2025-01-01T00:00:00.000Z",
+      avgRating: 3,
+      ratingCount: 1,
+      recentSaveCount: 0,
+      recentCommentCount: 0,
+      recentLikeCount: 2,
+      recentMakeCount: 0,
+    }, {}, new Date("2026-08-01T00:00:00.000Z"));
+    const popular = scoreRecommendation({
+      ...base,
+      createdAt: "2025-01-01T00:00:00.000Z",
+      avgRating: 3,
+      ratingCount: 1,
+      recentSaveCount: 1,
+      recentCommentCount: 1,
+      recentLikeCount: 2,
+      recentMakeCount: 1,
+    }, {}, new Date("2026-08-01T00:00:00.000Z"));
+
+    expect(quiet.reasonCode).toBeUndefined();
+    expect(popular.reasonCode).toBe("popular");
   });
 
   it("gives fresh recipes and established creators a discovery boost", () => {

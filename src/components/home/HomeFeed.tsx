@@ -4,11 +4,12 @@ import { useQuery } from '@tanstack/react-query';
 import { useLanguage } from '../../contexts/LanguageContext';
 import RecipeCard from './RecipeCard';
 import type { RecipeListItem } from '../../types';
-import { Sparkles, Flame, Clock, Leaf, UtensilsCrossed, Star } from 'lucide-react';
+import { Sparkles, Flame, Clock, Leaf, UtensilsCrossed, Star, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { apiFetch } from '../../lib/apiFetch';
 import { LoadingPan } from '../ui/LoadingPan';
 import { useMinLoading } from '../../hooks/useMinLoading';
+import { recipeLanguageCode } from '../../lib/recipeLanguage';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -26,6 +27,7 @@ function imgSrc(url: string | null | undefined) {
 function HeroCard({ recipe }: { recipe: RecipeListItem }) {
   const { t } = useLanguage();
   const info = recipe.info as Record<string, string> | null | undefined;
+  const originalLanguageCode = recipeLanguageCode(recipe.originalLanguage);
   return (
     <Link to={recipe.authorUsername ? `/${recipe.authorUsername}/${recipe.slug}` : `/recipe/${recipe.slug}`}
       className="relative rounded-3xl overflow-hidden bg-stone-900 text-white cursor-pointer shadow-xl group border border-stone-800 block">
@@ -46,6 +48,12 @@ function HeroCard({ recipe }: { recipe: RecipeListItem }) {
             <Sparkles className="w-3 h-3" />
             {t('home.featured')}
           </span>
+          {originalLanguageCode && (
+            <span className="rounded-full bg-white/90 px-2 py-1 text-[10px] font-extrabold text-stone-900"
+              title={t(`detail.language.${recipe.originalLanguage}`)}>
+              {originalLanguageCode}
+            </span>
+          )}
           {recipe.authorName && (
             <span className="text-stone-300 text-xs font-semibold">{t('home.by', { name: recipe.authorName })}</span>
           )}
@@ -117,8 +125,35 @@ export default function HomeFeed() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-4 space-y-6 pb-24 w-full">
+      {!user && (
+        <section className="relative overflow-hidden rounded-3xl border px-6 py-8 sm:px-10 sm:py-10"
+          style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-accent-soft-border)' }}>
+          <div className="absolute -right-16 -top-20 h-48 w-48 rounded-full bg-amber-200/30 blur-3xl" aria-hidden="true" />
+          <div className="relative max-w-2xl">
+            <p className="mb-3 text-xs font-extrabold uppercase tracking-[0.18em] home-accent-text">
+              {t('home.valueKicker')}
+            </p>
+            <h1 className="font-serif text-3xl font-extrabold leading-tight sm:text-4xl" style={{ color: 'var(--color-text)' }}>
+              {t('home.valueTitle')}
+            </h1>
+            <p className="mt-3 max-w-xl text-sm leading-6 sm:text-base" style={{ color: 'var(--color-muted)' }}>
+              {t('home.valueDescription')}
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <a href="#recipe-feed" className="inline-flex items-center gap-2 rounded-full bg-amber-800 px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-amber-900">
+                {t('home.exploreRecipes')} <ArrowRight className="h-4 w-4" />
+              </a>
+              <Link to="/add-recipe" className="inline-flex items-center rounded-full border px-5 py-3 text-sm font-bold transition-colors hover:bg-[var(--color-hover)]"
+                style={{ color: 'var(--color-text)', borderColor: 'var(--color-border)' }}>
+                {t('home.shareRecipe')}
+              </Link>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Primary feeds */}
-      <div className="grid grid-cols-2 rounded-2xl p-1" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+      <div id="recipe-feed" className="grid scroll-mt-24 grid-cols-2 rounded-2xl p-1" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
         {[
           { key: 'all' as const, labelKey: 'home.forYou', Icon: Sparkles },
           { key: 'following' as const, labelKey: 'home.following', Icon: UtensilsCrossed },

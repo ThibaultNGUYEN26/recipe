@@ -4,6 +4,7 @@ export type DietaryTag = 'vegetarian' | 'vegan' | 'gluten-free' | 'dairy-free' |
 export interface RecipeInfo {
   prepTime?: string;
   cookTime?: string;
+  restTime?: string;
   totalTime?: string;
   servings?: number;
   difficulty?: Difficulty;
@@ -119,6 +120,9 @@ export interface UserProfile {
   isChefVerified: boolean;
   name: string | null;
   bio?: string | null;
+  instagramUrl?: string | null;
+  tiktokUrl?: string | null;
+  youtubeUrl?: string | null;
   avatarUrl?: string | null;
   followerCount: number;
   followingCount: number;
@@ -136,6 +140,10 @@ export interface AuthUser {
   isChefVerified: boolean;
   emailVerified: boolean;
   name: string | null;
+  bio?: string | null;
+  instagramUrl?: string | null;
+  tiktokUrl?: string | null;
+  youtubeUrl?: string | null;
   avatarUrl?: string | null;
   preferredLanguage?: 'fr' | 'en' | 'es' | 'vi' | 'ar' | 'it' | 'zh' | 'de' | 'ja' | 'ko' | 'pt' | null;
 }

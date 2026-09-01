@@ -7,7 +7,8 @@
   "info": {
     "prepTime": "15 min",
     "cookTime": "20 min",
-    "totalTime": "35 min",
+    "restTime": "60 min",
+    "totalTime": "95 min",
     "servings": 8,
     "difficulty": "Easy"
   },

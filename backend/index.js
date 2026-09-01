@@ -30,6 +30,7 @@ import { buildSitemap } from "./lib/sitemap.js";
 import { prisma } from "./lib/prisma.js";
 import { initializeMonitoring, installExpressErrorMonitoring, monitorServerErrors } from "./lib/monitoring.js";
 import { readinessStatus } from "./lib/readiness.js";
+import { normalizeCategoryInput } from "./lib/contentNormalization.js";
 
 export const app = express();
 initializeMonitoring();
@@ -127,11 +128,15 @@ app.get("/api/categories", async (_req, res) => {
 });
 app.post("/api/categories", authenticate, requireAdmin, async (req, res) => {
   const { prisma } = await import("./lib/prisma.js");
-  const { label } = req.body;
-  if (!label?.trim()) return res.status(400).json({ error: "Label is required" });
-  const slug = label.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const { label, slug } = normalizeCategoryInput(req.body.label);
+  if (!label || !slug) return res.status(400).json({ error: "Label is required" });
   try {
-    const category = await prisma.category.create({ data: { label: label.trim(), slug } });
+    const duplicate = await prisma.category.findFirst({
+      where: { OR: [{ slug }, { label: { equals: label, mode: "insensitive" } }] },
+      select: { id: true },
+    });
+    if (duplicate) return res.status(409).json({ error: "Category already exists" });
+    const category = await prisma.category.create({ data: { label, slug } });
     res.status(201).json(category);
   } catch (err) {
     if (err.code === "P2002") return res.status(409).json({ error: "Category already exists" });

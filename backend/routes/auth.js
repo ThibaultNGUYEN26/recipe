@@ -29,6 +29,10 @@ function publicUser(user) {
     avatarUrl: user.avatarUrl || DEFAULT_AVATAR_URL,
     avatarPending: Boolean(user.pendingAvatarId),
     preferredLanguage: user.preferredLanguage,
+    bio: user.bio,
+    instagramUrl: user.instagramUrl,
+    tiktokUrl: user.tiktokUrl,
+    youtubeUrl: user.youtubeUrl,
     emailVerified: Boolean(user.emailVerifiedAt),
   };
 }
@@ -284,7 +288,7 @@ router.post("/verify-email", accountEmailRateLimit, async (req, res) => {
 router.get("/me", authenticate, async (req, res) => {
   const user = await prisma.user.findUnique({
     where: { id: req.user.id },
-    select: { id: true, email: true, username: true, name: true, isAdmin: true, isVerified: true, isChefVerified: true, emailVerifiedAt: true, avatarUrl: true, pendingAvatarId: true, preferredLanguage: true, sessionVersion: true },
+    select: { id: true, email: true, username: true, name: true, bio: true, instagramUrl: true, tiktokUrl: true, youtubeUrl: true, isAdmin: true, isVerified: true, isChefVerified: true, emailVerifiedAt: true, avatarUrl: true, pendingAvatarId: true, preferredLanguage: true, sessionVersion: true },
   });
   if (!user) return res.status(401).json({ error: "User no longer exists" });
   // Keep the current cookie stable. Rotating it here can race with focus or

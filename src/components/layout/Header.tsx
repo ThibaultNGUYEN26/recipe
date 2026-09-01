@@ -1,4 +1,4 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Bell, LogOut, User, ChevronDown, BadgeCheck, ShieldCheck, BarChart3, Settings } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -12,6 +12,7 @@ export default function Header() {
   const { openNotifDrawer, unreadNotifCount } = useUI();
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -38,6 +39,27 @@ export default function Header() {
             SOCIAL RECIPES
           </span>
         </Link>
+
+        <nav aria-label={t('nav.primary')} className="hidden items-center gap-1 md:flex">
+          {[
+            { to: '/', label: t('nav.home') },
+            { to: '/search', label: t('nav.discover') },
+            { to: user ? '/add-recipe' : '/login', match: '/add-recipe', label: t('nav.add') },
+            { to: user ? '/my-recipes' : '/login', match: '/my-recipes', label: t('nav.saved') },
+          ].map((item) => {
+            const activePath = item.match ?? item.to;
+            const isActive = activePath === '/' ? location.pathname === '/' : location.pathname.startsWith(activePath);
+            return (
+              <Link key={item.label} to={item.to} aria-current={isActive ? 'page' : undefined}
+                className="rounded-full px-3 py-2 text-xs font-semibold transition-colors"
+                style={isActive
+                  ? { backgroundColor: 'var(--color-accent-soft)', color: 'var(--color-accent)' }
+                  : { color: 'var(--header-muted)' }}>
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
 
         <div className="flex shrink-0 items-center gap-1.5">
           {user ? (
@@ -129,9 +151,6 @@ export default function Header() {
             </>
           ) : (
             <div className="flex items-center gap-2">
-              <Link to="/settings" className="savor-header__icon-button p-1.5 rounded-full transition-colors" aria-label="Settings">
-                <Settings className="savor-header__muted w-5 h-5" />
-              </Link>
               <Link to="/login" className="savor-header__sign-in text-xs font-semibold px-3 py-1.5 rounded-full transition-colors">
                 {t('header.signIn')}
               </Link>

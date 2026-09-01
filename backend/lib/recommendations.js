@@ -18,16 +18,26 @@ export function scoreRecommendation(recipe, preferences = {}, now = new Date()) 
   const matchingTags = recipe.tags.filter((tag) => preferences.tags?.has(tag));
   const tagAffinity = matchingTags.reduce((sum, tag) => sum + (preferences.tags.get(tag) || 0), 0);
   const followsAuthor = Boolean(recipe.authorId && preferences.following?.has(recipe.authorId));
+  const preferredLanguage = preferences.language?.toLowerCase();
+  const originalLanguageMatch = Boolean(preferredLanguage && recipe.originalLanguage?.toLowerCase() === preferredLanguage);
+  const translationMatch = Boolean(preferredLanguage && recipe.availableLanguages?.some((language) => language.toLowerCase() === preferredLanguage));
+  const languageAffinity = originalLanguageMatch ? 3 : translationMatch ? 1.25 : 0;
   const seenPenalty = preferences.viewed?.has(recipe.id) ? 1.5 : 0;
-  const score = engagement + discovery + ratingQuality + freshness + categoryAffinity * 2 + tagAffinity + (followsAuthor ? 6 : 0) - seenPenalty;
+  const score = engagement + discovery + ratingQuality + freshness + categoryAffinity * 2 + tagAffinity + languageAffinity + (followsAuthor ? 6 : 0) - seenPenalty;
 
-  let reasonCode = 'popular';
+  const explicitEngagement =
+    (recipe.recentSaveCount ?? recipe.saveCount ?? 0)
+    + (recipe.recentCommentCount ?? recipe.commentCount ?? 0)
+    + (recipe.recentLikeCount ?? recipe.likeCount ?? 0)
+    + (recipe.recentMakeCount ?? recipe.makeCount ?? 0);
+  let reasonCode;
   let reasonValue = undefined;
   if (followsAuthor) reasonCode = 'follow';
   else if (categoryAffinity > 0) { reasonCode = 'category'; reasonValue = recipe.categoryLabel; }
   else if (matchingTags.length) { reasonCode = 'tag'; reasonValue = matchingTags[0]; }
   else if (ageDays <= 14) reasonCode = 'fresh';
   else if (recipe.avgRating >= 4.5 && recipe.ratingCount >= 2) reasonCode = 'rated';
+  else if (explicitEngagement >= 5) reasonCode = 'popular';
 
   return { score, reasonCode, reasonValue };
 }

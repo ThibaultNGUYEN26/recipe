@@ -14,6 +14,7 @@ import { broadcastRecipeEvent, broadcastRecipeLikeEvent, broadcastRecipeStatsEve
 import { likeRateLimit } from "../middleware/rateLimit.js";
 import { blockedUserIds, usersAreBlocked } from "../lib/blocks.js";
 import { normalizeMakeInput } from "../lib/makes.js";
+import { normalizeTags } from "../lib/contentNormalization.js";
 
 const router = Router();
 const uploadRecipeMedia = recipeUpload.fields([
@@ -39,6 +40,23 @@ function hasRequiredRecipeTimes(info) {
   const prepMinutes = minutes(info?.prepTime);
   const cookMinutes = minutes(info?.cookTime);
   return prepMinutes > 0 && Number.isFinite(cookMinutes) && cookMinutes >= 0;
+}
+
+function normalizeRecipeTimes(info) {
+  if (!hasRequiredRecipeTimes(info)) return null;
+  const minutes = (value) => Number.parseFloat(String(value ?? "").match(/-?\d+(?:\.\d+)?/)?.[0] ?? "NaN");
+  const prepMinutes = minutes(info.prepTime);
+  const cookMinutes = minutes(info.cookTime);
+  const hasRestTime = info.restTime !== undefined && info.restTime !== null && info.restTime !== "";
+  const restMinutes = hasRestTime ? minutes(info.restTime) : 0;
+  if (!Number.isFinite(restMinutes) || restMinutes < 0) return null;
+  return {
+    ...info,
+    prepTime: `${prepMinutes} min`,
+    cookTime: `${cookMinutes} min`,
+    ...(hasRestTime ? { restTime: `${restMinutes} min` } : {}),
+    totalTime: `${prepMinutes + cookMinutes + restMinutes} min`,
+  };
 }
 
 function normalizeFocalPoint(value) {
@@ -173,6 +191,7 @@ router.get("/recommended", optionalAuthenticate, async (req, res) => {
     const preferences = {
       categories,
       tags,
+      language: normalizeLanguage(lang),
       following: new Set(follows.map((follow) => follow.followingId)),
       viewed: new Set(viewed.map((item) => item.recipeId)),
     };
@@ -197,6 +216,8 @@ router.get("/recommended", optionalAuthenticate, async (req, res) => {
         followerCount: recipe.author?._count.followers ?? 0,
         categorySlug: recipe.category.slug,
         categoryLabel: recipe.category.label,
+        originalLanguage: recipe.originalLanguage,
+        availableLanguages: recipe.translations.map((translation) => normalizeLanguage(translation.language)),
         tags: (Array.isArray(recipe.tags) ? recipe.tags : []).map((tag) => String(tag).toLowerCase()),
         authorId: recipe.authorId,
       };
@@ -243,7 +264,10 @@ router.get("/recommended", optionalAuthenticate, async (req, res) => {
       ...ranked.filter((recipe) => savedIds.has(recipe.id)),
     ];
     const trendingScore = (recipe) => recipe.recentSaveCount * 3 + recipe.recentCommentCount * 2 + recipe.recentLikeCount + recipe.recentMakeCount * 2 + recipe.recentViews * 0.25;
-    const trending = [...formatted].sort((a, b) => trendingScore(b) - trendingScore(a) || new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 20).map((recipe) => ({ ...recipe, recommendationReason: 'trending' }));
+    const trending = [...formatted].sort((a, b) => trendingScore(b) - trendingScore(a) || new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 20).map((recipe) => ({
+      ...recipe,
+      recommendationReason: trendingScore(recipe) >= 5 ? 'trending' : recipe.recommendationReason,
+    }));
     const following = formatted.filter((recipe) => preferences.following.has(recipe.authorId)).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).map((recipe) => ({ ...recipe, recommendationReason: 'follow' }));
     res.json({
       personalized: diversifyRecommendations(byScore, 20),
@@ -427,11 +451,12 @@ router.post("/", authenticate, handleRecipeMedia, async (req, res) => {
   }
 
   try {
-    const parsedInfo = info ? JSON.parse(info) : null;
-    if (!hasRequiredRecipeTimes(parsedInfo)) {
+    const parsedInfo = info ? normalizeRecipeTimes(JSON.parse(info)) : null;
+    if (!parsedInfo) {
       removeUploadedFiles();
       return res.status(400).json({ error: "Preparation time must be greater than zero and cooking time cannot be negative" });
     }
+    const parsedTags = tags ? normalizeTags(JSON.parse(tags)) : null;
 
     // Support both multi-translation JSON payload and legacy single-lang fields
     let translationRows = [];
@@ -462,7 +487,7 @@ router.post("/", authenticate, handleRecipeMedia, async (req, res) => {
           isPublic: isPublic === "true",
           authorId: req.user.id,
           info: parsedInfo,
-          tags: tags ? JSON.parse(tags) : null,
+          tags: parsedTags,
           videoUrl,
           sourcePlatform: validatedSourceUrl ? "tiktok" : null,
           sourceUrl: validatedSourceUrl,
@@ -559,11 +584,12 @@ router.put("/:slug", authenticate, handleRecipeMedia, async (req, res) => {
       translationRows = JSON.parse(rawTranslations);
     }
 
-    const parsedInfo = info ? JSON.parse(info) : null;
-    if (info && !hasRequiredRecipeTimes(parsedInfo)) {
+    const parsedInfo = info ? normalizeRecipeTimes(JSON.parse(info)) : null;
+    if (info && !parsedInfo) {
       removeUploadedFiles();
       return res.status(400).json({ error: "Preparation time must be greater than zero and cooking time cannot be negative" });
     }
+    const parsedTags = tags ? normalizeTags(JSON.parse(tags)) : null;
     const originCountry = normalizeCountryCode(rawOriginCountry);
     if (rawOriginCountry && !originCountry) {
       removeUploadedFiles();
@@ -576,7 +602,7 @@ router.put("/:slug", authenticate, handleRecipeMedia, async (req, res) => {
         data: {
           ...(categoryId ? { categoryId: parseInt(categoryId) } : {}),
           ...(info ? { info: parsedInfo } : {}),
-          ...(tags ? { tags: JSON.parse(tags) } : {}),
+          ...(tags ? { tags: parsedTags } : {}),
           ...(rawOriginalLanguage ? { originalLanguage: normalizeLanguage(rawOriginalLanguage) } : {}),
           ...(rawOriginCountry !== undefined ? { originCountry } : {}),
           ...(isPublic !== undefined ? { isPublic: isPublic === "true" } : {}),

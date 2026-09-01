@@ -29,22 +29,53 @@ function savedCategoryName(value) {
   return typeof value === "string" ? value.trim().replace(/\s+/g, " ") : "";
 }
 
+const SOCIAL_HOSTS = {
+  instagramUrl: new Set(["instagram.com", "www.instagram.com"]),
+  tiktokUrl: new Set(["tiktok.com", "www.tiktok.com"]),
+  youtubeUrl: new Set(["youtube.com", "www.youtube.com", "youtu.be"]),
+};
+
+function normalizeSocialUrl(value, field) {
+  const input = typeof value === "string" ? value.trim() : "";
+  if (!input) return null;
+  if (input.length > 300) throw new Error("Social profile URL is too long");
+  let url;
+  try { url = new URL(input); } catch { throw new Error("Enter a valid social profile URL"); }
+  if (url.protocol !== "https:" || !SOCIAL_HOSTS[field]?.has(url.hostname.toLowerCase())) {
+    throw new Error(`Enter a valid ${field.replace("Url", "")} profile URL using HTTPS`);
+  }
+  return url.toString();
+}
+
 // GET /api/users?q=
 router.get("/", optionalAuthenticate, async (req, res) => {
   const { q = "" } = req.query;
   const query = String(q).trim();
   const usernameQuery = normalizeUsername(query);
+  const withRecipes = req.query.withRecipes === "true";
   try {
-    const select = { id: true, username: true, name: true, avatarUrl: true, isVerified: true, isChefVerified: true };
+    const select = {
+      id: true,
+      username: true,
+      name: true,
+      avatarUrl: true,
+      isVerified: true,
+      isChefVerified: true,
+      ...(withRecipes ? { _count: { select: { recipes: { where: { isPublic: true } } } } } : {}),
+    };
+    const where = {
+      ...(query ? {
+        OR: [
+          { username: { contains: usernameQuery, mode: "insensitive" } },
+          { name: { contains: query, mode: "insensitive" } },
+        ],
+      } : {}),
+      ...(withRecipes ? { recipes: { some: { isPublic: true } } } : {}),
+    };
     const [exactUser, matches] = await Promise.all([
       usernameQuery ? prisma.user.findUnique({ where: { username: usernameQuery }, select }) : null,
       prisma.user.findMany({
-        where: query ? {
-          OR: [
-            { username: { contains: usernameQuery, mode: "insensitive" } },
-            { name: { contains: query, mode: "insensitive" } },
-          ],
-        } : undefined,
+        where,
         select,
         take: 20,
       }),
@@ -54,6 +85,10 @@ router.get("/", optionalAuthenticate, async (req, res) => {
       : matches;
     const excludedUserIds = new Set(await blockedUserIds(req.user?.id));
     users.sort((a, b) => {
+      if (withRecipes) {
+        const countDifference = (b._count?.recipes ?? 0) - (a._count?.recipes ?? 0);
+        if (countDifference) return countDifference;
+      }
       const aExact = a.username === usernameQuery ? 1 : 0;
       const bExact = b.username === usernameQuery ? 1 : 0;
       const aPrefix = a.username?.startsWith(usernameQuery) ? 1 : 0;
@@ -66,7 +101,14 @@ router.get("/", optionalAuthenticate, async (req, res) => {
       select: { followingId: true },
     }) : [];
     const followedIds = new Set(followed.map((follow) => follow.followingId));
-    res.json(visibleUsers.map((user) => ({ ...user, isFollowing: followedIds.has(user.id) })));
+    res.json(visibleUsers.map((user) => {
+      const { _count, ...publicUser } = user;
+      return {
+        ...publicUser,
+        ...(withRecipes ? { recipeCount: _count?.recipes ?? 0 } : {}),
+        isFollowing: followedIds.has(user.id),
+      };
+    }));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message || "Failed to search users" });
@@ -161,6 +203,15 @@ router.patch("/me", authenticate, uploadRateLimit, handleAvatarUpload, async (re
     return res.status(400).json({ error: usernameResult.error, code: "INVALID_USERNAME" });
   }
 
+  let socialLinks = {};
+  try {
+    for (const field of Object.keys(SOCIAL_HOSTS)) {
+      if (req.body[field] !== undefined) socialLinks[field] = normalizeSocialUrl(req.body[field], field);
+    }
+  } catch (error) {
+    return res.status(400).json({ error: error.message, code: "INVALID_SOCIAL_URL" });
+  }
+
   try {
     let avatarResult = null;
     if (req.file) {
@@ -171,9 +222,10 @@ router.patch("/me", authenticate, uploadRateLimit, handleAvatarUpload, async (re
       data: {
         ...(name !== undefined && { name }),
         ...(bio !== undefined && { bio }),
+        ...socialLinks,
         ...(usernameResult && { username: usernameResult.username }),
       },
-      select: { id: true, username: true, name: true, email: true, bio: true, avatarUrl: true },
+      select: { id: true, username: true, name: true, email: true, bio: true, instagramUrl: true, tiktokUrl: true, youtubeUrl: true, avatarUrl: true },
     });
     res.status(avatarResult?.status === "approved" || !avatarResult ? 200 : 202).json({
       user: { ...user, avatarUrl: user.avatarUrl || DEFAULT_AVATAR_URL },
@@ -390,7 +442,7 @@ router.get("/by-username/:username", optionalAuthenticate, async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { username },
-      select: { id: true, username: true, name: true, bio: true, avatarUrl: true, isVerified: true, isChefVerified: true, createdAt: true },
+      select: { id: true, username: true, name: true, bio: true, instagramUrl: true, tiktokUrl: true, youtubeUrl: true, avatarUrl: true, isVerified: true, isChefVerified: true, createdAt: true },
     });
     if (!user) return res.status(404).json({ error: "User not found" });
     if (await usersAreBlocked(req.user?.id, user.id)) return res.status(404).json({ error: "User not found" });
@@ -418,7 +470,7 @@ router.get("/:id", optionalAuthenticate, async (req, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: { id: true, username: true, name: true, bio: true, avatarUrl: true, isVerified: true, isChefVerified: true, createdAt: true },
+      select: { id: true, username: true, name: true, bio: true, instagramUrl: true, tiktokUrl: true, youtubeUrl: true, avatarUrl: true, isVerified: true, isChefVerified: true, createdAt: true },
     });
     if (!user) return res.status(404).json({ error: "User not found" });
     if (await usersAreBlocked(req.user?.id, user.id)) return res.status(404).json({ error: "User not found" });

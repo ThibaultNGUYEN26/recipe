@@ -28,6 +28,9 @@ model User {
   isVerified            Boolean               @default(false)
   isChefVerified        Boolean               @default(false)
   bio                   String?
+  instagramUrl          String?
+  tiktokUrl             String?
+  youtubeUrl            String?
   avatarUrl             String?               @default("/api/media/default-avatar.svg")
   avatarMediaId         String?               @unique
   avatarMedia           MediaAsset?           @relation("ApprovedAvatar", fields: [avatarMediaId], references: [id], onDelete: SetNull)

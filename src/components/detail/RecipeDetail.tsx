@@ -17,6 +17,7 @@ import { recipeStructuredData, serializeStructuredData } from '../../lib/recipeS
 import MadeItSection from './MadeItSection';
 import { formatCompactCount } from '../../lib/formatCompactCount';
 import { countryFlag, getCountryName } from '../../lib/countries';
+import { recipeLanguageCode } from '../../lib/recipeLanguage';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -393,6 +394,7 @@ export default function RecipeDetail() {
 
   const info = recipe.info as Record<string, unknown> | null | undefined;
   const baseServings = (info?.servings as number) ?? 4;
+  const originalLanguageCode = recipeLanguageCode(recipe.originalLanguage);
   const structuredData = recipe.isPublic
     ? recipeStructuredData(recipe, recipe.image ? imgSrc(recipe.image) : null)
     : null;
@@ -476,6 +478,13 @@ export default function RecipeDetail() {
             <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">
               {recipe.category.label}
             </span>
+            {originalLanguageCode && (
+              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-extrabold"
+                style={{ backgroundColor: 'var(--color-accent-soft)', color: 'var(--color-accent)' }}
+                title={t(`detail.language.${recipe.originalLanguage}`)}>
+                <Languages className="h-3.5 w-3.5" /> {originalLanguageCode}
+              </span>
+            )}
             {recipe.originCountry && (
               <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full"
                 style={{ backgroundColor: 'var(--color-border)', color: 'var(--color-text)' }}
@@ -539,6 +548,7 @@ export default function RecipeDetail() {
               { icon: <Clock size={16} />, label: t('detail.totalTime'), value: info?.totalTime as string },
               { icon: <Clock size={16} />, label: t('detail.prepTime'), value: info?.prepTime as string },
               { icon: <Clock size={16} />, label: t('detail.cookTime'), value: info?.cookTime as string },
+              { icon: <Clock size={16} />, label: t('detail.restTime'), value: info?.restTime as string },
               { icon: <ChefHat size={16} />, label: t('detail.level'), value: info?.difficulty as string },
               { icon: <Star size={16} />, label: t('detail.rating'), value: recipe.avgRating ? recipe.avgRating.toFixed(1) : '—' },
             ].map(({ icon, label, value }) => value ? (

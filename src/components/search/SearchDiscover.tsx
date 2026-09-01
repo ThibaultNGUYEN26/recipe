@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   Search, SlidersHorizontal, Star, Clock, UserPlus, UserMinus, X,
-  Sparkles, Flame, ChefHat
+  Sparkles, Flame, ChefHat, Languages
 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import type { RecipeListItem } from '../../types';
@@ -14,6 +14,7 @@ import { LoadingPan } from '../ui/LoadingPan';
 import { useMinLoading } from '../../hooks/useMinLoading';
 import { useUI } from '../../contexts/UIContext';
 import { countryFlag, getCountryName, getCountryOptions } from '../../lib/countries';
+import { recipeLanguageCode } from '../../lib/recipeLanguage';
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -44,7 +45,7 @@ const DIETARY_OPTS = [
   { value: 'keto', labelKey: 'discover.diet.keto' },
 ] as const;
 
-interface UserResult { id: number; username: string | null; name: string | null; avatarUrl: string | null; isVerified: boolean; isFollowing?: boolean }
+interface UserResult { id: number; username: string | null; name: string | null; avatarUrl: string | null; isVerified: boolean; isFollowing?: boolean; recipeCount?: number }
 
 function imgSrc(url: string | null | undefined) {
   if (!url) return null;
@@ -86,6 +87,7 @@ export default function SearchDiscover() {
   const [minRating, setMinRating] = useState<number | 'Any'>('Any');
   const [dietary, setDietary] = useState<string | null>(null);
   const [country, setCountry] = useState('');
+  const [recipeLanguageFilter, setRecipeLanguageFilter] = useState('');
   const [showFilterModal, setShowFilterModal] = useState(false);
 
   const { data, isLoading: loading } = useQuery({
@@ -106,6 +108,9 @@ export default function SearchDiscover() {
   const countryOptions = useMemo(() => getCountryOptions(language,
     allRecipes.map((recipe) => recipe.originCountry).filter((code): code is string => Boolean(code))),
   [allRecipes, language]);
+  const recipeLanguageOptions = useMemo(() => [...new Set(
+    allRecipes.map((recipe) => recipe.originalLanguage?.toLowerCase()).filter((code): code is string => Boolean(code)),
+  )].sort((a, b) => t(`detail.language.${a}`).localeCompare(t(`detail.language.${b}`), language)), [allRecipes, language, t]);
 
   // Fast, debounced creator search by @username or display name.
   useEffect(() => {
@@ -152,16 +157,17 @@ export default function SearchDiscover() {
     const matchesDietary = !dietary ||
       (r.tags as string[] | undefined)?.some((t) => t.toLowerCase() === dietary.toLowerCase());
     const matchesCountry = !country || r.originCountry === country;
-    return matchesQuery && matchesDifficulty && matchesTime && matchesRating && matchesDietary && matchesCountry;
+    const matchesRecipeLanguage = !recipeLanguageFilter || r.originalLanguage?.toLowerCase() === recipeLanguageFilter;
+    return matchesQuery && matchesDifficulty && matchesTime && matchesRating && matchesDietary && matchesCountry && matchesRecipeLanguage;
   });
 
   const activeFilterCount = (difficulty !== 'All' ? 1 : 0) +
     (maxTime !== 'Any' ? 1 : 0) +
     (minRating !== 'Any' ? 1 : 0) +
-    (dietary ? 1 : 0) + (country ? 1 : 0);
+    (dietary ? 1 : 0) + (country ? 1 : 0) + (recipeLanguageFilter ? 1 : 0);
 
   function clearAll() {
-    setDifficulty('All'); setMaxTime('Any'); setMinRating('Any'); setDietary(null); setCountry(''); setQuery('');
+    setDifficulty('All'); setMaxTime('Any'); setMinRating('Any'); setDietary(null); setCountry(''); setRecipeLanguageFilter(''); setQuery('');
   }
 
   const hasSearch = q.length > 0 || activeFilterCount > 0;
@@ -212,6 +218,12 @@ export default function SearchDiscover() {
           {country && (
             <span className="discover-chip flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full border">
               {countryFlag(country)} {getCountryName(country, language)} <X className="w-3.5 h-3.5 cursor-pointer" onClick={() => setCountry('')} />
+            </span>
+          )}
+          {recipeLanguageFilter && (
+            <span className="discover-chip flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full border">
+              <Languages className="h-3.5 w-3.5" /> {t(`detail.language.${recipeLanguageFilter}`)}
+              <X className="w-3.5 h-3.5 cursor-pointer" onClick={() => setRecipeLanguageFilter('')} />
             </span>
           )}
           {difficulty !== 'All' && (
@@ -327,6 +339,12 @@ export default function SearchDiscover() {
                 ) : (
                   <div className="recipe-card__image-placeholder w-full h-full flex items-center justify-center text-3xl">🍽️</div>
                 )}
+                {recipeLanguageCode(r.originalLanguage) && (
+                  <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2 py-1 text-[10px] font-extrabold text-stone-900 shadow-sm backdrop-blur-md"
+                    title={t(`detail.language.${r.originalLanguage}`)}>
+                    {recipeLanguageCode(r.originalLanguage)}
+                  </span>
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-stone-950/90 via-stone-950/20 to-transparent p-3 flex flex-col justify-end">
                   <p className="text-xs font-bold text-white line-clamp-2 group-hover:text-amber-300 transition-colors">{r.title}</p>
                   {r.authorName && <p className="text-[10px] text-stone-300 truncate">{r.authorName}</p>}
@@ -355,7 +373,7 @@ export default function SearchDiscover() {
       {showFilterModal && (
         <div className="app-modal-backdrop fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-stone-900/60 backdrop-blur-sm"
           onClick={() => setShowFilterModal(false)}>
-          <div className="app-modal-panel discover-modal w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl border space-y-5"
+          <div className="app-modal-panel discover-modal max-h-[calc(100dvh-1rem)] w-full max-w-lg overflow-y-auto rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl border space-y-5"
             onClick={(e) => e.stopPropagation()}>
             <div className="discover-divider flex items-center justify-between pb-3 border-b">
               <div className="flex items-center gap-2">
@@ -390,6 +408,17 @@ export default function SearchDiscover() {
                 <option value="">{t('discover.allCountries')}</option>
                 {countryOptions.map((option) => (
                   <option key={option.code} value={option.code}>{option.flag} {option.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="discover-muted text-xs font-semibold uppercase tracking-wider">{t('discover.recipeLanguage')}</label>
+              <select value={recipeLanguageFilter} onChange={(event) => setRecipeLanguageFilter(event.target.value)}
+                className="discover-input w-full rounded-xl border px-3 py-2.5 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-amber-600/40">
+                <option value="">{t('discover.allLanguages')}</option>
+                {recipeLanguageOptions.map((code) => (
+                  <option key={code} value={code}>{code.toUpperCase()} · {t(`detail.language.${code}`)}</option>
                 ))}
               </select>
             </div>
@@ -475,18 +504,14 @@ function TrendingCreators({ lang }: { lang: string }) {
   }
 
   useEffect(() => {
-    apiFetch('/api/users')
+    apiFetch('/api/users?withRecipes=true')
       .then((r) => r.json())
-      .then(async (users: UserResult[]) => {
-        const withCounts = await Promise.all(
-          users.filter((u) => u.id !== user?.id).slice(0, 6).map(async (u) => {
-            const res = await apiFetch(`/api/users/${u.id}`);
-            const data = await res.json();
-            return { ...u, recipeCount: data.recipeCount ?? 0 };
-          })
-        );
-        setCreators(withCounts);
-        setFollowedUsers(Object.fromEntries(withCounts.map((creator) => [creator.id, Boolean(creator.isFollowing)])));
+      .then((users: UserResult[]) => {
+        const activeCreators = (Array.isArray(users) ? users : [])
+          .filter((creator) => creator.id !== user?.id && (creator.recipeCount ?? 0) > 0)
+          .slice(0, 6) as (UserResult & { recipeCount: number })[];
+        setCreators(activeCreators);
+        setFollowedUsers(Object.fromEntries(activeCreators.map((creator) => [creator.id, Boolean(creator.isFollowing)])));
       })
       .catch(console.error);
   }, [user?.id]);

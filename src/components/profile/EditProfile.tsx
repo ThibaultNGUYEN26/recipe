@@ -4,15 +4,20 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useUI } from '../../contexts/UIContext';
 import { ArrowLeft, Camera } from 'lucide-react';
 import { apiFetch } from '../../lib/apiFetch';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 export default function EditProfile() {
   const { user, logout, updateUser } = useAuth();
   const { showToast } = useUI();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const fileRef = useRef<HTMLInputElement>(null);
   const [name, setName] = useState(user?.name ?? '');
   const [username, setUsername] = useState(user?.username ?? '');
-  const [bio, setBio] = useState('');
+  const [bio, setBio] = useState(user?.bio ?? '');
+  const [instagramUrl, setInstagramUrl] = useState(user?.instagramUrl ?? '');
+  const [tiktokUrl, setTiktokUrl] = useState(user?.tiktokUrl ?? '');
+  const [youtubeUrl, setYoutubeUrl] = useState(user?.youtubeUrl ?? '');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -40,6 +45,9 @@ export default function EditProfile() {
     fd.append('name', name);
     fd.append('username', username);
     fd.append('bio', bio);
+    fd.append('instagramUrl', instagramUrl);
+    fd.append('tiktokUrl', tiktokUrl);
+    fd.append('youtubeUrl', youtubeUrl);
     if (avatarFile) fd.append('avatar', avatarFile);
     try {
       const res = await apiFetch('/api/users/me', { method: 'PATCH', body: fd });
@@ -48,6 +56,10 @@ export default function EditProfile() {
         updateUser({
           username: d.user.username,
           name: d.user.name,
+          bio: d.user.bio,
+          instagramUrl: d.user.instagramUrl,
+          tiktokUrl: d.user.tiktokUrl,
+          youtubeUrl: d.user.youtubeUrl,
           avatarUrl: d.user.avatarUrl,
           avatarPending: d.avatarStatus === 'pending' || d.avatarStatus === 'review_required',
         });
@@ -112,6 +124,18 @@ export default function EditProfile() {
               style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
           </div>
         </div>
+        <fieldset className="space-y-3">
+          <legend className="mb-1 block text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--color-muted)' }}>{t('profile.socialLinks')}</legend>
+          <input type="url" maxLength={300} value={instagramUrl} onChange={(e) => setInstagramUrl(e.target.value)} placeholder="https://instagram.com/your-profile"
+            aria-label="Instagram profile URL" className="w-full px-4 py-3 rounded-2xl text-sm outline-none"
+            style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
+          <input type="url" maxLength={300} value={tiktokUrl} onChange={(e) => setTiktokUrl(e.target.value)} placeholder="https://tiktok.com/@your-profile"
+            aria-label="TikTok profile URL" className="w-full px-4 py-3 rounded-2xl text-sm outline-none"
+            style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
+          <input type="url" maxLength={300} value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} placeholder="https://youtube.com/@your-channel"
+            aria-label="YouTube channel URL" className="w-full px-4 py-3 rounded-2xl text-sm outline-none"
+            style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }} />
+        </fieldset>
         <div>
           <label className="text-xs font-semibold uppercase tracking-wide mb-1 block" style={{ color: 'var(--color-muted)' }}>Display name</label>
           <input value={name} onChange={(e) => setName(e.target.value)}
