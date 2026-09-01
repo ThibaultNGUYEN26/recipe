@@ -12,7 +12,6 @@ const messages = {
   'header.signOut': 'تسجيل الخروج',
   'header.signIn': 'تسجيل الدخول',
   'nav.home': 'الرئيسية',
-  'nav.primary': 'التنقل الرئيسي',
   'nav.discover': 'استكشاف',
   'nav.add': 'إضافة',
   'nav.saved': 'المحفوظات',

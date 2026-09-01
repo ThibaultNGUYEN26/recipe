@@ -12,7 +12,6 @@ const messages = {
   'header.signOut': 'Đăng xuất',
   'header.signIn': 'Đăng nhập',
   'nav.home': 'Trang chủ',
-  'nav.primary': 'Điều hướng chính',
   'nav.discover': 'Khám phá',
   'nav.add': 'Thêm',
   'nav.saved': 'Đã lưu',

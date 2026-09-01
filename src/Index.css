@@ -935,7 +935,7 @@ a {
 }
 
 .savor-footer {
-  padding-bottom: 0;
+  padding-bottom: calc(6rem + env(safe-area-inset-bottom));
 }
 
 @media (max-width: 47.999rem) {
@@ -981,17 +981,11 @@ a {
 }
 
 .cookie-consent-banner {
-  bottom: max(1rem, env(safe-area-inset-bottom));
+  bottom: calc(6rem + env(safe-area-inset-bottom));
   width: min(36rem, calc(100% - 2rem - env(safe-area-inset-left) - env(safe-area-inset-right)));
   max-height: calc(100vh - 7rem);
   max-height: calc(100dvh - 7rem - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   overflow-y: auto;
-}
-
-@media (max-width: 47.999rem) {
-  .cookie-consent-banner {
-    bottom: calc(6rem + env(safe-area-inset-bottom));
-  }
 }
 
 @media (max-width: 26rem) {

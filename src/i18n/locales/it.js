@@ -12,7 +12,6 @@ const messages = {
   'header.signOut': 'Esci',
   'header.signIn': 'Accedi',
   'nav.home': 'Home',
-  'nav.primary': 'Navigazione principale',
   'nav.discover': 'Esplora',
   'nav.add': 'Aggiungi',
   'nav.saved': 'Salvati',

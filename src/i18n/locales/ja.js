@@ -10,7 +10,6 @@ const messages = {
   'header.signOut': 'ログアウト',
   'header.signIn': 'ログイン',
   'nav.home': 'ホーム',
-  'nav.primary': 'メインナビゲーション',
   'nav.discover': '見つける',
   'nav.add': '追加',
   'nav.saved': '保存済み',

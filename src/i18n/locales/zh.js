@@ -9,7 +9,6 @@ const messages = {
   'header.signOut': '退出登录',
   'header.signIn': '登录',
   'nav.home': '首页',
-  'nav.primary': '主导航',
   'nav.discover': '发现',
   'nav.add': '发布',
   'nav.saved': '收藏',

@@ -9,7 +9,6 @@ const messages = {
   'header.signOut': '로그아웃',
   'header.signIn': '로그인',
   'nav.home': '홈',
-  'nav.primary': '기본 탐색',
   'nav.discover': '둘러보기',
   'nav.add': '만들기',
   'nav.saved': '저장됨',

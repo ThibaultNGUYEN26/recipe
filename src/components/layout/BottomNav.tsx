@@ -33,7 +33,7 @@ export default function BottomNav() {
   }
 
   return (
-    <nav aria-label="Primary navigation" className="savor-bottom-nav fixed z-40 py-1.5 px-2 rounded-full shadow-2xl md:hidden"
+    <nav aria-label="Primary navigation" className="savor-bottom-nav fixed z-40 py-1.5 px-2 rounded-full shadow-2xl"
       style={{
         backgroundColor: 'rgba(28,25,23,0.95)',
         backdropFilter: 'blur(20px)',

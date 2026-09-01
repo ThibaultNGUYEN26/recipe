@@ -9,7 +9,6 @@ const messages = {
   'header.signOut': 'Abmelden',
   'header.signIn': 'Anmelden',
   'nav.home': 'Startseite',
-  'nav.primary': 'Hauptnavigation',
   'nav.discover': 'Entdecken',
   'nav.add': 'Erstellen',
   'nav.saved': 'Gespeichert',
