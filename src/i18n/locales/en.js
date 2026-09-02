@@ -31,6 +31,10 @@ const messages = {
   'settings.privacySafetyDescription': 'Export data, blocked users, and account deletion',
   'settings.changePassword': 'Change password',
   'settings.changePasswordDescription': 'Update your password and secure your account',
+  'settings.verifiedUserStatus': 'Verified User status',
+  'settings.applyVerifiedUser': 'Apply for Verified User',
+  'settings.verifiedUserActive': 'Your blue identity badge is active',
+  'settings.verifiedUserDescription': 'Request the blue identity and authenticity badge',
   'password.back': 'Back to settings',
   'password.title': 'Change password',
   'password.subtitle': 'Use at least 8 characters. Other signed-in sessions will be disconnected.',
@@ -787,6 +791,9 @@ const messages = {
   'verification.userBackgroundPlaceholder': 'Tell us why your account should receive the blue badge.',
   'verification.userDisclaimer': 'Savor reviews the submitted evidence manually. The badge confirms identity and account ownership, but is not an endorsement of individual recipes or claims.',
   'verification.applyUser': 'Apply for Verified User',
+  'verification.badgeLabel': 'Verified User',
+  'verification.badgeAriaLabel': 'Verified user',
+  'verification.badgeTitle': 'Identity and account ownership reviewed by Savor',
 };
 
 export default messages;
