@@ -355,7 +355,7 @@ const messages = {
   'creatorAnalytics.followSources': 'Origen de los seguidores',
   'creatorAnalytics.followSourcesSubtitle': 'Qué receta inspiró el seguimiento',
   'creatorAnalytics.noFollows': 'No hubo nuevos seguidores en este período.',
-  'login.welcome': 'Qué bueno verte de nuevo',
+  'login.welcome': '¡Qué bueno verte de nuevo',
   'login.subtitle': 'Inicia sesión en tu cuenta',
   'login.identifier': 'Correo o nombre de usuario',
   'login.identifierPlaceholder': 'tu@ejemplo.com o @usuario',

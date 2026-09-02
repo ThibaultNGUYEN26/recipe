@@ -346,7 +346,7 @@ const messages = {
   'discover.cat.vegetarian': '素食',
   'discover.creators': '创作者',
   'discover.diet.dairyFree': '无乳制品',
-  'discover.diet.glutenFree': '无麾质',
+  'discover.diet.glutenFree': '无麸质',
   'discover.diet.keto': '生酮',
   'discover.diet.lowCarb': '低碳水',
   'discover.diet.nutFree': '无坚果',

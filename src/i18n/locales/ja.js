@@ -317,7 +317,7 @@ const messages = {
   'detail.byAuthor': '{author}さん',
   'detail.sourceVideo': '参照元の動画',
   'detail.signIn': 'ログイン',
-  'detail.toRateRecipe': 'してこのレシピを評価',
+  'detail.toRateRecipe': 'してこのレシピを評価しましょう',
   'detail.shareThoughts': '感想を共有…',
   'comments.savorChef': 'Savorシェフ',
   'madeIt.savorCook': 'Savorの料理人',

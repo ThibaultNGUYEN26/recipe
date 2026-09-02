@@ -127,7 +127,7 @@ const messages = {
   'language.vietnameseDescription': 'Usa Savor in vietnamita',
   'language.arabicDescription': 'Usa Savor in arabo',
   'language.italianDescription': 'Usa Savor in italiano',
-  'language.chineseDescription': 'Usa Savor in cinese',
+  'language.chineseDescription': 'Usa Savor in cinese semplificato',
   'language.germanDescription': 'Usa Savor in tedesco',
   'language.koreanDescription': 'Usa Savor in coreano',
   'language.japaneseDescription': 'Usa Savor in giapponese',
